@@ -1,0 +1,203 @@
+.admin-course-toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-course-toolbar .admin-button,
+.admin-link-button {
+  text-decoration: none;
+}
+
+.admin-course-description {
+  max-width: 520px;
+  margin: 6px 0 0;
+  color: #eee8dc;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.admin-course-slots-card {
+  text-align: left;
+}
+
+.admin-course-slots-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 390px) 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+.admin-slot-calendar {
+  padding: 18px;
+  border-radius: 24px;
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 10px 22px rgba(20, 13, 18, 0.18);
+}
+
+.admin-slot-calendar__monthbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.admin-slot-calendar__monthbar h2 {
+  margin: 0;
+  color: #26c7c0;
+  text-transform: capitalize;
+}
+
+.admin-slot-calendar__monthbar button {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: transparent;
+  color: #26c7c0;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.admin-slot-calendar__legend {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.admin-slot-calendar__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-slot-calendar__legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.admin-slot-calendar__legend-dot--available {
+  background: #35c5bd;
+}
+
+.admin-slot-calendar__legend-dot--empty {
+  background: #d5d5d5;
+}
+
+.admin-slot-calendar__weekdays,
+.admin-slot-calendar__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.admin-slot-calendar__weekdays {
+  margin-bottom: 8px;
+  text-align: center;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.admin-slot-calendar__day {
+  display: grid;
+  place-items: center;
+  min-height: 42px;
+  padding: 4px;
+  border-radius: 50%;
+  background: transparent;
+  color: #c9c9c9;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.admin-slot-calendar__day--current {
+  color: #b8b8b8;
+}
+
+.admin-slot-calendar__day--outside {
+  color: #d5d5d5;
+}
+
+.admin-slot-calendar__day--empty:hover,
+.admin-slot-calendar__day--empty:focus-visible {
+  background: rgba(108, 72, 92, 0.08);
+  color: #6c485c;
+}
+
+.admin-slot-calendar__day--has-slots {
+  background: rgba(53, 197, 189, 0.15);
+  color: #16aaa4;
+  font-weight: 800;
+}
+
+.admin-slot-calendar__day--has-slots:hover,
+.admin-slot-calendar__day--has-slots:focus-visible {
+  background: rgba(53, 197, 189, 0.26);
+  transform: translateY(-1px);
+}
+
+.admin-slot-calendar__day--selected {
+  background: #35c5bd;
+  color: #ffffff;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(53, 197, 189, 0.18);
+}
+
+.admin-slot-calendar__day small {
+  min-height: 12px;
+  font-size: 11px;
+}
+
+.admin-slot-list__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.admin-slot-list__header h2 {
+  margin: 0;
+  color: #ffffff;
+  text-transform: capitalize;
+}
+
+.admin-slot-items {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-slot-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 14px;
+  border: 2px solid rgba(238, 232, 220, 0.55);
+  border-radius: 18px;
+  background: rgba(238, 232, 220, 0.12);
+}
+
+.admin-slot-item p {
+  margin: 4px 0 0;
+}
+
+@media (max-width: 900px) {
+  .admin-course-slots-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-slot-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

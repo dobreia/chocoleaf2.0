@@ -1,0 +1,60 @@
+.admin-bookings-toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-bookings-toolbar .admin-button {
+  text-decoration: none;
+}
+
+.admin-bookings-table th,
+.admin-bookings-table td {
+  min-width: 132px;
+}
+
+.admin-bookings-table th:first-child,
+.admin-bookings-table td:first-child {
+  min-width: 240px;
+}
+
+.admin-bookings-note {
+  margin: 6px 0 0;
+  color: #eee8dc;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.admin-bookings-muted {
+  margin: 4px 0 0;
+  color: #eee8dc;
+  font-size: 12px;
+}
+
+.admin-bookings-select {
+  width: 100%;
+  min-width: 130px;
+  padding: 8px 10px;
+  border: 2px solid #eee8dccf;
+  border-radius: 999px;
+  background: #eee8dc;
+  color: #2f1f2a;
+  font-weight: 700;
+}
+
+.admin-bookings-select--confirmed,
+.admin-bookings-select--paid {
+  border-color: #8ee3ad;
+  background: #dff7e8;
+}
+
+.admin-bookings-select--cancelled,
+.admin-bookings-select--failed {
+  border-color: #e9a0a0;
+  background: #f8dddd;
+}
+
+.admin-bookings-select--pending {
+  border-color: #eee8dccf;
+}

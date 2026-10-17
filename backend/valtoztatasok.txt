@@ -1,0 +1,32 @@
+lehet-e 2x300 p
+legyen órában
+
+részletek oldalon kép szöveg csere
+
+Céges számlázásnál email címet megadni
+Számlázási névnél kitölteni a fentivel csak legyen szerkeszhető
+
+formoknál legyen adattartó frissítésnél
+
+naptárnál az ügyfélnél is kerüljön be a naptárba az időpont
+
+szolgáltatás részleteknél leírás mező legyen nagyobb
+
+időpont létrehozásnál töltsük be hogy meddig tart
+
+időpont létrehozásnál lehessen a naptárnézetből a napnál plusz jelre kattintva lehessen új időpontot létrehozni
+
+Ügyfél listából csoportos email küldése, lehessen szűrni hogy melyik szolgáltatás alatt lévő emailek maradjanak benne
+
+Megkereséseknél több állapot, megválaszolt, olvasatlan, folyamatban, árajánlatot adni
+Megkeresnél oldalrol megnyitható legyen az email válaszolásra
+
+Utalványoknál legyen a régi formátum a azonosítónál
+
+Időpont foglalásnál promóciós mező, utalvány sorszám ellenőrzése és ár levonása
+
+Utalványál egylb összeget meg lehessen adni, és dinamikusan frissüljenek az árak aszerint, hogy milyen időpontok vannak meghirdetve
+
+Ha félbemarad egy fizetés, autmatikusan 2 és 24 óra múlva kapjon emlékezetőt ha még mindig fizetetlen akkor admin kap emlékeztetőt. Manuálisan lehessen foglalni email kiküldéssel, vagy az egészet törölni adminként vagy ügyfélként is.
+
+időpont előtt 3 nappal automatikus emlékeztetőt kapjon az ügyfél.

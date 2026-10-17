@@ -1,0 +1,35 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "local": "node scripts/local.cjs",
+    "local:check": "node scripts/local.cjs --check",
+    "mail:check": "node scripts/mail-check.cjs",
+    "start": "node src/index.js",
+    "migrate": "node src/migrate.js",
+    "admin:create": "node src/createAdmin.js",
+    "test": "node --test test/*.test.cjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "fontkit": "^2.0.4",
+    "nodemailer": "^7.0.10",
+    "pdf-lib": "^1.17.1",
+    "pg": "^8.21.0",
+    "sharp": "^0.35.4",
+    "stripe": "^22.6.2"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@stripe/cli": "^1.52.1",
+    "nodemon": "^3.1.14"
+  }
+}

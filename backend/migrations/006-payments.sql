@@ -1,0 +1,25 @@
+CREATE TABLE payment_orders (
+ id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+ booking_id UUID UNIQUE REFERENCES bookings(id),
+ gift_order_id TEXT UNIQUE REFERENCES gift_orders(id),
+ request_key UUID UNIQUE,
+ amount INTEGER NOT NULL CHECK(amount>0),
+ email TEXT NOT NULL,
+ description TEXT NOT NULL,
+ billing JSONB NOT NULL,
+ invoice_config JSONB NOT NULL,
+ status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','paid','expired')),
+ stripe_session_id TEXT UNIQUE,
+ checkout_url TEXT,
+ stripe_expires_at TIMESTAMPTZ,
+ expires_at TIMESTAMPTZ NOT NULL DEFAULT now()+interval '30 minutes',
+ paid_at TIMESTAMPTZ,
+ invoice_id BIGINT,
+ invoice_url TEXT,
+ invoice_status TEXT NOT NULL DEFAULT 'pending',
+ last_error TEXT,
+ next_attempt TIMESTAMPTZ NOT NULL DEFAULT now(),
+ created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+ CHECK ((booking_id IS NULL) <> (gift_order_id IS NULL))
+);
+CREATE INDEX payment_work ON payment_orders(status,next_attempt);

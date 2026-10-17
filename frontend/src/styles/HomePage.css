@@ -1,0 +1,1232 @@
+.home-page .hero-content,
+.home-page .logo,
+.home-page .navbar,
+.home-page .nav-buttons {
+    position: relative;
+    z-index: 1;
+}
+
+.home-page .navbar-toggler {
+    border-color: white;
+    /* a gomb kerete fehér lesz */
+}
+
+.home-page .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='white' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+}
+
+
+.home-page a {
+    text-decoration: none;
+}
+
+.home-page .divider-top {
+    width: 100%;
+    height: 10px;
+    overflow: hidden;
+    line-height: 0;
+    background-color: #92B4B8;
+}
+
+.home-page .divider-top svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+
+.home-page button {
+    width: auto;
+    padding: 6px 12px;
+    border: black 1px solid;
+    border-radius: 6px;
+    font-family: 'Exo 2';
+    font-size: 18px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.home-page .button-primary {
+    background-color: #6C485C;
+    color: white;
+}
+
+.home-page .button-secondary {
+    background-color: #EEE8DC;
+    color: black;
+}
+
+.home-page .button-primary:hover {
+    background-color: #d49eb9;
+    color: white;
+}
+
+.home-page .button-secondary:hover {
+    background-color: #A39DCD;
+    color: white;
+}
+
+.home-page .bg-cream {
+    background-color: #EEE8DC;
+}
+
+.home-page .bg-blue {
+    background-color: #92B4B8;
+}
+
+.home-page .bg-purple {
+    position: relative;
+    background-color: #6C485C;
+    color: white;
+    padding-bottom: 30px;
+}
+
+.home-page .bg-light-purple {
+    position: relative;
+    background-color: #CECBE6;
+    color: white;
+}
+
+.home-page #navbarNav {
+    justify-content: center;
+}
+
+.home-page .nav-link {
+    color: white;
+    font-family: 'Courgette';
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    font-size: 20px;
+}
+
+.home-page .nav-link:hover {
+    color: #A39DCD;
+
+}
+
+.home-page .nav-buttons {
+    position: absolute;
+    right: 20px;
+}
+
+.home-page .nav-item:not(:first-child) {
+    border-left: 1px solid rgba(255, 255, 255, 0.7);
+    /* vagy amit szeretnél */
+    padding-left: 1rem;
+    margin-left: 1rem;
+}
+
+
+.home-page .logo {
+    display: block;
+    height: 100px;
+    margin: 0 auto;
+}
+
+.home-page .hero {
+    z-index: 1;
+    position: relative;
+    height: 100vh;
+    /* Teljes magasság */
+    overflow: hidden;
+    background-color: black;
+}
+
+.home-page .hero-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.8;
+    filter: blur(2px);
+    /* Kitölti a hátteret */
+    z-index: 0;
+    /* Háttérbe kerül */
+}
+
+.home-page .hero-content {
+    margin-top: 90px;
+    padding-inline: 20px;
+}
+
+.home-page .hero-content h1 {
+    font-size: 80px;
+    font-family: 'Courgette';
+    color: white;
+    text-align: center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.home-page .hero-content h2 {
+    font-size: 40px;
+    font-family: 'Exo 2';
+    color: white;
+    text-align: center;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.home-page .hero-content button {
+    display: block;
+    margin: 40px auto 0 auto;
+}
+
+.home-page .first-divider {
+    position: absolute;
+    bottom: -40px;
+    left: 0;
+    width: 132%;
+    line-height: 0;
+    z-index: 1;
+    overflow: hidden;
+    transform: translateX(-19.5%);
+    /* középre igazítás, ha kell */
+}
+
+.home-page .first-divider img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.home-page .introducing {
+    padding-bottom: 50px;
+}
+
+
+
+.home-page .introducing h1 {
+    padding-top: 70px;
+    margin-bottom: 50px;
+    font-family: 'Courgette';
+    font-size: 60px;
+    text-align: center;
+    color: #6C485C;
+}
+
+.home-page .introducing p {
+    font-size: 18px;
+    font-family: 'Libre Baskerville';
+    text-align: justify;
+    color: rgba(0, 0, 0, 0.51);
+}
+
+.home-page .introducing .col-lg {
+    padding: 0 50px;
+}
+
+.home-page .introducing button {
+    display: block;
+    width: 150px;
+}
+
+.home-page .gallery-button {
+    margin-top: 10px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.home-page .contact-container {
+    margin-top: 50px;
+}
+
+.home-page .profile-container {
+    display: flex;
+}
+
+.home-page .profile-container img {
+    margin-left: 20px;
+    height: 117px;
+    border: white 5px solid;
+    box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+}
+
+.home-page .profile-name {
+    margin-top: 35px;
+}
+
+.home-page .profile-container p {
+    margin: -5px;
+    font-family: 'Courgette';
+}
+
+.home-page .profile-name .name {
+    color: #6C485C;
+    font-size: 22px;
+}
+
+.home-page .profile-name .profession {
+    color: #6c485c96;
+}
+
+.home-page .contact-button {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    margin-right: 80px;
+}
+
+.home-page .introducing .card-container {
+    margin-top: 100px;
+}
+
+
+.home-page .card-container p {
+    text-align: center;
+    font-family: 'Courgette';
+    color: #6C485C;
+    font-size: 32px;
+}
+
+.home-page .image-container {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 10px;
+    box-shadow: 0 0 10px 2px rgba(0, 0, 0, 0.4);
+}
+
+.home-page .image-container img {
+    height: 300px;
+    width: 100%;
+    object-fit: cover;
+    transition: all 0.4s ease;
+}
+
+.home-page .image-container img:hover {
+    opacity: 0.2;
+    transform: scale(1.1);
+
+}
+
+
+
+.home-page .image-container .overlay-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #6C485C;
+    font-family: 'Libre Baskerville';
+    font-size: 17px;
+    text-align: center;
+    padding: 20px;
+    width: 300px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+
+
+}
+
+.home-page .image-container:hover .overlay-text {
+    opacity: 1;
+}
+
+.home-page .benefits {
+    padding-top: 50px;
+    color: white;
+}
+
+.home-page .benefits h1,
+.home-page .bg-purple h1 {
+    text-align: center;
+    font-family: 'Courgette';
+    font-size: 60px;
+    margin-bottom: 50px;
+}
+
+.home-page .benefit-container {
+    text-align: center;
+    font-family: 'Exo 2';
+}
+
+.home-page .benefit-container h2 {
+    margin: 15px 0 5px 0;
+    font-size: 21px;
+    font-weight: bold;
+}
+
+.home-page .benefit-container p {
+    font-size: 17px;
+}
+
+.home-page .benefit-container img {
+    height: 120px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.home-page .custom-shape-divider-top-1745653202 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+    line-height: 0;
+}
+
+.home-page .wave-separator {
+    width: 100%;
+    overflow: hidden;
+    line-height: 0;
+    background-color: #92B4B8;
+}
+
+.home-page .wave-separator svg {
+    display: block;
+    width: 100%;
+    height: 100px;
+}
+
+.home-page .bg-purple h1 {
+    margin-left: auto;
+    margin-right: auto;
+    width: 60%;
+    margin-bottom: 20px;
+}
+
+.home-page .bg-purple h2 {
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 50px;
+    text-align: center;
+    font-size: 24px;
+    font-family: 'Exo 2';
+    opacity: 0.7;
+    width: 70%;
+}
+
+.home-page .bg-purple p {
+    margin-left: auto;
+    margin-right: auto;
+    width: 70%;
+    font-size: 24px;
+    font-family: 'Exo 2';
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.home-page .bg-purple img {
+    width: 30px;
+    filter: brightness(0) invert(1);
+    flex-shrink: 0;
+    margin-top: 3px;
+}
+
+.home-page .bg-purple button {
+    font-size: 20px;
+    margin-top: 50px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    border-color: white;
+
+}
+
+.home-page .vr {
+    position: absolute;
+    width: 10px;
+    background-color: white;
+    opacity: 0.7;
+    height: 320px;
+    margin: 0 20px;
+    right: 180px;
+    bottom: 100px;
+}
+
+.home-page .infinite-carousel {
+    overflow: hidden;
+    white-space: nowrap;
+    width: 100%;
+    background-color: #EEE8DC;
+    padding: 20px 0;
+}
+
+.home-page .carousel-track {
+    display: inline-block;
+    animation: scroll 30s linear infinite;
+}
+
+.home-page .infinite-carousel:hover .carousel-track {
+    animation-play-state: paused;
+}
+
+.home-page .carousel-track img {
+    height: 250px;
+    margin: 0 15px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px black solid;
+}
+
+
+.home-page #opinions h1 {
+    font-size: 55px;
+    padding-top: 40px;
+    text-align: center;
+    font-family: 'Courgette';
+    color: #6C485C;
+}
+
+.home-page #opinions h2 {
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 30px;
+    text-align: center;
+    font-size: 24px;
+    font-family: 'Exo 2';
+    width: 70%;
+    color: #6c485ccd;
+}
+
+.home-page #opinions .card {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    padding: 12px;
+    background-color: #6c485c1c;
+    /*box-shadow: inset 0 0 10px 1px rgba(0, 0, 0, 0.2);*/
+    border: #6c485ca7 3px solid;
+    border-radius: 12px;
+
+}
+
+.home-page #opinions .row {
+    display: flex;
+    flex-wrap: wrap;
+    /* Több sorba törhetnek az elemek */
+    justify-content: flex-start;
+    /* Balra igazítás, amikor több elem van */
+}
+
+
+
+.home-page #opinions .row > .col-12:last-child {
+    margin-left: auto;
+    margin-right: auto;
+    justify-content: center;
+    /* Középre igazítja az utolsó elemet, ha egyedül van a sorban */
+}
+
+
+
+.home-page #opinions .header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.home-page #opinions .left {
+    display: flex;
+    flex-direction: column;
+}
+
+.home-page #opinions .left p {
+    font-family: Roboto, sans-serif;
+    font-weight: bold;
+}
+
+.home-page #opinions .rating {
+    display: flex;
+    flex-direction: row;
+}
+
+.home-page #opinions .rating img {
+    width: 20px;
+    margin-right: -5px;
+}
+
+.home-page #opinions .google {
+    width: 25px;
+    margin-bottom: 24px;
+}
+
+.home-page #opinions .google-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.home-page #opinions .google-tooltip .google-tooltip-text {
+    visibility: hidden;
+    /* Maximum szélesség megadása, hogy ne legyen túl széles */
+    width: 272px;
+    /* Az alapértelmezett szélesség automatikusan igazodik */
+    background-color: black;
+    color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    /* Tooltip az ikon fölött */
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.home-page #opinions .google-tooltip:hover .google-tooltip-text,
+.home-page #opinions .google-tooltip-text:hover {
+    visibility: visible;
+    opacity: 1;
+}
+
+.home-page #opinions .google-tooltip .google-tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    /* Nyíl a tooltip alján */
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: black transparent transparent transparent;
+}
+
+/* Bal oldalra igazítás */
+.home-page #opinions .left-tooltip .google-tooltip-text {
+    left: auto;
+    right: 0;
+    transform: none;
+    /* Elhelyezés balra */
+}
+
+.home-page #opinions .left-tooltip .google-tooltip-text::after {
+    left: auto;
+    right: 2%;
+    /* A nyíl a balra igazított tooltiphez igazodik */
+    transform: none;
+    /* A nyíl nem tolódik el balra igazításkor */
+}
+
+
+.home-page #opinions .text {
+    margin-top: 10px;
+    font-family: 'Libre Baskerville';
+}
+
+.home-page #opinions button {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.home-page .opinions-button {
+    padding-bottom: 4px;
+}
+
+
+.home-page .second-divider {
+    display: block;
+    width: 100%;
+    max-width: none;
+    line-height: 0;
+    z-index: 1;
+    overflow: hidden;
+    margin: -2px auto -20px auto;
+    /* itt növeld a felső margót */
+}
+
+
+
+.home-page #form h1 {
+    padding-top: 80px;
+    color: white;
+    font-size: 55px;
+    text-align: center;
+    font-family: 'Courgette';
+}
+
+.home-page #form h2 {
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 30px;
+    text-align: center;
+    font-size: 24px;
+    font-family: 'Exo 2';
+    width: 70%;
+    color: rgba(255, 255, 255, 0.793);
+}
+
+.home-page #form h3 {
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 0;
+    text-align: center;
+    font-size: 24px;
+    font-family: 'Exo 2';
+    width: 70%;
+    color: rgb(255, 255, 255);
+}
+
+.home-page #form p {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 10px;
+    margin-bottom: 0;
+    text-align: center;
+    font-size: 15px;
+    font-family: 'Exo 2';
+    width: 80%;
+    color: rgba(0, 0, 0, 0.793);
+}
+
+.home-page .bg-blue {
+    padding-bottom: 30px;
+}
+
+.home-page .date-text {
+    font: 3.3vw Montserrat, sans-serif;
+    padding-top: 60px;
+    text-align: center;
+}
+
+.home-page .form-bg {
+    position: relative;
+    display: block;
+    height: auto;
+    width: 500px;
+    margin: 50px auto 40px auto;
+    padding-top: 30px;
+    background-color: #f7f7f791;
+    border-radius: 18px;
+    border: rgba(255, 255, 255, 0.732) 5px solid;
+}
+
+.home-page .form-gender {
+    margin-bottom: 20px;
+}
+
+
+.home-page form ::placeholder {
+    opacity: 0.8;
+    font-size: 0.9em;
+}
+
+.home-page form label {
+    margin-left: 40px;
+    margin-top: 20px;
+}
+
+.home-page input[type=text],
+.home-page input[type=email],
+.home-page input[type=tel] {
+    display: block;
+    width: 85%;
+    font: 1em Montserrat, sans-serif;
+    margin: 5px auto 20px auto;
+    padding: 10px 0 10px 10px;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 0 10px 2px rgb(165, 165, 165);
+}
+
+.home-page input[type="date"] {
+    display: block;
+    width: 85%;
+    font: 1em Montserrat, sans-serif;
+    margin: 5px auto 20px auto;
+    padding: 10px 12px;
+    /* itt legyen oldalt is padding */
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 0 10px 2px rgb(165, 165, 165);
+    background-color: white;
+}
+
+.home-page input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+}
+
+.home-page .date-input:invalid {
+    color: #919191;
+}
+
+.home-page .date-input:valid {
+    color: #919191;
+}
+
+
+
+.home-page input[type=text]:focus,
+.home-page input[type=email]:focus {
+    border: none;
+}
+
+
+.home-page .radio,
+.home-page .checkbox {
+    margin: 25px 0 0 10px;
+}
+
+.home-page input[type='radio'],
+.home-page input[type='checkbox'] {
+    accent-color: #00442F;
+}
+
+.home-page hr {
+    display: none;
+}
+
+.home-page textarea {
+    display: block;
+    width: 85%;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    box-shadow: 0 0 10px 2px rgb(165, 165, 165);
+}
+
+
+.home-page #reszletek {
+    font-family: Montserrat, sans-serif;
+
+}
+
+.home-page #reszletek-label {
+    margin: 10px 0;
+}
+
+.home-page input[type=submit] {
+    display: block;
+    margin: 20px auto 15px auto;
+    width: 100px;
+    padding: 6px 12px;
+    border: black 1px solid;
+    border-radius: 6px;
+    font-family: 'Exo 2';
+    font-size: 18px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.home-page input[type=submit] {
+    background-color: #6C485C;
+    color: white;
+}
+
+.home-page input[type=submit]:hover {
+    background-color: #d49eb9;
+    color: white;
+}
+
+
+.home-page input[type=submit]:active {
+    background-color: #e7e7e7;
+
+}
+
+.home-page #footer {
+    padding: 50px 0;
+    color: #7C7498;
+    font-family: 'Exo 2', sans-serif;
+}
+
+.home-page .footer-flex {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 40px;
+}
+
+/* Bal oldal */
+.home-page .footer-left {
+    flex: 1;
+    min-width: 280px;
+}
+
+.home-page .footer-logo {
+    height: 80px;
+    margin-bottom: 15px;
+}
+
+.home-page .footer-left h1 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.home-page .footer-left p {
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.home-page .footer-legal {
+    font-size: 14px;
+}
+
+.home-page .footer-legal a {
+    color: #7C7498;
+    margin: 0 5px 0 0;
+    text-decoration: underline;
+}
+
+.home-page .payment-logos img {
+    height: 50px !important;
+}
+
+/* Jobb oldal */
+.home-page .footer-right {
+    flex: 1;
+    min-width: 280px;
+}
+
+.home-page .footer-right h1 {
+    text-align: left;
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.home-page .footer-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.home-page .footer-icons p {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    margin: 8px 0;
+}
+
+.home-page .footer-icons {
+    display: flex;
+}
+
+.home-page .icons-left {
+    margin-right: 30px;
+}
+
+.home-page .icons-right a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+
+.home-page .icons-right img {
+    width: 22px;
+    height: 22px;
+}
+
+
+.home-page .footer-icons img {
+    height: 22px;
+    width: 22px;
+}
+
+.home-page .footer-map iframe {
+    display: block;
+    margin-left: auto;
+    margin-right: 0;
+    margin-top: -40px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    width: 50%;
+}
+
+.home-page #footer a {
+    text-decoration: none;
+}
+
+.home-page #footer a:hover {
+    text-decoration: underline;
+}
+
+.home-page a[href^="tel"] {
+    color: inherit;
+    text-decoration: none;
+}
+
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0%);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+@media (max-width: 1300px) {
+    .home-page .vr {
+        display: none;
+    }
+
+    .home-page #form h2 {
+        width: 90%;
+    }
+}
+
+@media (max-width: 1200px) {
+    .home-page .image-container .overlay-text {
+        padding: 0 45px;
+    }
+
+    .home-page .bg-purple h1 {
+        width: 85%;
+    }
+
+    .home-page .nav-buttons {
+        position: static;
+        /* ne legyen absolute */
+        margin-top: 10px;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    .home-page .navbar-collapse {
+        text-align: center;
+    }
+
+    .home-page .nav-item {
+        border: none !important;
+        padding-left: 0 !important;
+        margin-left: 0 !important;
+    }
+}
+
+
+
+@media (max-width: 992px) {
+    .home-page .image-container .overlay-text {
+        padding: 0 20px;
+    }
+
+    .home-page #form h2 {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 926px) {
+    .home-page .hero-content h1 {
+        font-size: 68px;
+    }
+
+    .home-page .hero-content h2 {
+        font-size: 34px;
+    }
+
+    .home-page .carousel-track img {
+        height: 200px;
+    }
+
+    .home-page .first-divider {
+        width: 200%;
+    }
+
+    .home-page .bg-purple h1 {
+        width: 87%;
+        font-size: 50px;
+    }
+
+    .home-page .bg-purple h2 {
+        font-size: 20px;
+        width: 85%
+    }
+
+    .home-page .bg-purple p {
+        font-size: 18px;
+    }
+
+    .home-page .bg-purple img {
+        width: 22.5px;
+    }
+
+    .home-page .bg-purple p {
+        width: 80%;
+    }
+
+    .home-page .footer-icons {
+        flex-direction: column;
+    }
+
+    .home-page .footer-map iframe {
+        width: 100%;
+        margin-top: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .home-page .image-container .overlay-text {
+        padding: 0 45px;
+    }
+
+    .home-page .hero-content h1 {
+        font-size: clamp(38px, 10vw, 60px);
+    }
+
+    .home-page .hero-content h2 {
+        font-size: 30px;
+    }
+
+    .home-page .bg-purple h1 {
+        width: 95%;
+        font-size: 40px;
+    }
+
+    .home-page .bg-purple h2 {
+        font-size: 18px;
+        width: 90%
+    }
+
+    .home-page .form-bg {
+        width: 80%;
+    }
+}
+
+@media(max-width: 750px) {
+    .home-page .first-divider {
+        width: 250%;
+    }
+
+    .home-page .introducing h1 {
+        font-size: 50px;
+        margin-bottom: 30px;
+    }
+
+    .home-page .bg-purple h1 {
+        width: 98%;
+        font-size: 30px;
+    }
+
+    .home-page .bg-purple h2 {
+        font-size: 17px;
+        width: 95%
+    }
+
+    .home-page .bg-purple p {
+        width: 90%;
+    }
+
+    .home-page #form h3 {
+        width: 80%;
+        font-size: 20px;
+    }
+
+
+}
+
+@media (max-width: 576px) {
+    .home-page .carousel-track img {
+        height: 180px;
+    }
+
+    .home-page .contact-button {
+        justify-content: center;
+        margin-right: 0;
+        margin-top: 20px;
+    }
+
+    .home-page .profile-container {
+        margin-top: -50px;
+        justify-content: center;
+        text-align: center;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .home-page .profile-name {
+        margin-top: 20px;
+    }
+
+    .home-page .profile-container img {
+        margin-left: 0;
+        margin-top: 10px;
+    }
+
+    .home-page .image-container .overlay-text {
+        padding: 0px;
+    }
+
+    .home-page .image-container {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 70%;
+        margin-bottom: 20px;
+    }
+
+    .home-page .card-container p {
+        margin: 10px;
+    }
+
+    .home-page .benefits h1 {
+        font-size: 45px;
+    }
+
+    .home-page .benefit-container img {
+        height: 80px;
+    }
+
+    .home-page #opinions h1 {
+        font-size: 45px;
+    }
+
+    .home-page #opinions h2,
+    .home-page #form h2 {
+        width: 90%;
+    }
+
+    .home-page .form-bg {
+        width: 90%;
+    }
+
+    .home-page #form h1 {
+        font-size: 45px
+    }
+}
+
+@media (max-width: 475px) {
+    .home-page .first-divider {
+        width: 400%;
+    }
+
+    .home-page .introducing h1 {
+        font-size: 40px;
+        margin-bottom: 15px;
+    }
+
+    .home-page .image-container {
+        width: 90%;
+    }
+
+    .home-page #opinions h2 {
+        width: 98%;
+        font-size: 20px;
+    }
+
+    .home-page #form h3 {
+        width: 95%;
+    }
+}
+
+@media (max-width: 413px) {
+    .home-page .first-divider {
+        width: 450%;
+    }
+
+    .home-page #form h3 {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 360px) {
+    .home-page .introducing h1 {
+        font-size: 35px;
+        margin-bottom: 10px;
+    }
+}
+
+/* The supplied archive lacks the old divider images; use simple brand separators. */
+.home-page .first-divider{height:12px;bottom:0;width:100%;transform:none;background:#eee8dc;}
+.home-page .second-divider{height:12px;margin:0;background:#92b4b8;}

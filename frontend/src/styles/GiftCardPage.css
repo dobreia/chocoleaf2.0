@@ -1,0 +1,262 @@
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.giftcard-section {
+  padding: 0 0 60px;
+  color: rgba(0, 0, 0, 0.75);
+}
+
+.giftcard-section .main {
+  width: 900px;
+  max-width: 100%;
+  margin: auto;
+  padding-top: 30px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-family: "Montserrat", sans-serif;
+  font-size: 48px;
+  font-weight: bold;
+}
+
+.giftcard-section .second {
+  width: 600px;
+  max-width: 100%;
+  margin: auto;
+  text-align: center;
+  font-family: "Exo 2", sans-serif;
+  font-size: 20px;
+  opacity: 0.8;
+}
+
+.giftcard-section .amount {
+  margin-top: 38px;
+  text-align: center;
+}
+
+.giftcard-section .amount-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.giftcard-section .amount-btn {
+  background: white;
+  border: 2px solid #6c485c;
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.giftcard-section .amount-btn:hover {
+  background: #f5eef4;
+  transform: translateY(-1px);
+}
+
+.giftcard-section .amount-btn.active {
+  background: #6c485c;
+  color: white;
+  border-color: #6c485c;
+}
+
+.giftcard-section .quantity {
+  text-align: center;
+}
+
+.giftcard-section .quantity-input {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(108, 72, 92, 0.25);
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 4px 14px rgba(108, 72, 92, 0.08);
+}
+
+.giftcard-section .quantity-input button {
+  background: #6c485c;
+  color: white;
+  border: none;
+  width: 42px;
+  height: 42px;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s ease;
+}
+
+.giftcard-section .quantity-input button:hover {
+  background: #58384a;
+}
+
+.giftcard-section .quantity-input input {
+  width: 64px;
+  height: 42px;
+  border: none;
+  outline: none;
+  text-align: center;
+  background: white;
+  color: #2f252b;
+  font-size: 18px;
+}
+
+.gift-form {
+  margin-top: 28px;
+}
+
+.giftcard-section .buyer-type-options {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  margin-bottom: 18px;
+}
+
+.giftcard-section .buyer-card {
+  border: 2px solid #6c485c;
+  border-radius: 12px;
+  padding: 12px 22px;
+  cursor: pointer;
+  background: white;
+  font-size: 18px;
+  font-family: "Exo 2", sans-serif;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(108, 72, 92, 0.06);
+}
+
+.giftcard-section .buyer-card:hover {
+  background: #f5eef4;
+  transform: translateY(-1px);
+}
+
+.giftcard-section .buyer-card input {
+  display: none;
+}
+
+.giftcard-section .buyer-card.active {
+  background: #6c485c;
+  color: white;
+  box-shadow: 0 6px 18px rgba(108, 72, 92, 0.22);
+}
+
+.giftcard-section .buyer-fields {
+  margin-top: 10px;
+}
+
+.giftcard-section .buyer-input,
+.giftcard-section #email,
+.giftcard-section .voucher-name {
+  display: block;
+  width: 50%;
+  margin-left: 0;
+  margin-bottom: 14px;
+  padding: 13px 16px;
+  border: 1px solid rgba(108, 72, 92, 0.25);
+  border-radius: 12px;
+  background: #fff;
+  color: #2f252b;
+  outline: none;
+  box-shadow: 0 4px 14px rgba(108, 72, 92, 0.08);
+  font-family: "Exo 2", sans-serif;
+  font-size: 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.giftcard-section .buyer-input:focus,
+.giftcard-section #email:focus,
+.giftcard-section .voucher-name:focus {
+  border-color: #6c485c;
+  box-shadow: 0 0 0 4px rgba(108, 72, 92, 0.12);
+  transform: translateY(-1px);
+}
+
+.giftcard-section .buyer-input::placeholder,
+.giftcard-section #email::placeholder,
+.giftcard-section .voucher-name::placeholder {
+  color: rgba(47, 37, 43, 0.45);
+}
+
+.giftcard-section .form-label h3,
+.giftcard-section .buyer-type h3,
+.giftcard-section .amount h3,
+.giftcard-section .quantity h3 {
+  margin-left: 0;
+  color: #2f252b;
+  font-family: "Exo 2", sans-serif;
+  font-weight: 600;
+}
+
+.giftcard-section .buyer-field-label {
+  display: block;
+  margin-left: 0;
+}
+
+.giftcard-section #PayBtn {
+  display: block;
+  margin-inline: auto;
+}
+
+.giftcard-section #PayBtn:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+@media (max-width: 992px) {
+  .giftcard-section .main {
+    width: 90%;
+    font-size: 36px;
+  }
+
+  .giftcard-section .second {
+    width: 90%;
+    font-size: 18px;
+  }
+
+  .giftcard-section #email,
+  .giftcard-section .voucher-name,
+  .giftcard-section .buyer-input {
+    width: 80%;
+  }
+}
+
+@media (max-width: 620px) {
+  .giftcard-section #email,
+  .giftcard-section .voucher-name,
+  .giftcard-section .buyer-input {
+    width: 100%;
+  }
+
+  .giftcard-section .buyer-type-options {
+    flex-direction: column;
+  }
+
+  .giftcard-section .buyer-card {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 400px) {
+  .giftcard-section .main {
+    font-size: 28px;
+  }
+
+  .giftcard-section .second {
+    font-size: 16px;
+  }
+
+  .giftcard-section .amount-btn {
+    width: 100%;
+  }
+}

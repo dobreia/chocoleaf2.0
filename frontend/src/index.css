@@ -1,0 +1,147 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  overflow-x: hidden;
+  color: #2f2630;
+  background: #f8f5ef;
+  font-family: Arial, Helvetica, sans-serif;
+  line-height: 1.6;
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  touch-action: manipulation;
+}
+
+a {
+  color: #6c485c;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  color: #4f3343;
+}
+
+:focus-visible {
+  outline: 3px solid #b9975b;
+  outline-offset: 4px;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.container {
+  width: min(100% - 32px, 1180px);
+  margin-inline: auto;
+}
+
+.site-main {
+  min-height: 60vh;
+}
+
+.page-section {
+  padding: 48px 0 64px;
+}
+
+.page-content {
+  max-width: 760px;
+  font-size: 18px;
+}
+
+.page-header {
+  padding: 42px 0 28px;
+  color: #ffffff;
+  background: #6c485c;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: clamp(38px, 7vw, 64px);
+  line-height: 1.08;
+}
+
+.page-header p {
+  max-width: 760px;
+  margin: 16px 0 0;
+  font-size: 20px;
+}
+
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid #6c485c;
+  border-radius: 6px;
+  background: #6c485c;
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.button-link:hover {
+  color: #ffffff;
+  background: #4f3343;
+}
+
+.button-link--secondary {
+  background: #eee8dc;
+  color: #2f2630;
+}
+
+.button-link--secondary:hover {
+  background: #ded5c5;
+  color: #2f2630;
+}
+
+.not-found-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (max-width: 700px) {
+  .container {
+    width: min(100% - 24px, 1180px);
+  }
+
+  .page-section {
+    padding: 32px 0 48px;
+  }
+
+  .page-header {
+    padding: 34px 0 24px;
+  }
+}
+
+/* Shared brand primitives retained outside the homepage. */
+.giftcard-section,.gallery-section{background:#eee8dc;}
+.button-primary,.button-secondary{padding:6px 12px;border:1px solid #57384b;border-radius:6px;font-family:'Exo 2',sans-serif;font-size:18px;}
+.button-primary{background:#6c485c;color:#fff;}
+.button-secondary{background:#eee8dc;color:#392732;}
+/* Shared billing details for booking and gift checkout. */
+.billing-fields { border: 1px solid #d8d3c8; border-radius: 12px; padding: 16px; margin: 16px 0; }
+.billing-fields label { display: grid; gap: 6px; margin: 10px 0; }
+.billing-fields input, .billing-fields select { width: 100%; min-width: 0; padding: 10px; border: 1px solid #b9b6ab; border-radius: 6px; font: inherit; background: white; color: #252b21; }
