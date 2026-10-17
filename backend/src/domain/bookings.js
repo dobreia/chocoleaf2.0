@@ -13,7 +13,8 @@ const { checkBooking } = require("./schedule");
 const { bookingNotice } = require("./notifications");
 const providers = require('../payments/providers');
 const payments = require('../payments/orders');
-const select = `SELECT b.*,c.title AS course_title,c.start_time,c.end_time,c.service_id,c.capacity FROM bookings b JOIN courses c ON c.id=b.course_id`;
+const {sessionsSQL,getSessions}=require('./courseSessions');
+const select = `SELECT b.*,c.title AS course_title,c.start_time,c.end_time,c.service_id,c.capacity,${sessionsSQL('c')} AS sessions FROM bookings b JOIN courses c ON c.id=b.course_id`;
 function publicBooking(b) {
   const { manage_hash, manage_expires, request_key, admin_note, ...safe } = b;
   return safe;
@@ -88,6 +89,7 @@ async function create(data, key, { manual = false } = {}) {
     );
     await c.query('UPDATE bookings SET payment_method=$2 WHERE id=$1', [b.id, paymentMethod]);
     b.payment_method = paymentMethod;
+    await c.query('UPDATE courses SET session_count_locked=true WHERE id=$1',[slot.id]);
     const payment = billing ? await payments.insert(c, { bookingId: b.id, amount: Number(b.total_price),
       email: address, description: `${slot.title} – ${seats} fő`, billing, config }) : null;
     await bookingNotice(c, b, slot, "Foglalásod megérkezett", t);
@@ -145,6 +147,10 @@ async function updateIn(c, id, data) {
     (old.status === "cancelled" && b.status !== "cancelled");
   let slot = await one(c, "SELECT * FROM courses WHERE id=$1", [b.course_id]);
   if (!slot) fail("Az időpont nem található.", 404);
+  if (b.course_id !== old.course_id) {
+    if (new Date(old.start_time)<=new Date()) fail('Elkezdődött kurzus foglalása nem helyezhető át.',409);
+    if ((await getSessions(c,b.course_id)).length!==old.sessions.length) fail('Az átfoglalás célja ugyanannyi alkalmat tartalmazzon.',409);
+  }
   if (b.status !== "cancelled" && changed)
     slot = await checkBooking(c, b.course_id, b.seats, b.id, b.customer_email);
   if (
@@ -234,6 +240,7 @@ async function request(id, t, data) {
       );
       if (target.service_id !== b.service_id || target.id === b.course_id)
         fail("Ugyanennek a képzésnek egy másik időpontját válaszd.");
+      if (target.sessions.length!==b.sessions.length) fail('Ugyanennyi alkalmat tartalmazó kurzust válassz.',409);
     }
     if (
       await one(

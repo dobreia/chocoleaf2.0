@@ -1,4 +1,5 @@
 import { dayKey } from './format';
+import { sessionsOf } from '../courseSessions';
 export function calendarRange(date, view) {
   const start = new Date(date + 'T12:00:00Z');
   let count = 1;
@@ -16,7 +17,7 @@ export function calendarRange(date, view) {
 export const clock = value => new Intl.DateTimeFormat('hu-HU', { timeZone: 'Europe/Budapest', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(value));
 export function groupBookings(items) {
   const groups = {};
-  [...items].sort((a,b) => new Date(a.start_time)-new Date(b.start_time) || a.customer_name.localeCompare(b.customer_name,'hu')).forEach(b => {
+  items.flatMap(b=>sessionsOf(b).map((s,i)=>({...b,start_time:s.start_time,end_time:s.end_time,session_id:s.id,session_index:i+1,session_count:sessionsOf(b).length}))).sort((a,b) => new Date(a.start_time)-new Date(b.start_time) || a.customer_name.localeCompare(b.customer_name,'hu')).forEach(b => {
     (groups[dayKey(b.start_time)] ||= []).push(b);
   });
   return groups;
@@ -26,11 +27,11 @@ export const monthSummary = bookings => ({ visible: bookings.slice(0,2), more: M
 export function courseEvents(slots, bookings) {
   const byId = new Map(slots.map(s=>[s.id,{...s,bookings:[],booked_seats:0}]));
   for(const b of bookings) {
-    if(!byId.has(b.course_id))byId.set(b.course_id,{id:b.course_id,title:b.course_title,start_time:b.start_time,end_time:b.end_time,capacity:b.capacity,active:true,bookings:[],booked_seats:0});
+    if(!byId.has(b.course_id))byId.set(b.course_id,{id:b.course_id,title:b.course_title,start_time:b.start_time,end_time:b.end_time,sessions:b.sessions,capacity:b.capacity,active:true,bookings:[],booked_seats:0});
     const event=byId.get(b.course_id);event.bookings.push(b);
     if(b.status!=='cancelled')event.booked_seats+=Number(b.seats);
   }
-  return [...byId.values()].filter(e=>e.active||e.bookings.length).sort((a,b)=>new Date(a.start_time)-new Date(b.start_time));
+  return [...byId.values()].filter(e=>e.active||e.bookings.length).flatMap(e=>sessionsOf(e).map((s,i)=>({...e,id:s.id || e.id,course_id:e.id,start_time:s.start_time,end_time:s.end_time,session_index:i+1,session_count:sessionsOf(e).length}))).sort((a,b)=>new Date(a.start_time)-new Date(b.start_time));
 }
 export const occupancy = event => event.capacity == null ? `${event.booked_seats} fő` : `${event.booked_seats} / ${event.capacity} fő`;
 

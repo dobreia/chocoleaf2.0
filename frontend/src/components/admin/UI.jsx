@@ -51,6 +51,7 @@ export function SaveForm({ onSave, children, label = "Mentés", disabled = false
     [error, setError] = useState("");
   return (
     <form
+      aria-busy={busy}
       onSubmit={async (e) => {
         e.preventDefault();
         if (busy || disabled) return;

@@ -3,6 +3,8 @@ import { usePageDraftState } from '../usePageDraft';
 import { api } from "../../api/courses";
 import { Modal, SaveForm, Field } from "./UI";
 import { labels, dateTime, money } from "./format";
+import SessionList from '../SessionList';
+import {sessionsOf,durationSummary} from '../courseSessions';
 export default function BookingEditor({ booking, slots, onDone, onClose }) {
   const [d, setD, resetDraft] = usePageDraftState(
     'bookingEditor.' + (booking?.id || 'new'),
@@ -100,14 +102,16 @@ export default function BookingEditor({ booking, slots, onDone, onClose }) {
           >
             <option value="">Válassz időpontot</option>
             {slots
-              .filter((s) => s.id===d.course_id || (s.active && s.service_active!==false && new Date(s.start_time).getTime()>now))
+              .filter((s) => s.id===d.course_id || (s.active && s.service_active!==false && new Date(s.start_time).getTime()>now && (!booking || sessionsOf(s).length===sessionsOf(booking).length)))
               .map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.title} · {dateTime(s.start_time)} · {money(s.price)}/fő
+                  {s.title} · {dateTime(s.start_time)} · {durationSummary(s)} · {money(s.price)}/fő
                 </option>
               ))}
           </select>
         </Field>
+        <SessionList course={slots.find(s=>s.id===d.course_id) || booking}/>
+        {sessionsOf(slots.find(s=>s.id===d.course_id) || booking).length>1 && <p>A foglalás, a státusz és a lemondás a teljes kurzus összes alkalmára vonatkozik.</p>}
         {booking && (
           <div className="cl-form-grid">
             <Field label="Foglalás státusza">

@@ -1,5 +1,21 @@
 # ChocoLeaf – működés és indítás
 
+## Többalkalmas kurzusmeghirdetések (F06)
+
+Az admin a **Szolgáltatások** oldalon, a kurzus létrehozásakor vagy szerkesztésekor állítja be az **Alkalmak száma** mezőt (1–100); a **+ Új alkalom hozzáadása** gomb itt növeli az alkalomszámot. Az **Időpontok → + Új kurzusmeghirdetés** űrlapján a kurzus kiválasztása automatikusan létrehozza az összes szükséges dátummezőt. Itt csak az egyes alkalmak kezdését és befejezését kell megadni; az alkalmak nem adhatók hozzá vagy törölhetők. Ugyanarra a napra is felvehető több, egymást nem átfedő alkalom. A megadott ár a teljes kurzus ára / fő, a férőhely és a foglalási státusz közös. A foglalás és a fizetés egyetlen csomagra történik.
+
+A szolgáltatás alkalomszámának módosítása csak az új meghirdetésekre érvényes. A korábbi meghirdetések megtartják a saját alkalmaikat, az eltérő számú régi meghirdetések is szerkeszthetők. A foglalás vagy megkezdett fizetés miatti zárolást piros figyelmeztetés jelzi; ilyenkor a meghirdetés szolgáltatása sem cserélhető.
+
+A vendégoldali foglalási naptárban a kurzus kezdőnapja választható; a további alkalmak nem önálló foglalási lehetőségek. A kártyák már kiválasztás előtt felsorolják a teljes csomag időpontjait, árát és férőhelyeit. Ha egy kezdőnapon egyetlen csomag indul, automatikusan kiválasztjuk; több csomag közül a vendég választ. A kiválasztott csomag összes napját közös kiemelés és alkalomsorszám jelzi. A másik hónapban lévő alkalom a „Mutasd a naptárban” gombbal megtekinthető, a kiválasztott csomag, az űrlap és a fizetési próbálkozás azonosítójának megtartásával, oldalfrissítés után is. Egy napra eső több alkalom sorszámai együtt jelennek meg. A hónaplapozó nyilak az adott hónapban induló kurzusok böngészésére szolgálnak.
+
+Az első foglalás vagy fizetésindítás rögzíti az alkalmak számát. A még el nem kezdődött dátumok közösen menthető szerkesztőből külön módosíthatók, a résztvevők értesítésével. Az elkezdődött alkalom időpontja nem változtatható. A jelentkezés az első alkalom kezdetekor lezárul, az ügyféloldali lemondási és átfoglalási határidő az első alkalomhoz számítódik. Az átfoglalás azonos alkalomszámú, teljes kurzuscsomagra vonatkozik.
+
+A `010-course-sessions.sql` migráció a meglévő időpontokból egyalkalmas meghirdetéseket készít, a foglalások és a Google-események kapcsolatának megtartásával. A `011-service-session-count.sql` hozzáadja a szolgáltatás alkalomszámát; alapértéke a szolgáltatás meglévő meghirdetései közül a legnagyobb alkalomszám, meghirdetés nélkül 1. A korábbi időpontokat és foglalásokat nem írja át. A backend induláskor lefuttatja a hiányzó migrációkat; külön is indítható: `npm run migrate`. A backend és a frontend együtt frissítendő.
+
+Az időpontok forrása a `course_sessions` tábla; a `course_session_times` nézet a korábbi, közvetlenül importált egyalkalmas adatokat is kezeli. A `courses.start_time` az első kezdés, a `courses.end_time` az utolsó befejezés: ez az életciklus határa, az ütközéseket az egyes alkalmak tényleges időtartamával kell vizsgálni. Egy Google-szinkronfeladat egy `session_id`-hoz tartozik, a `course_id` a közös meghirdetésre mutat.
+
+Az automatikus e-mail-emlékeztetők az F20 feladatai; az alkalmak külön időpontjai és azonosítói már rendelkezésre állnak a minden alkalom előtti küldéshez.
+
 ## Mit tartalmaz ez a változat?
 
 A meglévő React 19 / Vite frontend és Express 5 / PostgreSQL backend továbbfejlesztése. A főoldal tartalma, képei, színei és szerkezete megmaradt. A főoldali űrlap saját API-ra került, a hibás linkek javítva, az oldalspecifikus CSS elkülönítve. A külön feltöltött courses.json a valódi szolgáltatáskatalógus kezdeti importja; nem generál foglalásokat vagy fiktív statisztikákat.

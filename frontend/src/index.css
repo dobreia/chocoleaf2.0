@@ -50,6 +50,9 @@ a:hover {
 #root {
   min-height: 100vh;
 }
+.cl-session-list { list-style:none; padding:0; margin:12px 0; display:grid; gap:10px; }
+.cl-session-list li { display:grid; gap:3px; }
+.cl-session-list span { font-size:14px; line-height:1.6; }
 
 .container {
   width: min(100% - 32px, 1180px);

@@ -52,7 +52,7 @@ export default function Dashboard() {
                   >
                     <strong>{b.customer_name}</strong>
                     <span>{b.course_title}</span>
-                    <span>{dateTime(b.start_time)}</span>
+                    <span>{dateTime(b.next_time || b.start_time)}</span>
                     <span>{labels[b.status]}</span>
                   </Link>
                 ))

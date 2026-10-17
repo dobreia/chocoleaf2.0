@@ -90,6 +90,10 @@
 .cl-admin button:disabled,
 .cl-dialog button:disabled {
   opacity: 0.5;
+  cursor: not-allowed;
+}
+.cl-admin form[aria-busy="true"] button:disabled,
+.cl-dialog form[aria-busy="true"] button:disabled {
   cursor: wait;
 }
 .cl-admin .cl-primary,
@@ -175,6 +179,8 @@
   grid-template-columns: 1fr 1fr;
   gap: 0 16px;
 }
+.cl-dialog fieldset.cl-session-editor { border:1px solid #dfd0d8; border-radius:12px; padding:12px 16px; margin:16px 0; }
+.cl-session-editor legend { font-size:16px; font-weight:700; width:auto; padding:0 6px; }
 .cl-admin fieldset,
 .cl-dialog fieldset {
   border: 0;

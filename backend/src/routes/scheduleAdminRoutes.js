@@ -1,6 +1,7 @@
 const express=require('express');const pool=require('../db');const{one,transaction}=require('../domain/store');
 const{fail,uuid}=require('../domain/rules');const courses=require('../domain/courses');
 const slotResponse=require('../domain/slotResponse');
+const {attachSessions}=require('../domain/courseSessions');
 const admin=express.Router();
 admin.get("/services", async (req, res) =>
   res.json((await pool.query("SELECT * FROM services ORDER BY title")).rows),
@@ -30,11 +31,11 @@ admin.delete("/services/:id", async (req, res) =>
 );
 admin.get("/courses", async (req, res) =>
   res.json(
-    (
+    (await attachSessions(pool, (
       await pool.query(
         "SELECT c.*,s.title,s.active AS service_active,COALESCE((SELECT SUM(seats) FROM bookings b WHERE b.course_id=c.id AND b.status<>'cancelled'),0)::int AS booked_seats FROM courses c JOIN services s ON s.id=c.service_id ORDER BY c.start_time",
       )
-    ).rows.map(slotResponse),
+    ).rows)).map(slotResponse),
   ),
 );
 admin.get("/courses/:id/slots", async (req, res) => {
@@ -48,7 +49,7 @@ admin.get("/courses/:id/slots", async (req, res) => {
   ).rows;
   res.json({
     course: s,
-    slots: rows.map((x) => ({
+    slots: (await attachSessions(pool,rows)).map((x) => ({
       ...slotResponse(x),
       available_spots: x.capacity - x.booked_count,
     })),

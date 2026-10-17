@@ -1,9 +1,11 @@
 import {Modal} from './UI';
 import {dateTime,labels} from './format';
 import {occupancy} from './calendarModel';
+import SessionList from '../SessionList';
 export default function CourseEventDetails({event,onClose,onBooking}) {
  return <Modal title={event.title} onClose={onClose}>
   <p>{dateTime(event.start_time)} – {dateTime(event.end_time)}</p>
+  {event.session_count>1 && <><p>{event.session_index}/{event.session_count}. alkalom · A foglalások a teljes kurzusra szólnak.</p><SessionList course={event}/></>}
   <div className="cl-course-capacity"><strong>{occupancy(event)}</strong><span>foglalt létszám</span>{event.capacity!=null&&<span>{Math.max(0,event.capacity-event.booked_seats)} szabad hely</span>}</div>
   <h3>Foglalások és résztvevők</h3>
   {!event.bookings.length?<p>Még nincs foglalás erre az alkalomra.</p>:event.bookings.map(b=><article className="cl-card" key={b.id}>

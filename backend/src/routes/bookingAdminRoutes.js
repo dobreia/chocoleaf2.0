@@ -3,7 +3,7 @@ const{fail,uuid,str,integer}=require('../domain/rules');const booking=require('.
 const admin=express.Router();
 admin.get("/bookings", async (req, res) => {
   const p = [],
-    w = [];
+    w = [], dates = [];
   for (const [field, col] of [
     ["status", "b.status"],
     ["service", "c.service_id"],
@@ -20,16 +20,17 @@ admin.get("/bookings", async (req, res) => {
   }
   if (req.query.from) {
     p.push(req.query.from);
-    w.push(
-      `c.start_time>=($${p.length}::date::timestamp AT TIME ZONE 'Europe/Budapest')`,
+    dates.push(
+      `st.start_time>=($${p.length}::date::timestamp AT TIME ZONE 'Europe/Budapest')`,
     );
   }
   if (req.query.to) {
     p.push(req.query.to);
-    w.push(
-      `c.start_time<(($${p.length}::date+1)::timestamp AT TIME ZONE 'Europe/Budapest')`,
+    dates.push(
+      `st.start_time<(($${p.length}::date+1)::timestamp AT TIME ZONE 'Europe/Budapest')`,
     );
   }
+  if (dates.length) w.push(`EXISTS(SELECT 1 FROM course_session_times st WHERE st.course_id=c.id AND ${dates.join(' AND ')})`);
   const where = w.length ? " WHERE " + w.join(" AND ") : "";
   const total = await one(
     pool,

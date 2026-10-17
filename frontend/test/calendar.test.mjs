@@ -18,7 +18,7 @@ function elements(el,out=[]){if(!el||typeof el!=='object')return out;if(Array.is
 test('ranges include Monday week and leap-year month',()=>{assert.equal(calendarRange('2026-10-25','day').days.length,1);assert.equal(calendarRange('2026-10-25','week').from,'2026-10-19');assert.equal(calendarRange('2028-02-29','month').days.length,42);assert(calendarRange('2028-02-29','month').days.includes('2028-02-29'));});
 test('Budapest midnight boundary assigns correct date',()=>{assert(groupBookings([{...items[0],start_time:'2026-07-01T22:30:00Z'}])['2026-07-02']);});
 test('aggregation sums seats, excludes cancellation and preserves unbooked slots',()=>{const events=courseEvents(slots,items);assert.equal(events.length,3);assert.equal(events[0].booked_seats,7);assert.equal(events[0].bookings.length,4);assert.equal(events[1].booked_seats,0);});
-test('day retains full booking details and course occupancy',()=>{const h=html('day');for(const text of ['10:00','11:30','90','private@example.test','Ügyfél megjegyzés','Belső megjegyzés','Vendég 3','7 / 12 fő'])assert(h.includes(text),text);});
+test('day retains full booking details and course occupancy',()=>{const h=html('day');for(const text of ['10:00','11:30','1,5 óra','private@example.test','Ügyfél megjegyzés','Belső megjegyzés','Vendég 3','7 / 12 fő'])assert(h.includes(text),text);});
 test('week has one card per course time and no customer names',()=>{const h=html('week');assert(h.includes('Csokoládé workshop'));assert(h.includes('7 / 12 fő'));assert(h.includes('0 / 8 fő'));assert(!h.includes('Vendég'));assert(!h.includes('private@example.test'));assert.equal(elements(Views(props('week'))).filter(e=>e.props?.className==='cl-event cl-course-event').length,3);});
 test('month includes title and occupancy; overflow counts course events',()=>{const h=html('month');assert(h.includes('3 alkalom'));assert(h.includes('+1 további'));assert(h.includes('Csokoládé workshop'));assert(h.includes('7 / 12 fő'));assert(!h.includes('Vendég'));let day;const tree=elements(Views({...props('month'),onDay:x=>day=x}));tree.find(e=>e.props?.className==='cl-more-events').props.onClick();assert.equal(day,'2026-10-25');});
 test('week/month open course details; day opens individual booking',()=>{for(const view of ['week','month']){let selected;elements(Views({...props(view),onCourse:e=>selected=e})).find(e=>e.props?.className==='cl-event cl-course-event').props.onClick();assert.equal(selected.id,'a');assert.equal(selected.booked_seats,7);}let selected;elements(Views({...props('day'),onOpen:b=>selected=b})).find(e=>e.props?.className?.startsWith('cl-event cl-day-event')).props.onClick();assert.equal(selected.id,'0');});
@@ -27,3 +27,21 @@ test('empty day has an empty state',()=>{assert(renderToStaticMarkup(React.creat
 
 test('seat field preserves empty input before accepting a replacement',()=>{let value='1';let tree=SeatCount({value,available:12,onChange:v=>value=v});elements(tree).find(e=>e.type==='input').props.onChange({target:{value:''}});assert.equal(value,'');tree=SeatCount({value,available:12,onChange:v=>value=v});assert.equal(elements(tree).find(e=>e.type==='input').props.value,'');elements(tree).find(e=>e.type==='input').props.onChange({target:{value:'7'}});assert.equal(value,'7');assert(validSeatCount(value,12));});
 test('seat validation rejects blank, zero, negative, fractions and excess',()=>{for(const value of ['', '0','-1','1.5','13'])assert(!validSeatCount(value,12),value);assert(validSeatCount('12',12));});
+
+test('a shared booking appears on every session date with one capacity per package',()=>{
+  const sessions=[{id:'first',start_time:'2026-10-25T09:00:00Z',end_time:'2026-10-25T14:00:00Z'},{id:'second',start_time:'2026-10-27T09:00:00Z',end_time:'2026-10-27T13:00:00Z'}];
+  const group={...slots[0],end_time:sessions[1].end_time,sessions};
+  const bookings=items.map(b=>({...b,sessions}));
+  const events=courseEvents([group],bookings);
+  assert.equal(events.length,2);
+  assert.deepEqual(events.map(e=>e.booked_seats),[7,7]);
+  assert.deepEqual(events.map(e=>e.session_index),[1,2]);
+  assert(events.every(e=>e.course_id==='a' && e.bookings.length===4));
+  const grouped=groupBookings(bookings);
+  assert.equal(grouped['2026-10-25'].length,4);
+  assert.equal(grouped['2026-10-27'].length,4);
+  const h=renderToStaticMarkup(React.createElement(Views,{...props('day'),date:'2026-10-27',slots:[group],items:bookings}));
+  assert(h.includes('2/2. alkalom'));
+  assert(h.includes('4 óra'));
+  assert(h.includes('7 résztvevő'));
+});

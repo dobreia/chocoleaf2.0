@@ -5,6 +5,7 @@ import { api } from "../../api/courses";
 import { Field, Notice } from "../../components/admin/UI";
 import { labels, dateTime, money } from "../../components/admin/format";
 import BookingEditor from "../../components/admin/BookingEditor";
+import SessionList from '../../components/SessionList';
 export default function Bookings() {
   const [search] = useSearchParams();
   const [data, setData] = useState({ items: [], total: 0 }),
@@ -248,7 +249,7 @@ export default function Bookings() {
                   <td>
                     {b.course_title}
                     <br />
-                    {dateTime(b.start_time)}
+                    <SessionList course={b}/>
                   </td>
                   <td>
                     {money(b.total_price)}

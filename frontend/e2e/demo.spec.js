@@ -89,7 +89,7 @@ test('admin creates a service, uploads an image, schedules and edits a booking, 
   await dialog.getByRole('button',{name:'Mentés',exact:true}).click();await expect(dialog).toHaveCount(0);
   const service=(await(await request.get(api+'/api/courses')).json()).find(s=>s.title==='Bemutató szerkesztett workshop');expect(service).toBeTruthy();
   expect((await request.get(api+service.image)).ok()).toBe(true);
-  await page.goto('/admin/courses');await page.getByRole('button',{name:'+ Új alkalom'}).click();
+  await page.goto('/admin/courses');await page.getByRole('button',{name:'+ Új kurzusmeghirdetés'}).click();
   await dialog.getByRole('combobox',{name:'Szolgáltatás',exact:true}).selectOption(service.id);
   const date=new Date(Date.now()+40*86400000).toISOString().slice(0,10);
   await dialog.getByLabel('Kezdés (Budapest)').fill(date+'T10:00');await dialog.getByLabel('Befejezés (Budapest)').fill(date+'T11:00');

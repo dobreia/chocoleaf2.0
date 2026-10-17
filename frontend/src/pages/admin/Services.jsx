@@ -5,12 +5,14 @@ import { Field, Modal, SaveForm, Notice } from "../../components/admin/UI";
 import { money } from "../../components/admin/format";
 import ImageUpload from "../../components/admin/ImageUpload";
 import ImageAsset from "../../components/ImageAsset";
+import {hours} from '../../components/courseSessions';
 const empty = {
   title: "",
   description: "",
   long_description: "",
   category: "",
   duration_minutes: 60,
+  session_count: 1,
   price: 0,
   capacity: 6,
   active: true,
@@ -52,7 +54,7 @@ export default function Services() {
               <h2>{s.title}</h2>
               <p>{s.description}</p>
               <p>
-                {s.duration_minutes} perc · {money(s.price)} · {s.capacity} fő
+                {s.session_count || 1} alkalom · {hours(s.duration_minutes)} / alkalom · {money(s.price)} · {s.capacity} fő
               </p>
               <p>
                 {s.active ? "Aktív" : "Inaktív"} · {s.category}
@@ -116,7 +118,8 @@ export default function Services() {
             </Field>
             <div className="cl-form-grid">
               {[
-                ["duration_minutes", "Időtartam (perc)", 1],
+                ["session_count", "Alkalmak száma", 1],
+                ["duration_minutes", "Alap időtartam (óra)", 1/60],
                 ["price", "Ár (Ft)", 0],
                 ["capacity", "Alap férőhely", 1],
               ].map(([k, l, min]) => (
@@ -126,13 +129,16 @@ export default function Services() {
                   label={l}
                   type="number"
                   min={min}
-                  value={edit[k]}
+                  max={k==='session_count'?100:undefined}
+                  step={k==='duration_minutes'?'any':1}
+                  value={k==='duration_minutes'?edit[k]/60:k==='session_count'?(edit[k] ?? 1):edit[k]}
                   onChange={(e) =>
-                    setEdit({ ...edit, [k]: Number(e.target.value) })
+                    setEdit({ ...edit, [k]: k==='duration_minutes'?Math.round(Number(e.target.value)*60):Number(e.target.value) })
                   }
                 />
               ))}
             </div>
+            <button type="button" disabled={(edit.session_count || 1)>=100} onClick={()=>setEdit({...edit,session_count:(edit.session_count || 1)+1})}>+ Új alkalom hozzáadása</button>
             <label className="cl-check">
               <input
                 type="checkbox"
@@ -142,8 +148,9 @@ export default function Services() {
               Aktív szolgáltatás
             </label>
             <p>
-              A meglévő alkalmak ára, időtartama és férőhelye külön
-              szerkeszthető.
+              Az alkalmak száma határozza meg, hány időpontot kell megadni egy új meghirdetésnél.
+              Módosítása a már meghirdetett kurzusok alkalomszámát nem változtatja meg.
+              Az ár a teljes kurzus ára / fő; az időtartam alkalmanként értendő.
             </p>
           </SaveForm>
         </Modal>

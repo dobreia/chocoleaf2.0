@@ -172,7 +172,7 @@ test('admin service, slot and booking modals reopen after refresh and discard on
   const dialog = page.locator('dialog');
   for (const [path, button, label] of [
     ['/admin/services', '+ Új szolgáltatás', 'Név'],
-    ['/admin/courses', '+ Új alkalom', 'Ár / fő (Ft)'],
+    ['/admin/courses', '+ Új kurzusmeghirdetés', 'Ár / fő (Ft)'],
     ['/admin/bookings', '+ Új foglalás', 'Ügyfél neve'],
     ['/admin/calendar', '+ Foglalás', 'Ügyfél neve'],
   ]) {

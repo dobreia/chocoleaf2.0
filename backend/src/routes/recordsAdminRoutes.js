@@ -4,14 +4,14 @@ const admin=express.Router();
 admin.get("/dashboard", async (req, res) => {
   const counts = await one(
     pool,
-    `SELECT count(*) FILTER(WHERE (c.start_time AT TIME ZONE 'Europe/Budapest')::date=(now() AT TIME ZONE 'Europe/Budapest')::date AND b.status<>'cancelled')::int AS today,count(*) FILTER(WHERE date_trunc('week',c.start_time AT TIME ZONE 'Europe/Budapest')=date_trunc('week',now() AT TIME ZONE 'Europe/Budapest') AND b.status<>'cancelled')::int AS week,count(*) FILTER(WHERE date_trunc('month',c.start_time AT TIME ZONE 'Europe/Budapest')=date_trunc('month',now() AT TIME ZONE 'Europe/Budapest') AND b.status<>'cancelled')::int AS month,count(*) FILTER(WHERE b.status='cancelled')::int AS cancelled,count(*) FILTER(WHERE b.status='completed')::int AS completed FROM bookings b JOIN courses c ON c.id=b.course_id`,
+    `SELECT count(*) FILTER(WHERE EXISTS(SELECT 1 FROM course_session_times st WHERE st.course_id=c.id AND (st.start_time AT TIME ZONE 'Europe/Budapest')::date=(now() AT TIME ZONE 'Europe/Budapest')::date) AND b.status<>'cancelled')::int AS today,count(*) FILTER(WHERE EXISTS(SELECT 1 FROM course_session_times st WHERE st.course_id=c.id AND date_trunc('week',st.start_time AT TIME ZONE 'Europe/Budapest')=date_trunc('week',now() AT TIME ZONE 'Europe/Budapest')) AND b.status<>'cancelled')::int AS week,count(*) FILTER(WHERE EXISTS(SELECT 1 FROM course_session_times st WHERE st.course_id=c.id AND date_trunc('month',st.start_time AT TIME ZONE 'Europe/Budapest')=date_trunc('month',now() AT TIME ZONE 'Europe/Budapest')) AND b.status<>'cancelled')::int AS month,count(*) FILTER(WHERE b.status='cancelled')::int AS cancelled,count(*) FILTER(WHERE b.status='completed')::int AS completed FROM bookings b JOIN courses c ON c.id=b.course_id`,
   );
   res.json({
     ...counts,
     next: (
       await pool.query(
-        booking.select +
-          " WHERE c.start_time>now() AND b.status IN ('pending','confirmed') ORDER BY c.start_time LIMIT 8",
+        booking.select.replace('SELECT b.*',"SELECT (SELECT MIN(st.start_time) FROM course_session_times st WHERE st.course_id=c.id AND st.start_time>now()) AS next_time,b.*") +
+          " WHERE EXISTS(SELECT 1 FROM course_session_times st WHERE st.course_id=c.id AND st.start_time>now()) AND b.status IN ('pending','confirmed') ORDER BY next_time,b.id LIMIT 8",
       )
     ).rows.map(booking.publicBooking),
     popular: (

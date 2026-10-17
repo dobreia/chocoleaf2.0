@@ -16,7 +16,7 @@ export default function Calendar() {
     [date, updateDate] = usePageDraftState('calendar.date', initialDate),
     [items, setItems] = useState([]),
     [slots, setSlots] = useState([]),
-    [courseId, setCourseId] = usePageDraftState('calendar.course', params.get("course")),
+    [courseId, setCourseId] = usePageDraftState('calendar.course', params.get('session') || params.get("course")),
     [edit, setEdit] = usePageDraftState('calendar.edit', undefined),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(true),
@@ -66,7 +66,8 @@ export default function Calendar() {
       live = false;
     };
   }, [from, to, revision, view, date]);
-  const course = courseEvents(slots,items).find(e=>e.id===courseId);
+  const events = courseEvents(slots,items);
+  const course = events.find(e=>e.id===courseId) || events.find(e=>e.course_id===courseId);
   function move(n) {
     const next = new Date(d);
     if (view === "month") {

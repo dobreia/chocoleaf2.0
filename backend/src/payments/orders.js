@@ -5,6 +5,7 @@ const { bookingNotice, queue } = require('../domain/notifications');
 const providers = require('./providers');
 
 async function insert(c, { bookingId, giftId, courseId, seats, bookingData, key, amount, email, description, billing, config }) {
+  if (courseId) await c.query('UPDATE courses SET session_count_locked=true WHERE id=$1',[courseId]);
   if (!Number.isSafeInteger(amount) || amount < 175) fail('A bankkártyás fizetés minimuma 175 Ft.');
   return one(c, `INSERT INTO payment_orders(booking_id,gift_order_id,request_key,amount,email,description,billing,invoice_config,course_id,seats,booking_data)
     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,

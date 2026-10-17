@@ -50,7 +50,7 @@ async function writeEvent(db, access, calendarId, row) {
   if (!row.desired) {
     try { await google.api(access, item, 'DELETE'); }
     catch (e) { if (![404,410].includes(e.statusCode)) throw e; }
-    await db.query('DELETE FROM calendar_events WHERE course_id=$1', [row.course_id]);
+    await db.query('DELETE FROM calendar_events WHERE session_id=$1', [row.session_id]);
     return;
   }
   // Stable IDs are committed before remote creation, so a retry cannot duplicate an event.
@@ -59,7 +59,7 @@ async function writeEvent(db, access, calendarId, row) {
     if (![404,410].includes(e.statusCode)) throw e;
     if (e.statusCode === 410) {
       row.event_id = crypto.randomUUID().replaceAll('-', '');
-      await db.query('UPDATE calendar_events SET event_id=$2 WHERE course_id=$1', [row.course_id, row.event_id]);
+      await db.query('UPDATE calendar_events SET event_id=$2 WHERE session_id=$1', [row.session_id, row.event_id]);
     }
     try { await google.api(access, path, 'POST', { ...row.desired, id: row.event_id }); }
     catch (insertError) {
@@ -67,7 +67,7 @@ async function writeEvent(db, access, calendarId, row) {
       await google.api(access, path + '/' + row.event_id, 'PUT', row.desired);
     }
   }
-  await db.query(`UPDATE calendar_events SET synced_hash=$2,synced_at=now(),attempts=0,last_error=NULL WHERE course_id=$1`, [row.course_id, row.desired_hash]);
+  await db.query(`UPDATE calendar_events SET synced_hash=$2,synced_at=now(),attempts=0,last_error=NULL WHERE session_id=$1`, [row.session_id, row.desired_hash]);
 }
 function delay(attempts, e) {
   return Math.max(e.retryAfter || 0, Math.min(3600, 15 * 2 ** Math.min(attempts, 8)) + Math.floor(Math.random() * 10));
@@ -100,7 +100,7 @@ async function tick() {
           try { await writeEvent(db, credentials.access_token, calendarId, row); }
           catch (e) {
             const message = google.friendlyError(e), seconds = delay(row.attempts, e);
-            await db.query(`UPDATE calendar_events SET attempts=attempts+1,last_error=$2,next_attempt_at=now()+($3*interval '1 second') WHERE course_id=$1`, [row.course_id, message, seconds]);
+            await db.query(`UPDATE calendar_events SET attempts=attempts+1,last_error=$2,next_attempt_at=now()+($3*interval '1 second') WHERE session_id=$1`, [row.session_id, message, seconds]);
             if (google.authFailure(e) || [403,429,503].includes(e.statusCode)) throw e;
           }
           if (Date.now() - started > 20000) break;

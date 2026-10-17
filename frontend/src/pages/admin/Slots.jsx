@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { usePageDraftState } from '../../components/usePageDraft';
 import { api } from "../../api/courses";
+import SessionList from '../../components/SessionList';
+import { sessionsOf } from '../../components/courseSessions';
 import { Field, Modal, SaveForm, Notice } from "../../components/admin/UI";
 import {
-  dateTime,
   money,
   localInput,
   budapestISO,
@@ -29,6 +30,8 @@ export default function Slots() {
   useEffect(() => {
     load();
   }, []);
+  const editSessions = edit ? edit.sessions || [{start_time:edit.start_time || '',end_time:edit.end_time || ''}] : [];
+  const updateSession = (index,key,value) => setEdit({...edit,sessions:editSessions.map((s,i)=>i===index?{...s,[key]:value}:s)});
   return (
     <>
       <div className="cl-title">
@@ -40,19 +43,20 @@ export default function Slots() {
               service_id: "",
               start_time: "",
               end_time: "",
+              sessions: [{start_time:'',end_time:''}],
               active: true,
               price: 0,
               capacity: 6,
             })
           }
         >
-          + Új alkalom
+          + Új kurzusmeghirdetés
         </button>
       </div>
       <Notice error={error} />
       <p>
-        Az időpontok budapesti idő szerint értendők. Egy alkalom több résztvevőt
-        fogadhat.
+        Az időpontok budapesti idő szerint értendők. Egy meghirdetés összes alkalma
+        közösen foglalható, közös csomagárral és férőhellyel.
       </p>
       <Field label="Szolgáltatás szűrése">
         <select value={q} onChange={(e) => setQ(e.target.value)}>
@@ -88,9 +92,7 @@ export default function Slots() {
                       {s.active ? "Aktív" : "Inaktív"}
                     </td>
                     <td>
-                      {dateTime(s.start_time)}
-                      <br />
-                      {dateTime(s.end_time)}
+                      <SessionList course={s}/>
                     </td>
 
                     <td>
@@ -103,6 +105,7 @@ export default function Slots() {
                             ...s,
                             start_time: localInput(s.start_time),
                             end_time: localInput(s.end_time),
+                            sessions: sessionsOf(s).map(session=>({...session,started:new Date(session.start_time)<=new Date(),start_time:localInput(session.start_time),end_time:localInput(session.end_time)})),
                           })
                         }
                       >
@@ -110,7 +113,7 @@ export default function Slots() {
                       </button>
                       <button
                         onClick={async () => {
-                          if (!window.confirm("Törlöd ezt az alkalmat?"))
+                          if (!window.confirm("Törlöd ezt a teljes meghirdetést az összes alkalmával együtt?"))
                             return;
                           try {
                             await api("/admin/courses/" + s.id, {
@@ -134,7 +137,7 @@ export default function Slots() {
       )}
       {edit && (
         <Modal
-          title={edit.id ? "Alkalom szerkesztése" : "Új alkalom"}
+          title={edit.id ? "Kurzusmeghirdetés szerkesztése" : "Új kurzusmeghirdetés"}
           onClose={() => setEdit(null)}
         >
           <SaveForm
@@ -143,8 +146,7 @@ export default function Slots() {
                 method: edit.id ? "PUT" : "POST",
                 body: {
                   ...edit,
-                  start_time: budapestISO(edit.start_time),
-                  end_time: budapestISO(edit.end_time),
+                  sessions: editSessions.map(session=>({...session,start_time:budapestISO(session.start_time),end_time:budapestISO(session.end_time)})),
                 },
               });
               setEdit(null);
@@ -154,12 +156,14 @@ export default function Slots() {
             <Field label="Szolgáltatás">
               <select
                 required
+                disabled={Boolean(edit.sessions_locked)}
                 value={edit.service_id}
                 onChange={(e) => {
                   const s = services.find((x) => x.id === e.target.value);
                   setEdit({
                     ...edit,
                     service_id: e.target.value,
+                    sessions: Array.from({length:s?.session_count || 1},(_,i)=>editSessions[i] || {start_time:'',end_time:''}),
                     price: s?.price || 0,
                     capacity: s?.capacity || 6,
                   });
@@ -174,20 +178,27 @@ export default function Slots() {
                 ))}
               </select>
             </Field>
-            <div className="cl-form-grid">
-              {[
-                ["start_time", "Kezdés (Budapest)"],
-                ["end_time", "Befejezés (Budapest)"],
-              ].map(([k, l]) => (
+            <p>{editSessions.length} alkalom · A foglalás minden felsorolt alkalomra szól. Mentéskor időrendbe rendezzük őket.</p>
+            <p>Az alkalmak számát a Szolgáltatások oldalon, a kurzusnál adhatod meg az új meghirdetésekhez. Itt minden alkalom kezdését és befejezését állítsd be.</p>
+            {edit.sessions_locked && <p className="cl-error" role="note">Az alkalmak száma és a kurzus nem módosítható, mert ehhez a meghirdetéshez már foglalás vagy megkezdett fizetés tartozik. A még el nem kezdődött alkalmak dátumai módosíthatók; a változásról értesítjük a résztvevőket.</p>}
+            {editSessions.map((session,index)=><fieldset className="cl-session-editor" key={session.id || index}>
+              <legend>{index+1}. alkalom</legend>
+              <div className="cl-form-grid">{[
+                ['start_time',index===0?'Kezdés (Budapest)':`${index+1}. alkalom kezdése (Budapest)`],
+                ['end_time',index===0?'Befejezés (Budapest)':`${index+1}. alkalom befejezése (Budapest)`],
+              ].map(([k,l])=>(
                 <Field
                   key={k}
                   required
                   label={l}
                   type="datetime-local"
-                  value={edit[k]}
-                  onChange={(e) => setEdit({ ...edit, [k]: e.target.value })}
+                  disabled={Boolean(session.started)}
+                  value={session[k]}
+                  onChange={e=>updateSession(index,k,e.target.value)}
                 />
-              ))}
+              ))}</div>
+            </fieldset>)}
+            <div className="cl-form-grid">
               <Field
                 required
                 label="Ár / fő (Ft)"
@@ -219,6 +230,7 @@ export default function Slots() {
               />
               Foglalható alkalom
             </label>
+            <p>Az ár a teljes kurzus ára / fő. Az aktív állapot és a férőhely az összes alkalomra közös.</p>
           </SaveForm>
         </Modal>
       )}

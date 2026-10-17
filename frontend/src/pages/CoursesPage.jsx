@@ -1,11 +1,12 @@
 import ImageAsset from "../components/ImageAsset";
 import { useEffect, useState } from "react";
+import {hours} from '../components/courseSessions';
 import { Link } from "react-router-dom";
 import { getCourses } from "../api/courses";
 import "../styles/CoursesPage.css";
 
 function formatDuration(course) {
-  if (course.duration_minutes) return `${course.duration_minutes} perc`;
+  if (course.duration_minutes) return `${hours(course.duration_minutes)} / alkalom`;
   if (course.durationText) return course.durationText;
   if (course.durationHour) return `${course.durationHour} óra`;
 

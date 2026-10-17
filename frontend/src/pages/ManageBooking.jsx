@@ -4,6 +4,8 @@ import { api, getCourseAvailability } from "../api/courses";
 import { Field, SaveForm, Notice } from "../components/admin/UI";
 import { dateTime, labels, money } from "../components/admin/format";
 import "../styles/AdminWorkspace.css";
+import SessionList from '../components/SessionList';
+import {sessionsOf,durationSummary} from '../components/courseSessions';
 export default function ManageBooking() {
   const [link] = useState(() => {
     const [id, token] = window.location.hash.slice(1).split(".");
@@ -56,8 +58,10 @@ export default function ManageBooking() {
             <article className="cl-card">
               <h2>{d.course_title}</h2>
               <p>
-                {dateTime(d.start_time)} – {dateTime(d.end_time)} (Budapest)
+                {durationSummary(d)} · Budapesti idő szerint
               </p>
+              <SessionList course={d}/>
+              {sessionsOf(d).length>1 && <p>A lemondás és az átfoglalás minden alkalomra együtt vonatkozik.</p>}
               <p>
                 {d.customer_name} · {d.seats} fő · {money(d.total_price)}
               </p>
@@ -74,7 +78,7 @@ export default function ManageBooking() {
                 <p>
                   A kérelmet az adminisztrátor hagyja jóvá. Az új időpont addig
                   nincs lefoglalva. Online kérelmet a kezdés előtt legalább{" "}
-                  {d.cancellation_hours} órával küldhetsz.
+                  {d.cancellation_hours} órával küldhetsz, az első alkalom kezdetétől számítva.
                 </p>
                 <SaveForm
                   label="Kérelem elküldése"
@@ -114,16 +118,18 @@ export default function ManageBooking() {
                           .filter(
                             (s) =>
                               s.id !== d.course_id &&
+                              sessionsOf(s).length===sessionsOf(d).length &&
                               s.available_spots >= d.seats,
                           )
                           .map((s) => (
                             <option key={s.id} value={s.id}>
-                              {dateTime(s.start_time)} · {money(s.price)}/fő
+                              {dateTime(s.start_time)} · {durationSummary(s)} · {money(s.price)}/fő
                             </option>
                           ))}
                       </select>
                     </Field>
                   )}
+                  {kind==='reschedule' && target && <SessionList course={slots.find(s=>s.id===target)}/>}
                   <Field label="Megjegyzés">
                     <textarea
                       maxLength={2000}

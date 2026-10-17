@@ -1,5 +1,6 @@
 import { labels, dayKey, money } from './format';
 import { clock, groupBookings, monthSummary, courseEvents, occupancy, occupancyStyle } from './calendarModel';
+import {hours as durationHours} from '../courseSessions';
 
 const title = (day, full = false) =>
   new Date(day + 'T12:00:00Z').toLocaleDateString('hu-HU', {
@@ -14,12 +15,13 @@ function Status({ booking }) {
 function DayView({ day, bookings, events, onOpen, onCourse }) {
   const hours = {};
   bookings.forEach(b => { (hours[clock(b.start_time).slice(0, 2)] ||= []).push(b); });
-  const participants = bookings.filter(b => b.status !== 'cancelled')
+  const uniqueBookings=[...new Map(bookings.map(b=>[b.id,b])).values()];
+  const participants = uniqueBookings.filter(b => b.status !== 'cancelled')
     .reduce((n, b) => n + Number(b.seats), 0);
   return (
     <section className="cl-day-agenda" aria-label="Részletes napi időrend">
       <h2>{title(day, true)}</h2>
-      <p>{bookings.length} foglalás · {participants} résztvevő a nem lemondott foglalásokban</p>
+      <p>{uniqueBookings.length} foglalás · {participants} résztvevő a nem lemondott foglalásokban</p>
       <div className="cl-day-courses">{events.map(e=><button key={e.id} className="cl-capacity-event" style={occupancyStyle(e)} onClick={()=>onCourse(e)}><strong>{clock(e.start_time)} · {e.title}</strong><span>{occupancy(e)}</span></button>)}</div>
       {!bookings.length ? (
         <div className="cl-card">Erre a napra nincs foglalás.</div>
@@ -28,16 +30,17 @@ function DayView({ day, bookings, events, onOpen, onCourse }) {
           <h3>{hour}:00</h3>
           <div>
             {list.map(b => (
-              <button key={b.id} className={'cl-event cl-day-event ' + b.status} style={occupancyStyle(events.find(e => e.id === b.course_id))} onClick={() => onOpen(b)}>
+              <button key={`${b.id}:${b.session_id}`} className={'cl-event cl-day-event ' + b.status} style={occupancyStyle(events.find(e => e.id === b.session_id || e.id === b.course_id))} onClick={() => onOpen(b)}>
                 <div className="cl-day-event-head">
                   <strong>{b.customer_name}</strong>
                   <Status booking={b} />
                 </div>
                 <span className="cl-event-time">
                   {clock(b.start_time)} – {clock(b.end_time)} ·{' '}
-                  {Math.round((new Date(b.end_time) - new Date(b.start_time)) / 60000)} perc
+                  {durationHours((new Date(b.end_time) - new Date(b.start_time)) / 60000)}
                 </span>
                 <span>{b.course_title} · {b.seats} fő</span>
+                {b.session_count>1 && <span>{b.session_index}/{b.session_count}. alkalom · közös foglalás</span>}
                 <span>{b.customer_email}{b.customer_phone ? ' · ' + b.customer_phone : ''}</span>
                 <span>{money(b.total_price)} · {labels[b.payment_status]}</span>
                 {b.note && <span className="cl-note-preview">Ügyfél: {b.note}</span>}
@@ -82,6 +85,7 @@ export default function CalendarViews({ view, date, days, items, slots = [], onO
                     {clock(b.start_time)}{view === 'week' && <> – {clock(b.end_time)}</>}
                   </span>
                   <strong>{b.title}</strong>
+                  {b.session_count>1 && <span>{b.session_index}/{b.session_count}. alkalom</span>}
                   <span className="cl-occupancy">{occupancy(b)}</span>
                 </button>
               ))}

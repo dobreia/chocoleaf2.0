@@ -2,6 +2,7 @@ const express=require('express'); const pool=require('../db');
 const{one,transaction}=require('../domain/store');const{fail,str,email,integer}=require('../domain/rules');
 const booking=require('../domain/bookings');const courses=require('../domain/courses');
 const{allowed}=require('../domain/schedule');const{queue}=require('../domain/notifications');const{rateLimit}=require('../domain/auth');
+const {attachSessions}=require('../domain/courseSessions');
 const publicRouter=express.Router();
 publicRouter.get("/courses", async (req, res) =>
   res.json(await courses.publicServices()),
@@ -25,7 +26,7 @@ publicRouter.get("/bookings/availability", async (req, res) => {
     integer(year, "Év", 2020, 2100);
     integer(month, "Hónap", 1, 12);
     values.push(`${year}-${String(month).padStart(2, "0")}-01`);
-    filter += ` AND c.start_time>=($${values.length}::date::timestamp AT TIME ZONE 'Europe/Budapest') AND c.start_time<(($${values.length}::date+interval '1 month') AT TIME ZONE 'Europe/Budapest')`;
+    filter += ` AND EXISTS(SELECT 1 FROM course_session_times st WHERE st.course_id=c.id AND st.start_time>=($${values.length}::date::timestamp AT TIME ZONE 'Europe/Budapest') AND st.start_time<(($${values.length}::date+interval '1 month') AT TIME ZONE 'Europe/Budapest'))`;
   }
   const rows = (
     await pool.query(
@@ -36,7 +37,7 @@ publicRouter.get("/bookings/availability", async (req, res) => {
     )
   ).rows;
   const result = [];
-  for (const s of rows) {
+  for (const s of await attachSessions(pool,rows)) {
     try {
       await allowed(pool, s);
       result.push({

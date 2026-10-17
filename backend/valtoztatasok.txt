@@ -59,19 +59,28 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
 2. SZOLGÁLTATÁSOK, IDŐPONTOK ÉS NAPTÁR
 =====================================
 
-[ ] F06 - Kétalkalmas kurzusok és órában megjelenített időtartam
+[x] F06 - Többalkalmas kurzusok és órában megjelenített időtartam
     Komplexitás: NAGY.
-    Feladat: Egy kurzusmeghirdetéshez két összetartozó időpont is tartozhasson.
-    Az ügyfél egy foglalással mindkét alkalomra foglaljon, és ezt már
-    a jelentkezés előtt egyértelműen lássa, mindkét időpont feltüntetésével.
-    Az időtartam órában jelenjen meg: például 2 × 300 perc helyett 2 × 5 óra.
+    Feladat: Az admin a kurzusnál (Szolgáltatások) adja meg az alkalmak számát;
+    a meghirdetésnél csak a szükséges alkalmak kezdését és befejezését állítsa be.
+    A kurzus alkalomszámának módosítása csak az új meghirdetésekre érvényes;
+    a foglalás utáni zárolást jól látható, piros figyelmeztetés jelezze.
+    két alkalomnál több is megadható, akár egy napon több, átfedés nélkül.
+    Minden alkalom kezdése és befejezése külön állítható, a hosszúságuk eltérhet.
+    Az ügyfél egy foglalással az összes alkalomra jelentkezik. A csomagár,
+    a férőhely, a fizetés és a foglalási státusz közös.
+    Az időtartam órában jelenik meg, például „2 alkalom · összesen 9 óra”.
     Megvalósítási bontás:
-      - A két alkalom összekapcsolása az adatmodellben és az adminfelületen.
-      - Mindkét időpont és az alkalmankénti időtartam megjelenítése.
-      - A foglalás és a férőhelykezelés mindkét alkalomra vonatkozzon.
-      - A visszaigazolás is egyértelműen tartalmazza a két alkalmat.
-    Tisztázandó: Lemondás és áthelyezés csak együtt lehetséges, vagy
-    alkalmanként is? Az emlékeztető mindkét alkalom előtt menjen?
+      - A meglévő foglalások és naptáresemények azonosítóit megőrző migráció.
+      - Külön időpontok az admin- és Google-naptárban, közös résztvevőkkel.
+      - Minden dátum a jelentkezésnél, a visszaigazolásban és a foglaláskezelésnél.
+      - Közös lemondás és teljes, azonos alkalomszámú csomagra átfoglalás.
+    Jóváhagyott szabályok:
+      - Foglalás vagy fizetés indítása után az alkalmak száma rögzített.
+      - A jövőbeli dátumok külön módosíthatók, értesítéssel; a múltbeliek nem.
+      - Az első alkalom után nincs új jelentkezés vagy ügyféloldali átfoglalás.
+      - Az online lemondási határidő az első alkalomhoz számítódik.
+      - Az emlékeztető minden alkalom előtt menjen majd, az F20 részeként.
 
 [ ] F07 - Befejezési idő automatikus kitöltése időpont létrehozásakor
     Komplexitás: KÖZEPES.
@@ -87,7 +96,7 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
 
 [ ] F09 - Foglalás hozzáadása az ügyfél saját naptárához
     Komplexitás: KÖZEPES–NAGY, a választott megoldástól függően.
-    Függőség: F06; kétalkalmas kurzusnál mindkét időpont kerüljön a naptárba.
+    Függőség: F06; többalkalmas kurzusnál minden időpont kerüljön a naptárba.
     Tisztázandó: Elég egy naptárba menthető meghívó / „Naptárhoz adás”
     lehetőség, vagy automatikus szinkronizálás kell? Mely naptárakkal?
 
@@ -178,8 +187,8 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
 
 [ ] F20 - Automatikus emlékeztető az időpont előtt 3 nappal
     Komplexitás: NAGY.
-    Feladat: Az ügyfél az időpont előtt 3 nappal kapjon emlékeztetőt.
-    Függőség: F06; a kétalkalmas kurzusok emlékeztetési szabályát is kezelni kell.
+    Feladat: Az ügyfél minden alkalom előtt 3 nappal kapjon emlékeztetőt.
+    Függőség: F06; többalkalmas kurzusnál külön emlékeztető minden alkalom előtt.
     Tisztázandó: Pontosan 72 órával előtte vagy egy adott napszakban menjen?
     Mi történjen a 3 napon belül létrejött vagy áthelyezett foglalásokkal?
 
