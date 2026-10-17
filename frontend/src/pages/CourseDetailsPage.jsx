@@ -5,6 +5,7 @@ import ImageAsset from '../components/ImageAsset';
 import {money,dayKey} from '../components/admin/format';
 import '../styles/ExperiencePages.css';
 import SessionList from '../components/SessionList';
+import CourseBookingNotice from '../components/CourseBookingNotice.jsx';
 import {hours,durationSummary} from '../components/courseSessions';
 export default function CourseDetailsPage(){
  const {id}=useParams();const [data,setData]=useState(null),[slots,setSlots]=useState([]),[error,setError]=useState(''),[slotError,setSlotError]=useState(''),[slotsLoading,setSlotsLoading]=useState(true);
@@ -14,7 +15,7 @@ export default function CourseDetailsPage(){
  const paragraphs=(d.long_description||d.description||'').split(/<br\s*\/?\s*>|\n/i).map(p=>p.replace(/<[^>]*>/g,'').trim()).filter(Boolean);
  return <section className="experience-page"><div className="experience-shell">
   <Link className="experience-back" to="/courses">← Összes képzés</Link>
-  <div className="experience-hero"><div className="experience-heading"><p className="experience-eyebrow">ChocoLeaf műhely · {d.category||'Csokoládéélmény'}</p><h1>{d.title}</h1><p className="experience-intro">{d.description}</p><div className="experience-facts">{d.duration_minutes>0&&<div><strong>{hours(d.duration_minutes)}</strong><span>alap időtartam / alkalom</span></div>}{d.price!=null&&<div><strong>{money(d.price)}</strong><span>alapár / fő</span></div>}</div><a className="experience-cta" href="#course-dates">Időpontot választok</a></div>
+  <div className="experience-hero"><div className="experience-heading"><p className="experience-eyebrow">ChocoLeaf műhely · {d.category||'Csokoládéélmény'}</p><h1>{d.title}</h1><p className="experience-intro">{d.description}</p><CourseBookingNotice service={d} offers={slots}/><div className="experience-facts">{d.duration_minutes>0&&<div><strong>{hours(d.duration_minutes)}</strong><span>alap időtartam / alkalom</span></div>}{d.price!=null&&<div><strong>{money(d.price)}</strong><span>alapár / fő · teljes kurzus</span></div>}</div><a className="experience-cta" href="#course-dates">Időpontot választok</a></div>
   {(d.image_detail||d.image)&&<ImageAsset className="experience-photo" src={d.image_detail||d.image} alt={d.title}/>}
   </div>
   <div className="experience-body"><article className="experience-story"><p className="experience-eyebrow">Az élményről</p><h2>Így telik a workshop</h2>{paragraphs.map((p,i)=><p key={i}>{p}</p>)}</article>

@@ -49,7 +49,14 @@ test('admin advertises three independent sessions, including two on one day; cus
   const first=day(200),last=day(202);
   const {service,group}=await create(page,'F06 háromalkalmas kurzus',[[first+'T10:00',first+'T12:00'],[first+'T14:00',first+'T15:00'],[last+'T10:00',last+'T13:00']]);
   expect(group.price).toBe(39000);
+  await page.goto('/courses');
+  const card=page.locator('.course-card').filter({has:page.getByRole('heading',{name:service.title,exact:true})});
+  await expect(card.locator('.course-booking-notice')).toContainText('Ez egy több alkalmas kurzus.');
+  await expect(card.locator('.course-booking-notice')).toContainText('A foglalással az összes alkalmat lefoglalod.');
   await page.goto('/courses/'+service.id);
+  await expect(page.locator('.experience-heading .course-booking-notice')).toContainText('A foglalással az összes alkalmat lefoglalod.');
+  await expect(page.locator('.experience-page .course-booking-notice')).toHaveCount(1);
+  await expect(page.locator('.experience-date .course-booking-notice')).toHaveCount(0);
   await expect(page.locator('.experience-date').first()).toContainText('3 alkalom · összesen 6 óra');
   await expect(page.locator('.experience-date .cl-session-list li')).toHaveCount(3);
   await page.goto(`/courses/${service.id}/book?date=${last}&slot=${group.id}`);
@@ -64,6 +71,14 @@ test('admin advertises three independent sessions, including two on one day; cus
 test('one Stripe payment covers both sessions, calendar entries share participants and cancellation releases the package',async({page,request})=>{
   const first=day(220),second=day(222),moved=day(223);
   const {service,group}=await create(page,'F06 fizetett kétalkalmas kurzus',[[first+'T10:00',first+'T15:00'],[second+'T11:00',second+'T15:00']],2);
+  await page.goto('/courses');
+  const card=page.locator('.course-card').filter({has:page.getByRole('heading',{name:service.title,exact:true})});
+  await expect(card.locator('.course-booking-notice')).toContainText('Ez egy több alkalmas kurzus.');
+  await expect(card.locator('.course-booking-notice')).toContainText('A foglalással az összes alkalmat lefoglalod.');
+  await page.goto('/courses/'+service.id);
+  await expect(page.locator('.experience-heading .course-booking-notice')).toContainText('Ez egy több alkalmas kurzus.');
+  await expect(page.locator('.experience-page .course-booking-notice')).toHaveCount(1);
+  await expect(page.locator('.experience-date .course-booking-notice')).toHaveCount(0);
   await page.route('https://checkout.stripe.com/**',r=>r.fulfill({contentType:'text/html',body:'<h1>Stripe test double</h1>'}));
   await page.goto(`/courses/${service.id}/book?date=${second}&slot=${group.id}`);
   await page.getByLabel('Név',{exact:true}).fill('F06 Foglaló');

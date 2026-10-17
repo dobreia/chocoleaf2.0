@@ -1,8 +1,9 @@
 import ImageAsset from "../components/ImageAsset";
+import CourseBookingNotice from '../components/CourseBookingNotice.jsx';
 import { useEffect, useState } from "react";
 import {hours} from '../components/courseSessions';
 import { Link } from "react-router-dom";
-import { getCourses } from "../api/courses";
+import { getCourses, getCourseAvailability } from "../api/courses";
 import "../styles/CoursesPage.css";
 
 function formatDuration(course) {
@@ -46,12 +47,13 @@ function getDetailsPath(course) {
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
+  const [offers, setOffers] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    getCourses()
-      .then(setCourses)
+    Promise.all([getCourses(),getCourseAvailability({}).catch(()=>null)])
+      .then(([courses,offers])=>{setCourses(courses);setOffers(offers);})
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -83,6 +85,7 @@ export default function CoursesPage() {
 
               <div className="course-card__content">
                 <h2>{course.title}</h2>
+                <CourseBookingNotice service={course} offers={offers?.filter(offer=>offer.service_id===course.id && offer.is_available)}/>
                 <p className="course-card__description">{course.description}</p>
               </div>
 
