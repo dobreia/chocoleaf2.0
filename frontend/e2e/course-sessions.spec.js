@@ -12,12 +12,13 @@ async function login(page){
   await expect(page.getByRole('navigation',{name:'Admin navigáció'})).toBeVisible();
 }
 async function create(page,title,dates,capacity=4){
+  const durationMs=new Date(dates[0][1]+'Z')-new Date(dates[0][0]+'Z');
   await login(page);
   await page.goto('/admin/services');
   await page.getByRole('button',{name:'+ Új szolgáltatás',exact:true}).click();
   const serviceDialog=page.locator('dialog');
   await serviceDialog.getByLabel('Név',{exact:true}).fill(title);
-  await serviceDialog.getByLabel('Alap időtartam (óra)',{exact:true}).fill('5');
+  await serviceDialog.getByLabel('Alap időtartam (óra)',{exact:true}).fill(String(durationMs/3600000));
   await serviceDialog.getByLabel('Ár (Ft)',{exact:true}).fill('39000');
   await serviceDialog.getByLabel('Alap férőhely',{exact:true}).fill(String(capacity));
   for(let i=1;i<dates.length;i++)await serviceDialog.getByRole('button',{name:'+ Új alkalom hozzáadása',exact:true}).click();
@@ -35,7 +36,9 @@ async function create(page,title,dates,capacity=4){
   await expect(dialog.getByRole('button',{name:'+ Új alkalom hozzáadása',exact:true})).toHaveCount(0);
   for(let i=0;i<dates.length;i++){
     await dialog.getByLabel(i?`${i+1}. alkalom kezdése (Budapest)`:'Kezdés (Budapest)',{exact:true}).fill(dates[i][0]);
-    await dialog.getByLabel(i?`${i+1}. alkalom befejezése (Budapest)`:'Befejezés (Budapest)',{exact:true}).fill(dates[i][1]);
+    const end=dialog.getByLabel(i?`${i+1}. alkalom befejezése (Budapest)`:'Befejezés (Budapest)',{exact:true});
+    await expect(end).toHaveAttribute('readonly','');
+    await expect(end).toHaveValue(new Date(new Date(dates[i][0]+'Z').getTime()+durationMs).toISOString().slice(0,16));
   }
   await page.reload();
   await expect(dialog).toBeVisible();

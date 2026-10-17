@@ -72,7 +72,7 @@ async function save(id, data) {
       : await one(c, 'SELECT * FROM services WHERE title=$1', [str(data.title,'Név')]);
     if (!service?.active) fail('Először válassz aktív szolgáltatást.');
     const before = old ? await getSessions(c,id) : [];
-    const sessions = normalizeSessions(data,before,parentId);
+    const sessions = normalizeSessions(data,before,parentId,old ? undefined : service.duration_minutes);
     if (before.some(s=>new Date(s.start_time)<=new Date() && !sessions.some(next=>next.id===s.id))) fail('Elkezdődött alkalom nem távolítható el.',409);
     const d = {...old,...data};
     const price = integer(d.price ?? service.price,'Ár');

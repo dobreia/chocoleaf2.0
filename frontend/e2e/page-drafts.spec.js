@@ -179,6 +179,7 @@ test('admin service, slot and booking modals reopen after refresh and discard on
     await page.goto(path);
     await page.getByRole('button', { name:button, exact:true }).click();
     const value = path === '/admin/courses' ? '12345' : 'Admin Piszkozat';
+    let expectedEnd;
     await dialog.getByLabel(label, { exact:true }).fill(value);
     if (path === '/admin/services') {
       await dialog.getByRole('textbox', { name:'Részletes leírás', exact:true }).fill('Hosszú, megőrzött szolgáltatásleírás.');
@@ -191,7 +192,8 @@ test('admin service, slot and booking modals reopen after refresh and discard on
       await dialog.getByRole('combobox', { name:'Szolgáltatás', exact:true }).selectOption(services[0].id);
       await dialog.getByLabel(label, { exact:true }).fill(value);
       await dialog.getByLabel('Kezdés (Budapest)', { exact:true }).fill('2027-12-01T10:00');
-      await dialog.getByLabel('Befejezés (Budapest)', { exact:true }).fill('2027-12-01T12:00');
+      expectedEnd=new Date(Date.parse('2027-12-01T10:00:00Z')+services[0].duration_minutes*60000).toISOString().slice(0,16);
+      await expect(dialog.getByLabel('Befejezés (Budapest)', { exact:true })).toHaveValue(expectedEnd);
     }
     await page.reload();
     await expect(dialog).toBeVisible({ timeout:15000 });
@@ -203,7 +205,7 @@ test('admin service, slot and booking modals reopen after refresh and discard on
     }
     if (path === '/admin/courses') {
       await expect(dialog.getByLabel('Kezdés (Budapest)', { exact:true })).toHaveValue('2027-12-01T10:00');
-      await expect(dialog.getByLabel('Befejezés (Budapest)', { exact:true })).toHaveValue('2027-12-01T12:00');
+      await expect(dialog.getByLabel('Befejezés (Budapest)', { exact:true })).toHaveValue(expectedEnd);
     }
     await dialog.getByRole('button', { name:'Bezárás', exact:true }).click();
     await page.reload();

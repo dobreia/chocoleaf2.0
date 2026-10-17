@@ -92,7 +92,8 @@ test('admin creates a service, uploads an image, schedules and edits a booking, 
   await page.goto('/admin/courses');await page.getByRole('button',{name:'+ Új kurzusmeghirdetés'}).click();
   await dialog.getByRole('combobox',{name:'Szolgáltatás',exact:true}).selectOption(service.id);
   const date=new Date(Date.now()+40*86400000).toISOString().slice(0,10);
-  await dialog.getByLabel('Kezdés (Budapest)').fill(date+'T10:00');await dialog.getByLabel('Befejezés (Budapest)').fill(date+'T11:00');
+  await dialog.getByLabel('Kezdés (Budapest)').fill(date+'T10:00');
+  await expect(dialog.getByLabel('Befejezés (Budapest)')).toHaveValue(date+'T11:00');
   await dialog.getByRole('button',{name:'Mentés',exact:true}).click();await expect(dialog).toHaveCount(0);
   const slot=(await(await request.get(api+'/api/bookings/availability?courseId='+service.id)).json())[0];expect(slot).toBeTruthy();
   await page.goto('/admin/bookings');await page.getByRole('button',{name:'+ Új foglalás'}).click();

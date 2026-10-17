@@ -12,7 +12,7 @@ async function attachSessions(c, rows) {
   const locks = (await c.query(`SELECT c.id, c.session_count_locked OR EXISTS(SELECT 1 FROM bookings b WHERE b.course_id=c.id) OR EXISTS(SELECT 1 FROM payment_orders p WHERE p.course_id=c.id OR p.booking_id IN(SELECT b.id FROM bookings b WHERE b.course_id=c.id)) AS locked FROM courses c WHERE c.id=ANY($1::uuid[])`, [ids])).rows;
   return rows.map(row => ({ ...row, sessions:sessions.filter(s => s.course_id===row.id).map(({course_id,...s})=>s), sessions_locked:locks.find(x=>x.id===row.id)?.locked || false }));
 }
-function normalizeSessions(data, oldSessions, parentId) {
+function normalizeSessions(data, oldSessions, parentId, defaultDuration) {
   const input = data.sessions === undefined
     ? oldSessions.length > 1 ? oldSessions : [{ id:oldSessions[0]?.id, start_time:data.start_time ?? oldSessions[0]?.start_time, end_time:data.end_time ?? oldSessions[0]?.end_time }]
     : data.sessions;
@@ -24,7 +24,10 @@ function normalizeSessions(data, oldSessions, parentId) {
     if (seen.has(id)) fail('Egy alkalom csak egyszer szerepelhet.');
     if (s.id && !oldSessions.some(old=>old.id===id)) fail('Ismeretlen alkalomazonosító.');
     seen.add(id);
-    const start_time = instant(s.start_time instanceof Date ? s.start_time.toISOString() : s.start_time), end_time = instant(s.end_time instanceof Date ? s.end_time.toISOString() : s.end_time);
+    const start_time = instant(s.start_time instanceof Date ? s.start_time.toISOString() : s.start_time);
+    const end_time = s.end_time===undefined && defaultDuration!==undefined
+      ? new Date(+start_time+defaultDuration*60000)
+      : instant(s.end_time instanceof Date ? s.end_time.toISOString() : s.end_time);
     if (end_time<=start_time) fail('Az alkalom befejezése legyen a kezdés után.');
     return {id,start_time,end_time};
   }).sort((a,b)=>a.start_time-b.start_time);

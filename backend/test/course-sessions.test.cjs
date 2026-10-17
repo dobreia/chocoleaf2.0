@@ -70,6 +70,18 @@ test('invalid sessions and any late conflicting session roll back the entire adv
   assert.equal((await db.query('SELECT count(*)::int AS n FROM courses')).rows[0].n,before+1);
 });
 
+test('start-only advertisements calculate every session end from the service duration and still reject overlaps',async()=>{
+  const service=await courses.serviceSave(null,{title:'Automatikus befejezés',duration_minutes:90,price:20000,session_count:2});
+  const group=await courses.save(null,{service_id:service.id,sessions:[{start_time:at(500,23)},{start_time:at(502,10)}]});
+  for(const s of group.sessions)assert.equal(new Date(s.end_time)-new Date(s.start_time),90*60000);
+  await assert.rejects(courses.save(null,{service_id:service.id,sessions:[{start_time:at(502,11)},{start_time:at(504,10)}]}),{status:409});
+  const single=await courses.serviceSave(null,{title:'Automatikus egyalkalmas',duration_minutes:120,price:10000});
+  const legacy=await courses.save(null,{service_id:single.id,start_time:at(506,23)});
+  assert.equal(new Date(legacy.end_time)-new Date(legacy.start_time),120*60000);
+  const saved=await courses.save(group.id,{sessions:group.sessions.map((s,i)=>i?{...s,end_time:at(502,13)}:s)});
+  assert.equal(new Date(saved.sessions[1].end_time)-new Date(saved.sessions[1].start_time),180*60000);
+});
+
 test('service defines the number of dates; template changes preserve existing advertisements and reject mismatched new dates',async()=>{
   const data={title:'Kurzus alkalomszáma',duration_minutes:120,price:25000,capacity:6,session_count:2};
   const service=await courses.serviceSave(null,data);
