@@ -1,4 +1,4 @@
-const { fail, str } = require('../domain/rules');
+const { fail, str, email } = require('../domain/rules');
 
 function provider() {
   return 'stripe';
@@ -34,6 +34,7 @@ function billingData(data) {
   };
   if (!/^\d{4}$/.test(billing.post_code)) fail('Négyjegyű magyar irányítószám szükséges.');
   if (company && !/^\d{8}-\d-\d{2}$/.test(billing.taxcode)) fail('Az adószám formátuma: 12345678-1-12.');
+  if (company) billing.billingEmail = email(str(data.billingEmail, 'Számlázási e-mail-cím', 254));
   return billing;
 }
 let client;

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { usePageDraftState } from '../../components/usePageDraft';
 import { api } from "../../api/courses";
 import { Field, Modal, SaveForm, Notice } from "../../components/admin/UI";
 import { money } from "../../components/admin/format";
@@ -19,7 +20,7 @@ const empty = {
 export default function Services() {
   const [items, setItems] = useState([]),
     [uploading,setUploading]=useState(0),
-    [edit, setEdit] = useState(null),
+    [edit, setEdit] = usePageDraftState('services.edit', null),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(true);
   const load = () =>
@@ -63,6 +64,7 @@ export default function Services() {
       )}
       {edit && (
         <Modal
+          className="cl-service-dialog"
           title={edit.id ? "Szolgáltatás szerkesztése" : "Új szolgáltatás"}
           onClose={() => setEdit(null)}
         >
@@ -78,7 +80,6 @@ export default function Services() {
           >
             {[
               ["title", "Név"],
-              ["description", "Leírás"],
               ["category", "Kategória"],
             ].map(([k, l]) => (
               <Field
@@ -89,14 +90,25 @@ export default function Services() {
                 onChange={(e) => setEdit({ ...edit, [k]: e.target.value })}
               />
             ))}
+            <Field label="Leírás">
+              <textarea
+                className="cl-service-description"
+                rows={6}
+                value={edit.description || ""}
+                onChange={(e) =>
+                  setEdit({ ...edit, description: e.target.value })
+                }
+              />
+            </Field>
             <div className="cl-form-grid">
               <ImageUpload onBusyChange={n=>setUploading(x=>x+n)} label="Kártyakép" value={edit.image} onChange={v=>setEdit(x=>x&&({...x,image:v}))}/>
               <ImageUpload onBusyChange={n=>setUploading(x=>x+n)} label="Részletes kép" value={edit.image_detail} onChange={v=>setEdit(x=>x&&({...x,image_detail:v}))}/>
             </div>
             <Field label="Részletes leírás">
               <textarea
-                rows="5"
-                value={edit.long_description}
+                className="cl-service-long-description"
+                rows={12}
+                value={edit.long_description || ""}
                 onChange={(e) =>
                   setEdit({ ...edit, long_description: e.target.value })
                 }

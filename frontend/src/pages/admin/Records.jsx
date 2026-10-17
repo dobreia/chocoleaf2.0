@@ -1,12 +1,13 @@
 import { useEffect, useState, useCallback } from "react";
+import { usePageDraftState } from '../../components/usePageDraft';
 import { api } from "../../api/courses";
 import { Field, Modal, SaveForm, Notice } from "../../components/admin/UI";
 import { dateTime } from "../../components/admin/format";
 export default function Records({ kind }) {
   const [items, setItems] = useState([]),
-    [edit, setEdit] = useState(null),
+    [edit, setEdit] = usePageDraftState('records.edit', null),
     [error, setError] = useState(""),
-    [q, setQ] = useState(""),
+    [q, setQ] = usePageDraftState('records.search', ""),
     [loading, setLoading] = useState(true);
   const load = useCallback(
     () =>

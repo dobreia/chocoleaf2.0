@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { usePageDraftState } from '../../components/usePageDraft';
 import { useSearchParams } from "react-router-dom";
 import { api } from "../../api/courses";
 import { Field, Notice } from "../../components/admin/UI";
@@ -10,7 +11,7 @@ export default function Bookings() {
     [slots, setSlots] = useState([]),
     [services, setServices] = useState([]),
     [requests, setRequests] = useState([]),
-    [filter, updateFilter] = useState({
+    [filter, updateFilter] = usePageDraftState('bookings.filter', {
       q: "",
       status: "",
       service: "",
@@ -19,7 +20,7 @@ export default function Bookings() {
       sort: "desc",
       page: 1,
     }),
-    [edit, setEdit] = useState(undefined),
+    [edit, setEdit] = usePageDraftState('bookings.edit', undefined),
     [error, setError] = useState(""),
     [message, setMessage] = useState(""),
     [loading, setLoading] = useState(true),
@@ -35,7 +36,7 @@ export default function Bookings() {
       api("/admin/bookings/" + id)
         .then(setEdit)
         .catch((e) => setError(e.message));
-  }, [search]);
+  }, [search, setEdit]);
   useEffect(() => {
     Promise.all([
       api("/admin/courses"),

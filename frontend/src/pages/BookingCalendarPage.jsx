@@ -2,7 +2,8 @@ import SeatCount from "../components/SeatCount";
 import { startStripePayment } from '../api/payments';
 import {validSeatCount} from "../components/seatRules";
 import { dayKey, money } from "../components/admin/format";
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { usePageDraftState, usePageDraftRef, useClearPageDrafts } from '../components/usePageDraft';
 import { Link, useParams, useSearchParams, useNavigate } from "react-router-dom";
 import BillingFields from '../components/BillingFields';
 import { emptyBilling } from '../components/billingData';
@@ -79,17 +80,20 @@ function getPeriodLabel(date) {
 export default function BookingCalendarPage() {
   const navigate = useNavigate();
   const [provider,setProvider] = useState(null);
-  const [billing,setBilling] = useState(emptyBilling);
+  const [billing,setBilling] = usePageDraftState('booking.billing', emptyBilling);
+  const [billingNameEdited, setBillingNameEdited] = usePageDraftState('booking.billingNameEdited', false);
+  const clearDrafts = useClearPageDrafts();
   const { id } = useParams();
   const [query] = useSearchParams();
   const preferredSlot = query.get("slot");
-  const requestKey = useRef(null);
+  const requestKeyRef = usePageDraftRef('booking.requestKeyRef', null);
   const [courses, setCourses] = useState([]);
-  const [monthDate, setMonthDate] = useState(() => getMonthStart(/^\d{4}-\d{2}-\d{2}$/.test(query.get("date")||"") ? new Date(query.get("date")+"T12:00:00") : new Date()));
+  const [monthValue, setMonthValue] = usePageDraftState('booking.month', () => getMonthStart(/^\d{4}-\d{2}-\d{2}$/.test(query.get("date")||"") ? new Date(query.get("date")+"T12:00:00") : new Date()).getTime());
+  const monthDate = useMemo(() => new Date(monthValue), [monthValue]);
   const [slots, setSlots] = useState([]);
-  const [selectedDateKey, setSelectedDateKey] = useState("");
-  const [selectedSlotId, setSelectedSlotId] = useState("");
-  const [formData, setFormData] = useState({
+  const [selectedDateKey, setSelectedDateKey] = usePageDraftState('booking.day', "");
+  const [selectedSlotId, setSelectedSlotId] = usePageDraftState('booking.slot', "");
+  const [formData, setFormData] = usePageDraftState('booking.form', {
     customerName: "",
     customerEmail: "",
     customerPhone: "",
@@ -99,6 +103,10 @@ export default function BookingCalendarPage() {
   const [status, setStatus] = useState({ type: "", message: "" });
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const resolvedBilling = {
+    ...billing,
+    privateName: billingNameEdited ? billing.privateName : formData.customerName,
+  };
 
   const selectedCourse = useMemo(
     () =>
@@ -154,7 +162,7 @@ export default function BookingCalendarPage() {
             ? currentKey
             : firstAvailableKey,
         );
-        setSelectedSlotId(items.some(s=>s.id===preferredSlot&&s.is_available)?preferredSlot:"");
+        setSelectedSlotId(current => items.some(s=>s.id===current&&s.is_available) ? current : items.some(s=>s.id===preferredSlot&&s.is_available)?preferredSlot:"");
       })
       .catch((error) => {
         if (live) setStatus({ type: "error", message: error.message });
@@ -165,22 +173,22 @@ export default function BookingCalendarPage() {
     return () => {
       live = false;
     };
-  }, [id, monthDate, preferredSlot]);
+  }, [id, monthDate, preferredSlot, setSelectedDateKey, setSelectedSlotId]);
 
   function moveMonth(delta) {
     setIsLoading(true);
     setSlots([]);
     setSelectedSlotId("");
     setStatus({ type: "", message: "" });
-    setMonthDate((currentDate) => {
+    setMonthValue((currentDate) => {
       const nextDate = new Date(currentDate);
       nextDate.setMonth(currentDate.getMonth() + delta);
-      return getMonthStart(nextDate);
+      return getMonthStart(nextDate).getTime();
     });
   }
 
   function updateFormField(field, value) {
-    requestKey.current = null;
+    requestKeyRef.current = null;
     setFormData((currentData) => ({
       ...currentData,
       [field]: value,
@@ -203,19 +211,20 @@ export default function BookingCalendarPage() {
       const seats = Number(formData.seats);
       if (!validSeatCount(formData.seats,selectedSlot.available_spots))
         throw new Error("Adj meg egész létszámot 1 és a szabad férőhelyek száma között.");
-      requestKey.current ||= crypto.randomUUID();
+      requestKeyRef.current ||= crypto.randomUUID();
       const result = await createBooking(
         {
           courseId: selectedSlot.id,
           ...formData,
           seats,
           paymentMethod: provider,
-          billingData: provider === 'stripe' ? billing : undefined,
+          billingData: provider === 'stripe' ? resolvedBilling : undefined,
         },
-        requestKey.current,
+        requestKeyRef.current,
       );
-      if (result.paymentId) { await startStripePayment(result); return; }
-      requestKey.current = null;
+      if (result.paymentId) { await startStripePayment(result); clearDrafts(); return; }
+      requestKeyRef.current = null;
+      clearDrafts();
       if (result.redirectUrl) { navigate(result.redirectUrl); return; }
 
       setStatus({
@@ -349,7 +358,7 @@ export default function BookingCalendarPage() {
                       aria-pressed={String(selectedSlotId) === String(slot.id)}
                       type="button"
                       onClick={() => {
-                        requestKey.current = null;
+                        requestKeyRef.current = null;
                         setSelectedSlotId(slot.id);
                       }}
                     >
@@ -425,7 +434,11 @@ export default function BookingCalendarPage() {
                       />
                     </label>
                   </div>
-                  {provider === 'stripe' && <BillingFields value={billing} onChange={value=>{requestKey.current=null;setBilling(value);}}/>}
+                  {provider === 'stripe' && <BillingFields value={resolvedBilling} onChange={(value, field)=>{
+                    requestKeyRef.current=null;
+                    if (field === 'privateName') setBillingNameEdited(true);
+                    setBilling(value);
+                  }}/>}
                   <button
                     className="booking-calendar-submit"
                     disabled={isSubmitting || isLoading || !selectedSlot || !provider}

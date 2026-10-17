@@ -1,1 +1,1 @@
-export const emptyBilling = { buyerType: 'private', privateName: '', companyName: '', taxNumber: '', postCode: '', city: '', street: '' };
+export const emptyBilling = { buyerType: 'private', privateName: '', companyName: '', billingEmail: '', taxNumber: '', postCode: '', city: '', street: '' };

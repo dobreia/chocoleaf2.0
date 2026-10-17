@@ -10,6 +10,7 @@ import Layout from "./components/Layout";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
+import DraftNavigation from "./components/DraftNavigation";
 import AboutPage from "./pages/AboutPage";
 import AdminShell from "./components/admin/AdminShell";
 import Dashboard from "./pages/admin/Dashboard";
@@ -58,6 +59,7 @@ function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <DraftNavigation>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/giftcard" element={giftCardRoute} />
@@ -146,6 +148,7 @@ function App() {
           />
         ))}
       </Routes>
+      </DraftNavigation>
     </BrowserRouter>
   );
 }

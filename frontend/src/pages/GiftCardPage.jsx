@@ -1,6 +1,7 @@
 import { api } from "../api/courses";
 import { startStripePayment } from '../api/payments';
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { usePageDraftState, usePageDraftRef, useClearPageDrafts } from '../components/usePageDraft';
 import BillingFields from '../components/BillingFields';
 import { emptyBilling } from '../components/billingData';
 import { useNavigate } from "react-router-dom";
@@ -15,23 +16,24 @@ function formatAmount(amount) {
 
 export default function GiftCardPage() {
   const navigate = useNavigate();
-  const requestKey = useRef(null);
+  const requestKeyRef = usePageDraftRef('gift.requestKeyRef', null);
+  const clearDrafts = useClearPageDrafts();
   const [provider, setProvider] = useState(null);
-  const [stripeBilling, setStripeBilling] = useState(emptyBilling);
+  const [stripeBilling, setStripeBilling] = usePageDraftState('gift.stripeBilling', emptyBilling);
   const [errorMessage, setErrorMessage] = useState("");
   useEffect(() => { api('/payments/config').then(x=>setProvider(x.provider)).catch(e=>setErrorMessage(e.message)); }, []);
-  const [selectedAmount, setSelectedAmount] = useState(null);
-  const [quantity, setQuantity] = useState(1);
-  const [names, setNames] = useState([""]);
-  const [buyerType, setBuyerType] = useState("private");
-  const [billingData, setBillingData] = useState({
+  const [selectedAmount, setSelectedAmount] = usePageDraftState('gift.amount', null);
+  const [quantity, setQuantity] = usePageDraftState('gift.quantity', 1);
+  const [names, setNames] = usePageDraftState('gift.names', [""]);
+  const [buyerType, setBuyerType] = usePageDraftState('gift.buyerType', "private");
+  const [billingData, setBillingData] = usePageDraftState('gift.billing', {
     privateName: "",
     privateAddress: "",
     companyName: "",
     companyAddress: "",
     taxNumber: "",
   });
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = usePageDraftState('gift.email', "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const buttonText = useMemo(
@@ -41,7 +43,7 @@ export default function GiftCardPage() {
   );
 
   function updateQuantity(nextQuantity) {
-    requestKey.current = null;
+    requestKeyRef.current = null;
     if(nextQuantity === "") {setQuantity(""); return;}
     const normalizedQuantity = Math.min(
       20,
@@ -133,11 +135,11 @@ export default function GiftCardPage() {
 
     try {
       setIsSubmitting(true);
-      requestKey.current ||= crypto.randomUUID();
+      requestKeyRef.current ||= crypto.randomUUID();
 
       const data = await api("/giftcard/start-payment", {
         method: "POST",
-        headers: { "Content-Type": "application/json", 'Idempotency-Key': requestKey.current },
+        headers: { "Content-Type": "application/json", 'Idempotency-Key': requestKeyRef.current },
         body: {
           name: cleanNames[0],
           names: cleanNames,
@@ -151,14 +153,17 @@ export default function GiftCardPage() {
 
       if (data.paymentId) {
         await startStripePayment(data);
+        clearDrafts();
         return;
       }
       if (data.redirectUrl) {
+        clearDrafts();
         navigate(data.redirectUrl);
         return;
       }
 
       if (data.id) {
+        clearDrafts();
         navigate(`/transfer?id=${encodeURIComponent(data.id)}`);
         return;
       }
@@ -174,10 +179,10 @@ export default function GiftCardPage() {
   return (
     <section className="experience-page voucher-page"><div className="experience-shell">
       <header className="voucher-heading"><p className="experience-eyebrow">ChocoLeaf ajándékutalvány</p><h1>Ajándékozz közös alkotást.</h1><p>Csokoládé, kíváncsiság és egy új élmény. Válaszd ki az utalvány értékét, mi pedig névre szólóan készítjük el.</p></header>
-      <form className="voucher-layout" onChange={()=>{requestKey.current=null;}} onSubmit={e=>{e.preventDefault();startPayment();}}>
+      <form className="voucher-layout" onChange={()=>{requestKeyRef.current=null;}} onSubmit={e=>{e.preventDefault();startPayment();}}>
         <div className="voucher-steps">
           <section className="voucher-step"><p className="experience-eyebrow">01 · Az ajándék</p><h2>Milyen értékben ajándékoznál?</h2>
-            <div className="voucher-amounts">{amountOptions.map(amount=><button type="button" key={amount} aria-pressed={selectedAmount===amount} className={selectedAmount===amount?'selected':''} onClick={()=>{requestKey.current=null;setSelectedAmount(amount);}}>{formatAmount(amount)} Ft<span>névre szóló utalvány</span></button>)}</div>
+            <div className="voucher-amounts">{amountOptions.map(amount=><button type="button" key={amount} aria-pressed={selectedAmount===amount} className={selectedAmount===amount?'selected':''} onClick={()=>{requestKeyRef.current=null;setSelectedAmount(amount);}}>{formatAmount(amount)} Ft<span>névre szóló utalvány</span></button>)}</div>
             <label className="voucher-label" htmlFor="voucher-quantity">Utalványok száma</label><div className="voucher-quantity"><button type="button" aria-label="Egy utalvánnyal kevesebb" disabled={Number(quantity)<=1} onClick={()=>changeQuantity(-1)}>−</button><input id="voucher-quantity" type="number" required min="1" max="20" step="1" value={quantity} onChange={e=>updateQuantity(e.target.value)}/><button type="button" aria-label="Egy utalvánnyal több" disabled={Number(quantity)>=20} onClick={()=>changeQuantity(1)}>+</button></div>
           </section>
           <section className="voucher-step"><p className="experience-eyebrow">02 · A megajándékozott</p><h2>Kinek szól az élmény?</h2><p>Minden utalvány 1 fő részére szól. Az alábbi nevek szerepelnek majd rajtuk.</p>

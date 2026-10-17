@@ -48,10 +48,17 @@ test('old and new submit responses go directly to Stripe and checkout errors rem
 test('billing captures a structured address and company tax number without retaining hidden private fields',()=>{
   const markup=renderToStaticMarkup(React.createElement(BillingFields,{value:{buyerType:'company',companyName:'Cég',taxNumber:'12345678-1-12',postCode:'1111',city:'Budapest',street:'Teszt'},onChange(){}}));
   const doc=new JSDOM(markup).window.document;
-  assert.equal(doc.querySelectorAll('input[required]').length,5);
+  assert.equal(doc.querySelectorAll('input[required]').length,6);
+  const billingEmail=doc.querySelector('input[type="email"]');
+  assert.ok(billingEmail.required);
+  assert.equal(billingEmail.maxLength,254);
   assert.ok(doc.querySelector('input[pattern="[0-9]{4}"]'));
   assert.match(doc.body.textContent,/Adószám/);
   assert.doesNotMatch(doc.body.textContent,/Számlázási név/);
+});
+test('private billing does not show a company billing email field',()=>{
+  const markup=renderToStaticMarkup(React.createElement(BillingFields,{value:{buyerType:'private',privateName:'Vásárló',postCode:'1111',city:'Budapest',street:'Teszt'},onChange(){}}));
+  assert.doesNotMatch(markup,/type="email"/);
 });
 async function mount(status) {
   globalThis.fetch=async()=>new Response(JSON.stringify({status,amount:19000,invoiceStatus:'pending'}),{status:200,headers:{'Content-Type':'application/json'}});

@@ -1,8 +1,11 @@
 import { useState } from "react";
+import { usePageDraftState } from '../components/usePageDraft';
 import { api } from "../api/courses";
 import "../styles/HomePage.css";
 
 export default function HomePage() {
+  const [draft, setDraft, resetDraft] = usePageDraftState('home.inquiry', {});
+  const field = name => ({ value: draft[name] || '', onChange: e => setDraft(current => ({ ...current, [name]: e.target.value })) });
   const [formStatus, setFormStatus] = useState("");
   const [sending, setSending] = useState(false);
   async function submitInquiry(e) {
@@ -23,6 +26,7 @@ export default function HomePage() {
         },
       });
       setFormStatus(r.message);
+      resetDraft();
       form.reset();
     } catch (err) {
       setFormStatus(err.message);
@@ -608,11 +612,12 @@ export default function HomePage() {
 
             <input type="text" name="_honey" style={{ display: "none" }} />
 
-            <input type="text" name="Név" id="nev" placeholder="Név" required />
+            <input type="text" name="Név" id="nev" placeholder="Név" required {...field('Név')} />
 
             <input
               type="email"
               name="Email"
+              {...field('Email')}
               id="email"
               placeholder="Email cím"
               required
@@ -621,6 +626,7 @@ export default function HomePage() {
             <input
               type="tel"
               name="Telefonszám"
+              {...field('Telefonszám')}
               id="telefon"
               placeholder="Telefonszám"
               required
@@ -629,12 +635,14 @@ export default function HomePage() {
             <input
               type="text"
               name="Termék"
+              {...field('Termék')}
               id="termek"
               placeholder="Termék megnevezése"
             />
 
             <textarea
               name="Részletek"
+              {...field('Részletek')}
               id="reszletek"
               rows={8}
               placeholder="Termék leírása"
@@ -647,6 +655,7 @@ export default function HomePage() {
               type="date"
               id="datum"
               name="Dátum"
+              {...field('Dátum')}
               className="date-input"
               required
             />

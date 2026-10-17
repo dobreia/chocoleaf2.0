@@ -1,5 +1,5 @@
 export default function BillingFields({ value, onChange }) {
-  const update = (key, next) => onChange({ ...value, [key]: next });
+  const update = (key, next) => onChange({ ...value, [key]: next }, key);
   return <fieldset className="billing-fields">
     <legend>Számlázási adatok</legend>
     <label>Vásárló típusa<select value={value.buyerType} onChange={e => update('buyerType', e.target.value)}>
@@ -7,6 +7,7 @@ export default function BillingFields({ value, onChange }) {
     </select></label>
     {(value.buyerType === 'company' ? [['companyName', 'Cégnév'], ['taxNumber', 'Adószám (12345678-1-12)']] : [['privateName', 'Számlázási név']]).map(([key,label]) =>
       <label key={key}>{label}<input required maxLength={key === 'taxNumber' ? 13 : 200} value={value[key]} onChange={e => update(key,e.target.value)} /></label>)}
+    {value.buyerType === 'company' && <label>Számlázási e-mail-cím<input required type="email" maxLength={254} autoComplete="billing email" value={value.billingEmail || ''} onChange={e => update('billingEmail', e.target.value)} /></label>}
     <p>Magyarországi számlázási cím</p>
     <label>Irányítószám<input required inputMode="numeric" pattern="[0-9]{4}" maxLength="4" autoComplete="billing postal-code" value={value.postCode} onChange={e=>update('postCode',e.target.value)}/></label>
     <label>Település<input required maxLength="100" autoComplete="billing address-level2" value={value.city} onChange={e=>update('city',e.target.value)}/></label>

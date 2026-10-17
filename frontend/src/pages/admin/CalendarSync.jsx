@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { usePageDraftState } from '../../components/usePageDraft';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../../api/courses';
 import { Modal, Notice } from '../../components/admin/UI';
@@ -15,7 +16,7 @@ const timestamp = value => value ? new Date(value).toLocaleString('hu-HU', { dat
 export default function CalendarSync() {
   const [params] = useSearchParams();
   const [data, setData] = useState(null), [error, setError] = useState(''), [message, setMessage] = useState('');
-  const [busy, setBusy] = useState(false), [confirm, setConfirm] = useState(false), [revision, setRevision] = useState(0);
+  const [busy, setBusy] = useState(false), [confirm, setConfirm] = usePageDraftState('calendarSync.confirm', false), [revision, setRevision] = useState(0);
   useEffect(() => {
     let live = true;
     const load = async () => {

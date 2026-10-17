@@ -264,6 +264,25 @@
 .cl-dialog::backdrop {
   background: #2b182aaa;
 }
+.cl-dialog.cl-service-dialog {
+  box-sizing: border-box;
+  width: min(960px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 32px);
+  padding: clamp(16px, 3vw, 32px);
+}
+.cl-service-dialog .cl-field textarea {
+  font-family: inherit;
+  line-height: 1.6;
+  overflow-y: auto;
+  resize: vertical;
+}
+.cl-service-dialog .cl-service-description {
+  min-height: 170px;
+}
+.cl-service-dialog .cl-service-long-description {
+  min-height: 300px;
+}
 .cl-modal-title {
   display: flex;
   align-items: center;

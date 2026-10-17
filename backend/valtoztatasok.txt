@@ -1,32 +1,219 @@
-lehet-e 2x300 p
-legyen órában
+FEJLESZTÉSI FELADATLISTA
+======================
 
-részletek oldalon kép szöveg csere
+A lista kategóriánként tartalmazza a kéréseket, alul javasolt kezdési
+sorrenddel. A komplexitás előzetes becslés, nem munkaidő-becslés;
+a pontos méret a meglévő megoldások átnézése után derül ki.
 
-Céges számlázásnál email címet megadni
-Számlázási névnél kitölteni a fentivel csak legyen szerkeszhető
+Komplexitás:
+  KICSI   - Várhatóan helyi felületi vagy űrlapmódosítás.
+  KÖZEPES - Több felületet, adatkezelést vagy backendmódosítást érint.
+  NAGY    - Fizetést, külső integrációt vagy időzített folyamatot érint.
 
-formoknál legyen adattartó frissítésnél
+A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények.
 
-naptárnál az ügyfélnél is kerüljön be a naptárba az időpont
 
-szolgáltatás részleteknél leírás mező legyen nagyobb
+1. MEGJELENÉS ÉS ŰRLAPOK
+========================
 
-időpont létrehozásnál töltsük be hogy meddig tart
+[ ] F01 - Kurzus részletező oldalának felületi javítása
+    Komplexitás: KICSI–KÖZEPES, a felületi módosítások mértékétől függően.
+    Feladat: A kurzus részletező oldalán a kép és a részletező szöveg
+    helyének felcserélése, az oldal elrendezésének javításával.
 
-időpont létrehozásnál lehessen a naptárnézetből a napnál plusz jelre kattintva lehessen új időpontot létrehozni
+[x] F02 - Nagyobb leírásmező a szolgáltatás részleteinél
+    Komplexitás: KICSI.
+    Feladat: A leírás szerkesztésére szolgáló mező legyen nagyobb.
 
-Ügyfél listából csoportos email küldése, lehessen szűrni hogy melyik szolgáltatás alatt lévő emailek maradjanak benne
+[x] F03 - Számlázási név automatikus előkitöltése
+    Komplexitás: KICSI.
+    Feladat: A korábban megadott név kerüljön a számlázási név mezőbe,
+    de az előkitöltött érték továbbra is szerkeszthető legyen.
+    Elkészült: Az időpontfoglalásnál a számlázási név követi a megadott
+    nevet az első kézi módosításig; utána a saját értékét őrzi meg,
+    kiürítés és vásárlótípus-váltás esetén is. Mentéskor a látható érték megy el.
+    Az utalványon szereplő megajándékozott nevét nem használjuk számlázási névként.
 
-Megkereséseknél több állapot, megválaszolt, olvasatlan, folyamatban, árajánlatot adni
-Megkeresnél oldalrol megnyitható legyen az email válaszolásra
+[x] F04 - E-mail-cím megadása céges számlázásnál
+    Komplexitás: KÖZEPES.
+    Feladat: Céges számlázásnál külön, kötelező számlázási e-mail-címet
+    kell megadni, böngésző- és backendoldali ellenőrzéssel.
+    Az adatot elmentjük, és az admin foglalási visszaigazolásában feltüntetjük.
+    Az ügyfél visszaigazolása továbbra is a foglalásnál megadott címre megy.
+    Későbbi fejlesztés: A Billingo bevezetésekor a számlát erre a külön címre
+    kell küldeni; a számlaküldés átirányítása nem része a mostani feladatnak.
 
-Utalványoknál legyen a régi formátum a azonosítónál
+[x] F05 - Űrlapadatok megtartása oldalfrissítés után
+    Komplexitás: KÖZEPES.
+    Feladat: Minden publikus és adminűrlap kitöltése folytatható legyen
+    oldalfrissítés után, ugyanabban a böngészőfülben.
+    A választások is maradjanak meg: céges/magánszemély mód, utalványösszeg,
+    darabszám, időpont, admin szűrők és nyitott szerkesztőablakok.
+    Sikeres beküldés, ablakbezárás és az oldal elhagyása után a kapcsolódó
+    piszkozat törlődjön. Sikertelen beküldéskor maradjon meg.
+    Az időpontok elérhetőségét frissítéskor újra ellenőrizzük a szerveren.
+    Kivételek: Jelszót nem mentünk böngészőtárhelyre. Fájlkiválasztást a
+    böngésző nem enged visszatölteni; a már feltöltött kép hivatkozása megmarad.
 
-Időpont foglalásnál promóciós mező, utalvány sorszám ellenőrzése és ár levonása
 
-Utalványál egylb összeget meg lehessen adni, és dinamikusan frissüljenek az árak aszerint, hogy milyen időpontok vannak meghirdetve
+2. SZOLGÁLTATÁSOK, IDŐPONTOK ÉS NAPTÁR
+=====================================
 
-Ha félbemarad egy fizetés, autmatikusan 2 és 24 óra múlva kapjon emlékezetőt ha még mindig fizetetlen akkor admin kap emlékeztetőt. Manuálisan lehessen foglalni email kiküldéssel, vagy az egészet törölni adminként vagy ügyfélként is.
+[ ] F06 - Kétalkalmas kurzusok és órában megjelenített időtartam
+    Komplexitás: NAGY.
+    Feladat: Egy kurzusmeghirdetéshez két összetartozó időpont is tartozhasson.
+    Az ügyfél egy foglalással mindkét alkalomra foglaljon, és ezt már
+    a jelentkezés előtt egyértelműen lássa, mindkét időpont feltüntetésével.
+    Az időtartam órában jelenjen meg: például 2 × 300 perc helyett 2 × 5 óra.
+    Megvalósítási bontás:
+      - A két alkalom összekapcsolása az adatmodellben és az adminfelületen.
+      - Mindkét időpont és az alkalmankénti időtartam megjelenítése.
+      - A foglalás és a férőhelykezelés mindkét alkalomra vonatkozzon.
+      - A visszaigazolás is egyértelműen tartalmazza a két alkalmat.
+    Tisztázandó: Lemondás és áthelyezés csak együtt lehetséges, vagy
+    alkalmanként is? Az emlékeztető mindkét alkalom előtt menjen?
 
-időpont előtt 3 nappal automatikus emlékeztetőt kapjon az ügyfél.
+[ ] F07 - Befejezési idő automatikus kitöltése időpont létrehozásakor
+    Komplexitás: KÖZEPES.
+    Feladat: A szolgáltatás időtartama és a kezdési idő alapján töltődjön
+    ki, hogy meddig tart az időpont.
+    Függőség: F06 adatmodellje; kétalkalmas kurzusnál mindkét alkalom
+    befejezési idejét a saját kezdési idejéből kell kiszámítani.
+
+[ ] F08 - Új időpont létrehozása a naptár napi plusz gombjával
+    Komplexitás: KÖZEPES.
+    Feladat: A naptárban az adott napnál lévő + gomb nyissa meg az
+    időpont létrehozását, a kiválasztott nap előkitöltésével.
+
+[ ] F09 - Foglalás hozzáadása az ügyfél saját naptárához
+    Komplexitás: KÖZEPES–NAGY, a választott megoldástól függően.
+    Függőség: F06; kétalkalmas kurzusnál mindkét időpont kerüljön a naptárba.
+    Tisztázandó: Elég egy naptárba menthető meghívó / „Naptárhoz adás”
+    lehetőség, vagy automatikus szinkronizálás kell? Mely naptárakkal?
+
+
+3. ÜGYFELEK ÉS MEGKERESÉSEK
+===========================
+
+[ ] F10 - Megkeresések állapotainak bővítése
+    Komplexitás: KÖZEPES.
+    Feladat: Olvasatlan, folyamatban és megválaszolt állapotok kezelése.
+    Tisztázandó: Az „árajánlatot adni” külön állapotot jelent,
+    vagy az oldalon elkészíthető és elküldhető árajánlatot is?
+
+[ ] F11 - Válasz e-mail megnyitása a megkeresésből
+    Komplexitás: KICSI–NAGY, a választott megoldástól függően.
+    Tisztázandó: A saját levelezőprogram nyíljon meg előkészített válasszal,
+    vagy az adminfelületről lehessen közvetlenül választ küldeni?
+    Kapcsolódó feladat: F10, ha a válasz az állapotot is módosítja.
+
+[ ] F12 - Csoportos e-mail az ügyféllistából, szolgáltatás szerinti szűréssel
+    Komplexitás: NAGY.
+    Feladat: A címzetteket szolgáltatás alapján lehessen szűrni,
+    majd a kiválasztott ügyfeleknek csoportos e-mailt küldeni.
+    Tisztázandó: A korábban foglalók vagy az aktuálisan foglalók kerüljenek
+    a listába? Helyben írt üzenetet vagy sablont küldünk?
+
+
+4. UTALVÁNYOK, KEDVEZMÉNYEK ÉS ÁRAK
+==================================
+
+[ ] F13 - Régi utalványazonosító-formátum visszaállítása
+    Komplexitás: KÖZEPES.
+    Feladat: Az utalványazonosító az ÉÉHHNN-napi_sorszám formátumot kövesse.
+    Példa: 261017-1, 261017-2; a következő napon 261018-1.
+    A napi sorszám 1-től indul, nincs nullákkal feltöltve.
+    Ellenőrzött referencia: a korábbi projekt lib/fill_voucher.js fájljának
+    generateSerial() függvénye. Projektkönyvtár:
+    C:\Users\Adminisztrátor\Documents\webfejlesztés\3github_chocoleaf\chocoleaf
+    Megvalósítási javaslat: A formátumot vegyük át; a régi, PDF-fájlokat
+    számláló sorszámképzés helyett adatbázisban biztosítsuk az egyediséget,
+    párhuzamos vásárlás és fájltörlés esetén is.
+    Tisztázandó: A már kiadott utalványok azonosítója is változzon,
+    vagy csak az újonnan kiadottaké?
+
+[ ] F14 - Egyedi összegű utalvány vásárlása
+    Komplexitás: NAGY.
+    Feladat: Az előre megadott értékek mellett egyéb összeg is megadható legyen.
+    Tisztázandó: Minimum, maximum és megengedett lépésköz.
+
+[ ] F15 - Utalványárak frissítése a meghirdetett időpontok alapján
+    Komplexitás: KÖZEPES–NAGY.
+    Feladat: A megjelenített összegek kövessék a meghirdetett időpontokat.
+    Tisztázandó: Pontosan mely összegek változzanak? Több eltérő árú időpont
+    esetén melyik ár legyen irányadó? Mi történjen, ha nincs meghirdetett időpont?
+
+[ ] F16 - Promóciós / utalványmező a foglalásnál
+    Komplexitás: NAGY.
+    Feladat: Utalványsorszám ellenőrzése és a megfelelő összeg levonása
+    a foglalás árából.
+    Függőség: F13 formátuma, valamint F14–F15 végleges árszabályai.
+    Tisztázandó: Külön promóciós kód is kell? Részben beváltható az utalvány?
+    A fennmaradó egyenleg megmarad? Több utalvány is felhasználható?
+
+
+5. FIZETÉSEK, FOGLALÁSKEZELÉS ÉS AUTOMATIKUS E-MAILEK
+===================================================
+
+[ ] F17 - Félbemaradt fizetések automatikus követése
+    Komplexitás: NAGY.
+    Feladat: Fizetetlen foglalásnál az ügyfél 2 és 24 óra múlva kapjon
+    emlékeztetőt. Ha továbbra is fizetetlen, az admin is kapjon értesítést.
+    Tisztázandó: A foglalástól vagy a fizetés indításától számoljuk az időt?
+    Az admin a 24 órás levéllel együtt vagy később kapjon értesítést?
+    Meddig tartjuk fenn a helyet fizetés nélkül?
+
+[ ] F18 - Manuális foglalás adminból, e-mail-küldéssel
+    Komplexitás: KÖZEPES–NAGY.
+    Feladat: Az admin kézzel is rögzíthessen foglalást, e-mail-küldéssel.
+    Tisztázandó: A levél visszaigazolás vagy fizetési felhívás legyen?
+    Milyen fizetési állapottal jöjjön létre a foglalás?
+
+[ ] F19 - Félbemaradt foglalás törlése admin és ügyfél által
+    Komplexitás: NAGY.
+    Feladat: Az admin és az ügyfél is meg tudja szüntetni az érintett foglalást.
+    Tisztázandó: Csak a fizetetlen foglalásokra vonatkozik? Valódi törlés
+    vagy lemondott állapot kell? Hogyan azonosítja magát az ügyfél?
+    Kapcsolódó feladat: F17; megszüntetés után ne menjen fizetési emlékeztető.
+
+[ ] F20 - Automatikus emlékeztető az időpont előtt 3 nappal
+    Komplexitás: NAGY.
+    Feladat: Az ügyfél az időpont előtt 3 nappal kapjon emlékeztetőt.
+    Függőség: F06; a kétalkalmas kurzusok emlékeztetési szabályát is kezelni kell.
+    Tisztázandó: Pontosan 72 órával előtte vagy egy adott napszakban menjen?
+    Mi történjen a 3 napon belül létrejött vagy áthelyezett foglalásokkal?
+
+
+JAVASOLT MEGVALÓSÍTÁSI SORREND
+=============================
+
+1. Gyors felületi javítások: F02, F03, majd F01.
+   Kezdés: Ezek külön-külön elkészíthetők és könnyen ellenőrizhetők.
+
+2. Kétalkalmas kurzusok és adminnaptár: F06, majd F07 és F08.
+   Kezdés: F06 nagyobb fejlesztés; előbb a kapcsolt alkalmak adatmodelljét
+   és közös foglalását készítsd el, utána a megjelenítést és az előkitöltést.
+   Ellenőrzés: Egy foglalás mindkét alkalomra rögzüljön, a férőhely mindkettőnél
+   helyesen változzon, és az ügyfél mindkét időpontot lássa a visszaigazolásban.
+
+3. Űrlapok és megkeresések: F04, F05, F10, F11.
+   Kezdés: Rögzítsd a mezőket, az állapotokat és a válaszadás módját.
+
+4. Utalványok és foglalási árak: F13, F14, F15, végül F16.
+   Kezdés: Előbb az azonosító- és árszabályok legyenek egyértelműek.
+   Ellenőrzés: Érvénytelen, lejárt vagy már beváltott utalvány,
+   részleges levonás és fizetés után helyes végösszeg.
+
+5. Foglalási életciklus: F18 és F19, majd F17 és F20.
+   Kezdés: Előbb a foglalási/fizetési állapotokat és a megszüntetést tisztázd.
+   Az időzített levelek ezután ugyanazokra a szabályokra épülhetnek.
+   Ellenőrzés: Fizetés, lemondás vagy időpontváltozás után ne menjen el
+   elavult vagy ismételt emlékeztető.
+
+6. Naptárkapcsolat és csoportos levelezés: F09, F12.
+   Kezdés: Válaszd ki a naptárkapcsolat módját, illetve a címzettek szűrését.
+   F09 korábbra vehető, ha egyszerű naptármeghívó is elegendő.
+
+Minden lépést külön, áttekinthető változtatásként érdemes elkészíteni.
+A sorrend a függőségeket és a várható komplexitást követi; üzleti prioritás
+alapján módosítható.

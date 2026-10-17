@@ -15,17 +15,19 @@ async function bookingNotice(c, b, slot, event, manageToken) {
   const link = manageToken
     ? `\nFoglalás kezelése: ${origin}/booking/manage#${b.id}.${manageToken}\nA módosítás és lemondás adminisztrátori jóváhagyás után lép életbe. A linket tartsd bizalmasan.`
     : "\nA foglalás kezeléséhez használd az eredeti visszaigazoló levélben kapott linket.";
-  const payment = b.payment_method === 'stripe' && b.payment_status === 'pending'
-    ? (await c.query('SELECT id FROM payment_orders WHERE booking_id=$1', [b.id])).rows[0] : null;
+  const payment = b.payment_method === 'stripe'
+    ? (await c.query('SELECT id,billing FROM payment_orders WHERE booking_id=$1', [b.id])).rows[0] : null;
+  const billingEmail = payment?.billing?.buyerType === 'company' && payment.billing.billingEmail
+    ? `\nSzámlázási e-mail-cím: ${payment.billing.billingEmail}` : '';
   const body = `Kedves ${b.customer_name}!\n\n${event}\n${slot.title}\n${new Date(slot.start_time).toLocaleString("hu-HU", { timeZone: "Europe/Budapest" })} (budapesti idő)\n${b.seats} fő • ${b.total_price} Ft\nStátusz: ${{ pending: "Függőben", confirmed: "Visszaigazolt", cancelled: "Lemondva", completed: "Teljesítve", "no-show": "Nem jelent meg" }[b.status]}\nAzonosító: ${b.id}${link}\n\nChocoLeaf`;
   const end = slot.end_time || b.end_time;
   const details = (end ? `\nBefejezés: ${new Date(end).toLocaleString('hu-HU', {timeZone:'Europe/Budapest'})} (budapesti idő)` : '') + `\nFizetés: ${{pending:'Fizetésre vár',paid:'Fizetve',refunded:'Visszatérítve',failed:'Sikertelen'}[b.payment_status] || b.payment_status}`;
-  await queue(c, b.customer_email, "ChocoLeaf – " + event, body + details + (payment ? `\nBankkártyás fizetés folytatása: ${origin}/payment#${payment.id}` : ''));
+  await queue(c, b.customer_email, "ChocoLeaf – " + event, body + details + (payment && b.payment_status === 'pending' ? `\nBankkártyás fizetés folytatása: ${origin}/payment#${payment.id}` : ''));
   await queue(
     c,
     process.env.MAIL_ADMIN || process.env.MAIL_FROM,
     "ChocoLeaf – " + event,
-    `${body.replace(link, '')}${details}\nEmail: ${b.customer_email}\nTelefon: ${b.customer_phone || '–'}\nMegjegyzés: ${b.note || '–'}\n\nAdmin: ${origin}/admin/bookings`,
+    `${body.replace(link, '')}${details}\nEmail: ${b.customer_email}${billingEmail}\nTelefon: ${b.customer_phone || '–'}\nMegjegyzés: ${b.note || '–'}\n\nAdmin: ${origin}/admin/bookings`,
   );
 }
 let running = false;

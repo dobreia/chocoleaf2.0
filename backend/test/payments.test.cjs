@@ -10,6 +10,7 @@ Object.assign(process.env, {
 });
 let pool, server, base, providers, orders, bookings, courseId;
 const billing = { buyerType:'private', privateName:'Teszt Vásárló', postCode:'1111', city:'Budapest', street:'Teszt utca 1.' };
+const companyBilling = { ...billing, buyerType:'company', companyName:'Teszt Kft.', taxNumber:'12345678-1-12', billingEmail:' Accounts@Example.Test ' };
 const sessions = new Map();
 let createCalls = [];
 const sdk = new Stripe('sk_test_local_only');
@@ -244,6 +245,13 @@ test('gift checkout is idempotent and unpaid Stripe gift cannot be manually fulf
     assert.equal(mails.filter(x=>x.recipient==='gift-admin@example.test').length,1);
   } finally {process.env.MAIL_ADMIN=oldAdmin;}
 });
+test('company billing email is required, validated and ignored for private buyers',()=>{
+  assert.equal(providers.billingData(companyBilling).billingEmail,'accounts@example.test');
+  for (const billingEmail of [undefined,'','   ','not-an-email','a@example.test\nBcc: other@example.test','a'.repeat(255)+'@example.test'])
+    assert.throws(()=>providers.billingData({...companyBilling,billingEmail}),{status:400});
+  assert.equal(Object.hasOwn(providers.billingData({...billing,billingEmail:'ignored@example.test'}),'billingEmail'),false);
+});
+
 test('background reconciliation expires abandoned orders and recovers a paid session after a lost local write',async()=>{
   // Keep other test fixtures out of this worker pass.
   await pool.query("UPDATE payment_orders SET next_attempt=now()+interval '1 day'");
@@ -270,4 +278,34 @@ test('background reconciliation expires abandoned orders and recovers a paid ses
   assert.equal((await row(abandoned.paymentId)).status,'expired');
   assert.equal((await row(recovered.paymentId)).status,'paid');
   assert.equal((await row(recovered.paymentId)).invoice_status,'sent');
+});
+
+test('company billing email persists and is shown only in the admin booking notice',async()=>{
+  const oldAdmin=process.env.MAIL_ADMIN;
+  process.env.MAIL_ADMIN='company-admin@example.test';
+  try {
+    const key=randomUUID();
+    const data={courseId,customerName:'Céges Foglaló',customerEmail:'company-contact@example.test',seats:1,billingData:companyBilling};
+    await assert.rejects(bookings.create({...data,billingData:{...companyBilling,billingEmail:''}},randomUUID()),{status:400});
+    const result=await bookings.create(data,key);
+    assert.equal((await row(result.paymentId)).billing.billingEmail,'accounts@example.test');
+    assert.equal((await bookings.create(data,key)).paymentId,result.paymentId);
+    await assert.rejects(bookings.create({...data,billingData:{...companyBilling,billingEmail:'other@example.test'}},key),{status:409});
+    await orders.checkout(result.paymentId);
+    assert.equal(createCalls.at(-1).body.customer_email,data.customerEmail);
+    await orders.applySession({...sessions.get('checkout-'+result.paymentId),payment_status:'paid',status:'complete'});
+    const bookingId=(await row(result.paymentId)).booking_id;
+    await bookings.update(bookingId,{admin_note:'Ellenőrzött céges foglalás'});
+    const mails=(await pool.query('SELECT recipient,body FROM outbox WHERE body LIKE $1',['%'+bookingId+'%'])).rows;
+    const adminMails=mails.filter(m=>m.recipient==='company-admin@example.test');
+    const customerMails=mails.filter(m=>m.recipient===data.customerEmail);
+    assert.equal(adminMails.length,2);
+    assert.equal(customerMails.length,2);
+    for(const mail of adminMails) assert.match(mail.body,/Számlázási e-mail-cím: accounts@example\.test/);
+    for(const mail of customerMails) {
+      assert.doesNotMatch(mail.body,/accounts@example\.test/);
+      assert.doesNotMatch(mail.body,/Bankkártyás fizetés folytatása/);
+    }
+    assert.equal(mails.some(m=>m.recipient==='accounts@example.test'),false);
+  } finally {process.env.MAIL_ADMIN=oldAdmin;}
 });

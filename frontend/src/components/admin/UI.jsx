@@ -23,7 +23,7 @@ export function Notice({ error, message }) {
     </>
   );
 }
-export function Modal({ title, children, onClose }) {
+export function Modal({ title, children, onClose, className = "" }) {
   const ref = useRef(null);
   useEffect(() => {
     const previous = document.activeElement;
@@ -35,7 +35,7 @@ export function Modal({ title, children, onClose }) {
     };
   }, []);
   return (
-    <dialog className="cl-dialog" ref={ref} onCancel={onClose}>
+    <dialog className={`cl-dialog ${className}`} ref={ref} onCancel={onClose}>
       <div className="cl-modal-title">
         <h2>{title}</h2>
         <button type="button" aria-label="Bezárás" onClick={onClose}>

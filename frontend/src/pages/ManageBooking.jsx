@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { usePageDraftState } from '../components/usePageDraft';
 import { api, getCourseAvailability } from "../api/courses";
 import { Field, SaveForm, Notice } from "../components/admin/UI";
 import { dateTime, labels, money } from "../components/admin/format";
@@ -10,9 +11,9 @@ export default function ManageBooking() {
   });
   const [d, setD] = useState(null),
     [slots, setSlots] = useState([]),
-    [kind, setKind] = useState("reschedule"),
-    [target, setTarget] = useState(""),
-    [note, setNote] = useState(""),
+    [kind, setKind, resetKind] = usePageDraftState('manage.kind', "reschedule"),
+    [target, setTarget, resetTarget] = usePageDraftState('manage.target', ""),
+    [note, setNote, resetNote] = usePageDraftState('manage.note', ""),
     [error, setError] = useState(() =>
       link.id && link.token
         ? ""
@@ -86,6 +87,9 @@ export default function ManageBooking() {
                     setMessage(
                       "Kérelmedet elküldtük. Emailben értesítünk a döntésről.",
                     );
+                    resetKind();
+                    resetTarget();
+                    resetNote();
                     load();
                   }}
                 >

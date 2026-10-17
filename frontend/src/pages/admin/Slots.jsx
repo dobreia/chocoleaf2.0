@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { usePageDraftState } from '../../components/usePageDraft';
 import { api } from "../../api/courses";
 import { Field, Modal, SaveForm, Notice } from "../../components/admin/UI";
 import {
@@ -10,9 +11,9 @@ import {
 export default function Slots() {
   const [items, setItems] = useState([]),
     [services, setServices] = useState([]),
-    [edit, setEdit] = useState(null),
+    [edit, setEdit] = usePageDraftState('slots.edit', null),
     [error, setError] = useState(""),
-    [q, setQ] = useState(""),
+    [q, setQ] = usePageDraftState('slots.filter', ""),
     [loading, setLoading] = useState(true);
   const load = () =>
     Promise.all([

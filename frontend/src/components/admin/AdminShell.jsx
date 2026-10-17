@@ -1,21 +1,23 @@
 import { useEffect, useState } from "react";
+import { usePageDraftState, useClearPageDrafts } from '../usePageDraft';
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { api } from "../../api/courses";
 import { Field, SaveForm } from "./UI";
 import "../../styles/AdminWorkspace.css";
 export default function AdminShell() {
   const [user, setUser] = useState(undefined);
-  const [email, setEmail] = useState(""),
+  const [email, setEmail, resetEmail] = usePageDraftState('login.email', ""),
     [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const clearDrafts = useClearPageDrafts();
   useEffect(() => {
     api("/auth/me")
       .then(setUser)
       .catch(() => setUser(null));
-    const expire = () => setUser(null);
+    const expire = () => { clearDrafts(); setUser(null); };
     window.addEventListener("admin-session-expired", expire);
     return () => window.removeEventListener("admin-session-expired", expire);
-  }, []);
+  }, [clearDrafts]);
   if (user === undefined)
     return (
       <main className="cl-admin">
@@ -36,7 +38,9 @@ export default function AdminShell() {
                 body: { email, password },
               }),
             );
+            clearDrafts();
             setPassword("");
+            resetEmail();
           }}
         >
           <Field
@@ -69,6 +73,7 @@ export default function AdminShell() {
           <button
             onClick={async () => {
               await api("/auth/logout", { method: "POST" });
+              clearDrafts();
               setUser(null);
               navigate("/admin");
             }}

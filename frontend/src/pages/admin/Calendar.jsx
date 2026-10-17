@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { usePageDraftState } from '../../components/usePageDraft';
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../../api/courses";
 import BookingEditor from "../../components/admin/BookingEditor";
@@ -11,12 +12,12 @@ export default function Calendar() {
   const [params] = useSearchParams();
   const linkedDate = params.get("date");
   const initialDate = /^\d{4}-\d{2}-\d{2}$/.test(linkedDate || "") && !Number.isNaN(Date.parse(linkedDate)) ? linkedDate : dayKey(new Date());
-  const [view, updateView] = useState("month"),
-    [date, updateDate] = useState(initialDate),
+  const [view, updateView] = usePageDraftState('calendar.view', "month"),
+    [date, updateDate] = usePageDraftState('calendar.date', initialDate),
     [items, setItems] = useState([]),
     [slots, setSlots] = useState([]),
-    [courseId, setCourseId] = useState(params.get("course")),
-    [edit, setEdit] = useState(undefined),
+    [courseId, setCourseId] = usePageDraftState('calendar.course', params.get("course")),
+    [edit, setEdit] = usePageDraftState('calendar.edit', undefined),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(true),
     [revision, setRevision] = useState(0);

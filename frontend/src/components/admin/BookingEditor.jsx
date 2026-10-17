@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { usePageDraftState } from '../usePageDraft';
 import { api } from "../../api/courses";
 import { Modal, SaveForm, Field } from "./UI";
 import { labels, dateTime, money } from "./format";
 export default function BookingEditor({ booking, slots, onDone, onClose }) {
-  const [d, setD] = useState(
+  const [d, setD, resetDraft] = usePageDraftState(
+    'bookingEditor.' + (booking?.id || 'new'),
     booking || {
       customer_name: "",
       customer_email: "",
@@ -23,7 +25,7 @@ export default function BookingEditor({ booking, slots, onDone, onClose }) {
   return (
     <Modal
       title={booking ? "Foglalás részletei" : "Új foglalás"}
-      onClose={onClose}
+      onClose={() => { resetDraft(); onClose(); }}
     >
       <SaveForm
         onSave={async () => {
@@ -51,6 +53,7 @@ export default function BookingEditor({ booking, slots, onDone, onClose }) {
                 note: d.note,
               },
             });
+          resetDraft();
           onDone();
         }}
       >
@@ -183,6 +186,7 @@ export default function BookingEditor({ booking, slots, onDone, onClose }) {
             await api("/admin/bookings/" + booking.id + "/send-link", {
               method: "POST",
             });
+            resetDraft();
             onDone();
           }}
         >

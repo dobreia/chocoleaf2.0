@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { usePageDraftState } from '../components/usePageDraft';
 import { api } from "../api/courses";
 import PageHeader from "../components/PageHeader";
 import { Field, SaveForm, Notice } from "../components/admin/UI";
 
 import "../styles/AdminWorkspace.css";
 export default function InquiryPage({ quote = false }) {
-  const [d, setD] = useState({
+  const [d, setD, resetDraft] = usePageDraftState('inquiry.form', {
       name: "",
       email: "",
       phone: "",
@@ -42,7 +43,7 @@ export default function InquiryPage({ quote = false }) {
           onSave={async () => {
             const r = await api("/inquiries", { method: "POST", body: d });
             setSent(r.message);
-            setD({ ...d, message: "" });
+            resetDraft();
           }}
         >
           {[
