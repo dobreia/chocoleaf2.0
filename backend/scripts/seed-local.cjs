@@ -8,8 +8,16 @@ module.exports = async function seedLocal(db) {
       let saved=false;
       for(let attempts=0;attempts<90;attempts++) {
         const start=new Date();start.setDate(start.getDate()+offset++);start.setHours(10,0,0,0);
+        const count=service.session_count || 1;
+        const sessions=Array.from({length:count},(_,index)=>{
+          const day=new Date(start);day.setDate(day.getDate()+index*2);
+          return {start_time:day.toISOString()};
+        });
         try {
-          await require('../src/domain/courses').save(null,{service_id:service.id,description:'Bemutató tesztidőpont',price:service.price,capacity:6,start_time:start.toISOString(),end_time:new Date(+start+service.duration_minutes*60000).toISOString()});
+          await require('../src/domain/courses').save(null,{service_id:service.id,description:'Bemutató tesztidőpont',price:service.price,capacity:6,sessions});
+          // Reserve the whole package before scheduling the next sample.
+          // Separate days also accommodate 24-hour courses through DST.
+          offset+=(count-1)*2;
           saved=true;break;
         } catch(e) {if(e.status!==409)throw e;}
       }

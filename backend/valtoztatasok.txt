@@ -82,7 +82,7 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
       - Az online lemondási határidő az első alkalomhoz számítódik.
       - Az emlékeztető minden alkalom előtt menjen majd, az F20 részeként.
 
-[ ] F07 - Befejezési idő automatikus kitöltése időpont létrehozásakor
+[x] F07 - Befejezési idő automatikus kitöltése időpont létrehozásakor
     Komplexitás: KÖZEPES.
     Feladat: A szolgáltatás időtartama és a kezdési idő alapján töltődjön
     ki, hogy meddig tart az időpont.

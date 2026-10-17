@@ -1,5 +1,11 @@
 # ChocoLeaf – működés és indítás
 
+## Helyi fejlesztői indítás
+
+A backend mappában az `npm run local` indítja a teljes helyi környezetet. A weboldal címe **http://127.0.0.1:5174**, a kipróbálható időpontválasztóé **http://127.0.0.1:5174/idopont-minta**. A backend a 3002-es porton fut. A terminált hagyd nyitva; leállítás: Ctrl+C.
+
+Az indító a külön helyi tesztadatbázisba szükség esetén teljes, a szolgáltatás alkalomszámának megfelelő mintakurzusokat hoz létre. A meglévő kurzusok időpontjait nem írja át. Az `npm run local:check` ellenőrzi az indítást, az adminbelépést és a helyi levélfogadót, majd leállítja az ellenőrzéshez indított szervereket.
+
 ## Többalkalmas kurzusmeghirdetések (F06)
 
 Az admin a **Szolgáltatások** oldalon, a kurzus létrehozásakor vagy szerkesztésekor állítja be az **Alkalmak száma** mezőt (1–100); a **+ Új alkalom hozzáadása** gomb itt növeli az alkalomszámot. Az **Időpontok → + Új kurzusmeghirdetés** űrlapján a kurzus kiválasztása automatikusan létrehozza az összes szükséges dátummezőt. Új meghirdetésnél csak az egyes alkalmak kezdését kell megadni; a befejezést a szolgáltatás alkalmankénti időtartamából automatikusan számítjuk, és csak olvasható mezőben mutatjuk. A backend is kiszámítja a hiányzó befejezést. Az alkalmak nem adhatók hozzá vagy törölhetők. Meglévő meghirdetés szerkesztésekor a befejezések továbbra is külön módosíthatók, így az eltérő hosszúságú alkalmak is kezelhetők. Ugyanarra a napra is felvehető több, egymást nem átfedő alkalom. A megadott ár a teljes kurzus ára / fő, a férőhely és a foglalási státusz közös. A foglalás és a fizetés egyetlen csomagra történik.

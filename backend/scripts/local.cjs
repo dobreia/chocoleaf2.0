@@ -99,6 +99,7 @@ async function main() {
   }
   if(!ready)throw Error('A helyi szerverek nem indultak el időben.');
   console.log(`Weboldal: ${webUrl} | Admin: ${webUrl}/admin`);
+  console.log(`Időpontválasztó minta: ${webUrl}/idopont-minta`);
   console.log('Billingo kikapcsolva ebben a tesztben. '+(mailMode==='real'?'Email: valódi kézbesítés.':'A levelek: backend/.local-mail (EML fájlok).')+' Leállítás: Ctrl+C.');
   if(check){
     const slots=await(await fetch(webUrl+'/api/bookings/availability')).json();
