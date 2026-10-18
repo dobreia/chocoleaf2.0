@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { usePageDraftState } from '../../components/usePageDraft';
+import { usePageDraftState, useDraftPage } from '../../components/usePageDraft';
+import { draftKey, writeDraft } from '../../components/pageDraftStore';
 import { useSearchParams } from "react-router-dom";
 import { api } from "../../api/courses";
 import { Field, Notice } from "../../components/admin/UI";
@@ -8,6 +9,7 @@ import BookingEditor from "../../components/admin/BookingEditor";
 import SessionList from '../../components/SessionList';
 export default function Bookings() {
   const [search] = useSearchParams();
+  const draftPage = useDraftPage();
   const [data, setData] = useState({ items: [], total: 0 }),
     [slots, setSlots] = useState([]),
     [services, setServices] = useState([]),
@@ -24,8 +26,8 @@ export default function Bookings() {
     [edit, setEdit] = usePageDraftState('bookings.edit', undefined),
     [error, setError] = useState(""),
     [message, setMessage] = useState(""),
+    [confirmation, setConfirmation] = useState(null),
     [loading, setLoading] = useState(true),
-    [revision, setRevision] = useState(0),
     [busy, setBusy] = useState(false);
   const setFilter = (value) => {
     setLoading(true);
@@ -48,7 +50,7 @@ export default function Bookings() {
         setServices(b);
       })
       .catch((e) => setError(e.message));
-  }, [revision]);
+  }, []);
   useEffect(() => {
     let live = true;
     const timer = setTimeout(
@@ -76,18 +78,26 @@ export default function Bookings() {
       live = false;
       clearTimeout(timer);
     };
-  }, [filter, revision, search]);
-  const refresh = () => {
-    setLoading(true);
-    setRevision((x) => x + 1);
+  }, [filter, search]);
+  const refresh = async () => {
+    const [bookings, pendingRequests, courses] = await Promise.all([
+      api("/admin/bookings?" + new URLSearchParams(filter)),
+      api("/admin/requests"),
+      api("/admin/courses"),
+    ]);
+    setData(bookings);
+    setRequests(pendingRequests);
+    setSlots(courses);
   };
   const action = async (fn) => {
     if (busy) return;
     setBusy(true);
     setError("");
+    setMessage("");
     try {
       await fn();
-      refresh();
+      setConfirmation(null);
+      await refresh();
       setMessage("A módosítás mentve.");
     } catch (e) {
       setError(e.message);
@@ -95,15 +105,29 @@ export default function Bookings() {
       setBusy(false);
     }
   };
+  const closeEditor = () => {
+    if (edit?.id) writeDraft(draftKey(draftPage, 'bookingEditor.' + edit.id), undefined);
+    setEdit(undefined);
+  };
+  const editorDone = async () => {
+    closeEditor();
+    await refresh();
+    setMessage("Foglalás mentve.");
+  };
+  const changeStatus = (booking, status) => action(() => api('/admin/bookings/' + booking.id, {
+    method: 'PATCH', body: { status, updated_at: booking.updated_at },
+  }));
   return (
     <>
       <div className="cl-title">
         <h1>Foglalások</h1>
-        <button className="cl-primary" onClick={() => setEdit(null)}>
+        <button className="cl-primary" onClick={() => { closeEditor(); setEdit(null); }}>
           + Új foglalás
         </button>
       </div>
-      <Notice error={error} message={message} />
+      <div className="cl-bookings-feedback">
+        <Notice error={error} message={message} />
+      </div>
       {requests.length > 0 && (
         <section className="cl-card">
           <h2>Jóváhagyásra vár · {requests.length}</h2>
@@ -233,12 +257,12 @@ export default function Bookings() {
                 <th>Képzés / időpont</th>
                 <th>Összeg</th>
                 <th>Státusz</th>
-                <th>Művelet</th>
+                <th>Műveletek</th>
               </tr>
             </thead>
             <tbody>
               {data.items.map((b) => (
-                <tr key={b.id}>
+                <tr key={b.id} data-booking-id={b.id}>
                   <td>
                     <strong>{b.customer_name}</strong>
                     <br />
@@ -262,26 +286,36 @@ export default function Bookings() {
                     </span>
                   </td>
                   <td>
-                    <button onClick={() => setEdit(b)}>Megnyitás</button>
-                    {b.status === "cancelled" && (
-                      <button
-                        disabled={busy}
-                        onClick={() => {
-                          if (
-                            window.confirm(
-                              "Végleg törlöd ezt a lemondott foglalást?",
-                            )
-                          )
-                            action(() =>
-                              api("/admin/bookings/" + b.id, {
-                                method: "DELETE",
-                              }),
-                            );
-                        }}
-                      >
-                        Törlés
+                    <div className="cl-booking-row-actions" role="group" aria-label={`${b.customer_name} foglalásának műveletei`}>
+                      {b.status === 'pending' && <>
+                        <button className="cl-booking-approve" disabled={busy || (b.payment_method === 'stripe' && b.payment_status === 'pending')}
+                          onClick={() => changeStatus(b, 'confirmed')}>Jóváhagyás</button>
+                        <button className="cl-booking-danger" disabled={busy || (b.payment_method === 'stripe' && b.payment_status === 'pending')}
+                          onClick={() => setConfirmation({ id: b.id, kind: 'reject' })}>Elutasítás</button>
+                      </>}
+                      {b.status === 'cancelled' && <button className="cl-booking-danger" disabled={busy || b.payment_status === 'paid'}
+                        onClick={() => setConfirmation({ id: b.id, kind: 'delete' })}>Törlés</button>}
+                    </div>
+                    {b.payment_method === 'stripe' && b.payment_status === 'pending' && b.status === 'pending' &&
+                      <p className="cl-booking-action-note">A fizetés lezárásáig nem bírálható el.</p>}
+                    {b.status === 'cancelled' && b.payment_status === 'paid' &&
+                      <p className="cl-booking-action-note">Fizetett foglalás csak visszatérítés után törölhető.</p>}
+                    {confirmation?.id === b.id && <div className="cl-booking-confirm" role="group" aria-label="Művelet megerősítése">
+                      <p>{confirmation.kind === 'delete'
+                        ? 'Végleg törlöd ezt a lemondott foglalást? A művelet nem vonható vissza.'
+                        : 'Elutasítod ezt a foglalást? Az összes hozzá tartozó alkalmat lemondjuk, és értesítjük az ügyfelet.'}</p>
+                      {confirmation.kind === 'reject' && b.payment_status === 'paid' &&
+                        <p>Az elutasítás önmagában nem indít pénzvisszatérítést.</p>}
+                      <button className="cl-booking-danger" disabled={busy} onClick={() => confirmation.kind === 'reject'
+                        ? changeStatus(b, 'cancelled')
+                        : action(async () => {
+                          await api('/admin/bookings/' + b.id, { method: 'DELETE' });
+                          if (edit?.id === b.id) closeEditor();
+                        })}>
+                        {confirmation.kind === 'delete' ? 'Végleges törlés' : 'Elutasítás megerősítése'}
                       </button>
-                    )}
+                      <button disabled={busy} onClick={() => setConfirmation(null)}>Mégse</button>
+                    </div>}
                   </td>
                 </tr>
               ))}
@@ -311,12 +345,8 @@ export default function Bookings() {
         <BookingEditor
           booking={edit}
           slots={slots}
-          onClose={() => setEdit(undefined)}
-          onDone={() => {
-            setEdit(undefined);
-            refresh();
-            setMessage("Foglalás mentve.");
-          }}
+          onClose={closeEditor}
+          onDone={editorDone}
         />
       )}
     </>

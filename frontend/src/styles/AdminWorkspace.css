@@ -326,6 +326,40 @@
   border-top: 1px solid #e8dae1;
   padding: 16px 0;
 }
+.cl-booking-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 300px;
+}
+.cl-bookings-feedback {
+  min-height: 72px;
+}
+.cl-admin .cl-booking-approve {
+  background: #6c485c;
+  border-color: #6c485c;
+  color: #fff;
+}
+.cl-admin .cl-booking-approve:hover {
+  background: #553949;
+}
+.cl-admin .cl-booking-danger {
+  color: #84283b;
+  border-color: #c994a0;
+}
+.cl-booking-action-note {
+  max-width: 280px;
+  margin: 8px 3px 0;
+  font-size: 13px;
+}
+.cl-booking-confirm {
+  max-width: 320px;
+  padding: 12px;
+  margin-top: 8px;
+  border: 1px solid #c994a0;
+  border-radius: 8px;
+  background: #fff5f6;
+}
 .cl-calendar {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
