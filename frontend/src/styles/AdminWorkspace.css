@@ -345,6 +345,39 @@
 .cl-calendar-day h2 {
   font-size: 14px;
 }
+.cl-calendar-day-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+}
+.cl-calendar-day-heading h2 {
+  min-width: 0;
+  margin-top: 0;
+}
+.cl-admin .cl-calendar-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: #6c485c;
+  color: #fff;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+.cl-admin .cl-calendar-add:hover {
+  background: #553949;
+}
+.cl-admin .cl-calendar-add:focus-visible {
+  outline: 3px solid #6c485c;
+  outline-offset: 3px;
+}
 .cl-calendar-day.today {
   border: 2px solid #6c485c;
 }

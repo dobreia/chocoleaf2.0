@@ -82,14 +82,14 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
       - Az online lemondási határidő az első alkalomhoz számítódik.
       - Az emlékeztető minden alkalom előtt menjen majd, az F20 részeként.
 
-[ ] F07 - Befejezési idő automatikus kitöltése időpont létrehozásakor
+[x] F07 - Befejezési idő automatikus kitöltése időpont létrehozásakor
     Komplexitás: KÖZEPES.
     Feladat: A szolgáltatás időtartama és a kezdési idő alapján töltődjön
     ki, hogy meddig tart az időpont.
     Függőség: F06 adatmodellje; kétalkalmas kurzusnál mindkét alkalom
     befejezési idejét a saját kezdési idejéből kell kiszámítani.
 
-[ ] F08 - Új időpont létrehozása a naptár napi plusz gombjával
+[x] F08 - Új időpont létrehozása a naptár napi plusz gombjával
     Komplexitás: KÖZEPES.
     Feladat: A naptárban az adott napnál lévő + gomb nyissa meg az
     időpont létrehozását, a kiválasztott nap előkitöltésével.

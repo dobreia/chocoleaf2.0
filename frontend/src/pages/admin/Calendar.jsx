@@ -6,6 +6,8 @@ import BookingEditor from "../../components/admin/BookingEditor";
 import { Notice, Field } from "../../components/admin/UI";
 import { dayKey } from "../../components/admin/format";
 import CalendarViews from "../../components/admin/CalendarViews";
+import CourseSlotEditor from '../../components/admin/CourseSlotEditor';
+import { newCourseDraft } from '../../components/admin/courseSlotDraft';
 import CourseEventDetails from "../../components/admin/CourseEventDetails";
 import { courseEvents, calendarRange } from "../../components/admin/calendarModel";
 export default function Calendar() {
@@ -16,6 +18,8 @@ export default function Calendar() {
     [date, updateDate] = usePageDraftState('calendar.date', initialDate),
     [items, setItems] = useState([]),
     [slots, setSlots] = useState([]),
+    [services, setServices] = useState([]),
+    [newCourse, setNewCourse] = usePageDraftState('calendar.newCourse', null),
     [courseId, setCourseId] = usePageDraftState('calendar.course', params.get('session') || params.get("course")),
     [edit, setEdit] = usePageDraftState('calendar.edit', undefined),
     [error, setError] = useState(""),
@@ -49,10 +53,13 @@ export default function Calendar() {
         total = r.total;
         page++;
       }
-      const s = await api("/admin/courses");
+      const [s, availableServices] = await Promise.all([
+        api("/admin/courses"), api("/admin/services"),
+      ]);
       if (live) {
         setItems(found);
         setSlots(s);
+        setServices(availableServices);
         setError("");
       }
     })()
@@ -116,7 +123,8 @@ export default function Calendar() {
         <p>Foglalások betöltése…</p>
       ) : (
         <CalendarViews view={view} date={date} days={days} items={items} slots={slots} onCourse={e=>setCourseId(e.id)}
-          onOpen={setEdit} onDay={(day) => { setDate(day); setView("day"); }} />
+          onOpen={setEdit} onCreateCourse={day => setNewCourse(newCourseDraft(day))}
+          onDay={(day) => { setDate(day); setView("day"); }} />
       )}
       {course && edit === undefined && <CourseEventDetails event={course} onClose={()=>setCourseId(null)} onBooking={setEdit}/>}
       {edit !== undefined && (
@@ -130,6 +138,15 @@ export default function Calendar() {
             setRevision((x) => x + 1);
           }}
         />
+      )}
+      {newCourse && (
+        <CourseSlotEditor edit={newCourse} setEdit={setNewCourse} services={services}
+          onClose={() => setNewCourse(null)}
+          onDone={() => {
+            setNewCourse(null);
+            setLoading(true);
+            setRevision(x => x + 1);
+          }} />
       )}
     </>
   );

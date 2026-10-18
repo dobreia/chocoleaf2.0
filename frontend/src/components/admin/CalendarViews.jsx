@@ -12,7 +12,13 @@ function Status({ booking }) {
   return <span className={'cl-badge ' + booking.status}>{labels[booking.status]}</span>;
 }
 
-function DayView({ day, bookings, events, onOpen, onCourse }) {
+function AddCourseButton({ day, onCreateCourse }) {
+  return <button type="button" className="cl-calendar-add"
+    aria-label={`Új kurzusmeghirdetés: ${day}`} title="Új kurzusmeghirdetés"
+    onClick={() => onCreateCourse(day)}><span aria-hidden="true">+</span></button>;
+}
+
+function DayView({ day, bookings, events, onOpen, onCourse, onCreateCourse }) {
   const hours = {};
   bookings.forEach(b => { (hours[clock(b.start_time).slice(0, 2)] ||= []).push(b); });
   const uniqueBookings=[...new Map(bookings.map(b=>[b.id,b])).values()];
@@ -20,7 +26,10 @@ function DayView({ day, bookings, events, onOpen, onCourse }) {
     .reduce((n, b) => n + Number(b.seats), 0);
   return (
     <section className="cl-day-agenda" aria-label="Részletes napi időrend">
-      <h2>{title(day, true)}</h2>
+      <div className="cl-calendar-day-heading">
+        <h2>{title(day, true)}</h2>
+        {onCreateCourse && <AddCourseButton day={day} onCreateCourse={onCreateCourse} />}
+      </div>
       <p>{uniqueBookings.length} foglalás · {participants} résztvevő a nem lemondott foglalásokban</p>
       <div className="cl-day-courses">{events.map(e=><button key={e.id} className="cl-capacity-event" style={occupancyStyle(e)} onClick={()=>onCourse(e)}><strong>{clock(e.start_time)} · {e.title}</strong><span>{occupancy(e)}</span></button>)}</div>
       {!bookings.length ? (
@@ -55,11 +64,11 @@ function DayView({ day, bookings, events, onOpen, onCourse }) {
   );
 }
 
-export default function CalendarViews({ view, date, days, items, slots = [], onOpen, onDay, onCourse = () => {} }) {
+export default function CalendarViews({ view, date, days, items, slots = [], onOpen, onDay, onCourse = () => {}, onCreateCourse }) {
   const groups = groupBookings(items);
   const events = courseEvents(slots,items);
   if (view === 'day') {
-    return <DayView day={date} bookings={groups[date] || []} events={events.filter(e=>dayKey(e.start_time)===date)} onCourse={onCourse} onOpen={onOpen} />;
+    return <DayView day={date} bookings={groups[date] || []} events={events.filter(e=>dayKey(e.start_time)===date)} onCourse={onCourse} onOpen={onOpen} onCreateCourse={onCreateCourse} />;
   }
   return (
     <div className={'cl-calendar-scroll ' + view}>
@@ -72,11 +81,13 @@ export default function CalendarViews({ view, date, days, items, slots = [], onO
             (day.slice(0, 7) !== date.slice(0, 7) ? 'outside-month' : '');
           return (
             <section className={className} key={day}>
-              <h2>
+              <div className="cl-calendar-day-heading"><h2>
                 <button className="cl-day-link" onClick={() => onDay(day)} aria-label={title(day, true) + ' – napi nézet'}>
                   {title(day)}
                 </button>
               </h2>
+                {onCreateCourse && <AddCourseButton day={day} onCreateCourse={onCreateCourse} />}
+              </div>
               <p className="cl-day-count">{bookings.length} alkalom</p>
               {visible.map(b => (
                 <button className='cl-event cl-course-event' key={b.id} style={occupancyStyle(b)} onClick={() => onCourse(b)}
