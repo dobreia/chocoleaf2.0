@@ -16,7 +16,7 @@ process.env.UPLOAD_DIR=require('node:path').resolve(__dirname,'../../frontend/te
     sessions.set(id,session);return session;
   }}}});
   const app=require('../src/index');
-  app.get('/__test/state',async(_req,res)=>res.json({bookings:(await db.query('SELECT * FROM bookings')).rows,mail:(await db.query('SELECT recipient,subject,body,attachments FROM outbox')).rows}));
+  app.get('/__test/state',async(_req,res)=>res.json({bookings:(await db.query('SELECT * FROM bookings')).rows,mail:(await db.query('SELECT recipient,subject,body,attachments,calendar FROM outbox')).rows}));
   app.post('/__test/complete/:id',async(req,res)=>{
     const session=sessions.get(req.params.id);if(!session)return res.sendStatus(404);
     const orders=require('../src/payments/orders');

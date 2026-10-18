@@ -3,6 +3,7 @@ const { transaction, one } = require("./store");
 const { fail, uuid, str, integer } = require("./rules");
 const { checkSlot } = require("./schedule");
 const { bookingNotice } = require("./notifications");
+const { syncBookingCalendar } = require('./bookingCalendar');
 const { randomUUID } = require('node:crypto');
 const { getSessions, normalizeSessions, attachSessions } = require('./courseSessions');
 function serviceData(d) {
@@ -51,6 +52,12 @@ async function serviceSave(id, data) {
         "UPDATE courses SET title=$2,description=$3 WHERE service_id=$1",
         [id, s.title, s.description],
       );
+      if (previous.title !== s.title) {
+        const confirmed = (await c.query(`SELECT b.* FROM bookings b JOIN courses c ON c.id=b.course_id
+          WHERE c.service_id=$1 AND b.status='confirmed' ORDER BY b.id FOR UPDATE OF b`, [id])).rows;
+        for (const booking of confirmed)
+          await syncBookingCalendar(c, booking, { title: s.title }, await getSessions(c, booking.course_id));
+      }
       return one(c, "SELECT * FROM services WHERE id=$1", [id]);
     }
     return one(

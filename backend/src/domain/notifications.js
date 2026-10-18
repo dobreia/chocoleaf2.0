@@ -1,6 +1,7 @@
 const pool = require("../db");
 const nodemailer = require("nodemailer");
 const {getSessions}=require('./courseSessions');
+const { syncBookingCalendar } = require('./bookingCalendar');
 async function queue(c, to, subject, body, attachments = []) {
   if (to)
     await c.query(
@@ -8,7 +9,7 @@ async function queue(c, to, subject, body, attachments = []) {
       [to, subject, body, JSON.stringify(attachments)],
     );
 }
-async function bookingNotice(c, b, slot, event, manageToken) {
+async function bookingNotice(c, b, slot, event, manageToken, { calendar = true } = {}) {
   const origin = (process.env.FRONTEND_URL || "http://localhost:5173").split(',')[0].replace(
     /\/$/,
     "",
@@ -32,6 +33,7 @@ async function bookingNotice(c, b, slot, event, manageToken) {
     "ChocoLeaf – " + event,
     `${body.replace(link, '')}${details}\nEmail: ${b.customer_email}${billingEmail}\nTelefon: ${b.customer_phone || '–'}\nMegjegyzés: ${b.note || '–'}\n\nAdmin: ${origin}/admin/bookings`,
   );
+  if (calendar) await syncBookingCalendar(c, b, slot, sessions);
 }
 let running = false;
 async function deliver() {
@@ -50,11 +52,14 @@ async function deliver() {
     for (const mail of rows) {
       try {
         await transport.sendMail({
-          from: process.env.MAIL_FROM || process.env.MAIL_USER,
+          from: mail.calendar?.from || process.env.MAIL_FROM || process.env.MAIL_USER,
           to: mail.recipient,
           subject: mail.subject,
           text: mail.body,
           attachments: (mail.attachments || []).map(a => ({filename:a.filename, content:Buffer.from(a.content, 'base64'), contentType:'application/pdf'})),
+          ...(mail.calendar ? { icalEvent: {
+            method: mail.calendar.method, filename: mail.calendar.filename, content: mail.calendar.content,
+          }} : {}),
           messageId: `<${mail.id}@chocoleaf.hu>`,
         });
         await c.query(

@@ -167,6 +167,11 @@ test('paid webhook is idempotent; late expiry cannot reverse payment; admin cann
   const response=await fetch(base+'/api/payments/'+b.paymentId);const publicData=await response.json();
   assert.equal(publicData.status,'paid');assert.equal(publicData.email,undefined);assert.equal(publicData.billing,undefined);
   assert.equal(response.headers.get('cache-control'),'no-store');
+  assert.equal((await pool.query("SELECT count(*)::int AS n FROM outbox WHERE calendar->>'uid' LIKE $1",[bookingId+'.%'])).rows[0].n,0);
+  await bookings.update(bookingId,{status:'confirmed'});
+  assert.equal((await pool.query("SELECT count(*)::int AS n FROM outbox WHERE calendar->>'uid' LIKE $1",[bookingId+'.%'])).rows[0].n,1);
+  await webhook(session);
+  assert.equal((await pool.query("SELECT count(*)::int AS n FROM outbox WHERE calendar->>'uid' LIKE $1",[bookingId+'.%'])).rows[0].n,1);
 });
 test('expired checkout releases its hold without ever saving an unpaid booking',async()=>{
   const b=await newBooking();await orders.checkout(b.paymentId);

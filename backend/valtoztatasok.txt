@@ -94,11 +94,15 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
     Feladat: A naptárban az adott napnál lévő + gomb nyissa meg az
     időpont létrehozását, a kiválasztott nap előkitöltésével.
 
-[ ] F09 - Foglalás hozzáadása az ügyfél saját naptárához
+[x] F09 - Foglalás hozzáadása az ügyfél saját naptárához
     Komplexitás: KÖZEPES–NAGY, a választott megoldástól függően.
     Függőség: F06; többalkalmas kurzusnál minden időpont kerüljön a naptárba.
-    Tisztázandó: Elég egy naptárba menthető meghívó / „Naptárhoz adás”
-    lehetőség, vagy automatikus szinkronizálás kell? Mely naptárakkal?
+    Megvalósítás: Visszaigazolt foglaláskor alkalmanként külön, szabványos
+    naptármeghívó az ügyfélnek; sorszámozott események, saját időtartammal.
+    Módosításkor eseményfrissítés, lemondáskor törlési értesítés.
+    Gmailre optimalizált meghívóformátum, más naptárakban elfogadható meghívó.
+    Az automatikus feldolgozás a címzett naptárának beállításaitól függ.
+    Naptári emlékeztető nincs; az e-mailes emlékeztető az F20 része.
 
 
 3. ÜGYFELEK ÉS MEGKERESÉSEK
@@ -189,8 +193,9 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
     Komplexitás: NAGY.
     Feladat: Az ügyfél minden alkalom előtt 3 nappal kapjon emlékeztetőt.
     Függőség: F06; többalkalmas kurzusnál külön emlékeztető minden alkalom előtt.
-    Tisztázandó: Pontosan 72 órával előtte vagy egy adott napszakban menjen?
-    Mi történjen a 3 napon belül létrejött vagy áthelyezett foglalásokkal?
+    Eldöntve: Minden alkalom előtt pontosan 72 órával e-mailben menjen.
+    Tisztázandó: Mi történjen a 3 napon belül létrejött vagy áthelyezett
+    foglalásokkal?
 
 
 JAVASOLT MEGVALÓSÍTÁSI SORREND

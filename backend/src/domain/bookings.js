@@ -265,6 +265,7 @@ async function request(id, t, data) {
       b,
       { title: b.course_title, start_time: b.start_time },
       "Módosítási kérelmed adminisztrátori jóváhagyásra vár",
+      undefined, { calendar: false },
     );
     return r;
   });
@@ -305,6 +306,7 @@ async function resolve(id, decision) {
         b,
         { title: b.course_title, start_time: b.start_time },
         "Módosítási kérelmedet elutasítottuk; az eredeti foglalás marad érvényben",
+        undefined, { calendar: false },
       );
     }
     return one(
