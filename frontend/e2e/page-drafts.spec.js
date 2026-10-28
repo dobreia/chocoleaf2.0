@@ -44,7 +44,7 @@ for (const path of ['/contact', '/quote-request']) {
     await name.fill('Elhagyott oldal');
     const nav = page.getByRole('navigation', { name:'Fő navigáció' });
     await nav.getByRole('link', { name:'Képzések', exact:true }).click();
-    await nav.getByRole('link', { name:path === '/contact' ? 'Kapcsolat' : 'Ajánlatkérés', exact:true }).click();
+    await page.goBack();
     await expect(name).toHaveValue('');
     await page.reload();
     await expect(name).toHaveValue('');

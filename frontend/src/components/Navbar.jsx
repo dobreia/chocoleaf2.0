@@ -2,16 +2,7 @@ import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import "../styles/Navbar.css";
 import AdminNavItem from './AdminNavItem';
-
-const navLinks = [
-  { to: "/", label: "Főoldal" },
-  { to: "/courses", label: "Képzések" },
-  { to: "/gallery", label: "Galéria" },
-  { to: "/about", label: "Rólam" },
-  { to: "/giftcards", label: "Ajándékutalvány" },
-  { to: "/contact", label: "Kapcsolat" },
-  { to: "/quote-request", label: "Ajánlatkérés" },
-];
+import { siteLinks, siteActions } from './siteNavigation';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -45,7 +36,7 @@ export default function Navbar() {
           id="primary-navigation"
         >
           <ul>
-            {navLinks.map((link) => (
+            {[...siteLinks, ...siteActions].map((link) => (
               <li key={link.to}>
                 <NavLink
                   className={({ isActive }) =>

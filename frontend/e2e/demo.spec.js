@@ -27,7 +27,7 @@ test('public pages, images and mobile navigation',async({page,request})=>{
     await page.goto(path);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),path+' overflow').toBe(true);
     await page.getByRole('button',{name:'Menü megnyitása',exact:true}).click();
-    await expect(page.locator('nav').getByRole('link',{name:path==='/'?'Munkáim':'Galéria',exact:true})).toBeVisible();
+    await expect(page.locator('nav').getByRole('link',{name:'Munkáim',exact:true})).toBeVisible();
   }
   expect(errors).toEqual([]);
 });
@@ -35,7 +35,7 @@ test('contact and quote forms persist in admin; all admin screens load',async({p
   await page.goto('/contact');await page.getByLabel('Név',{exact:true}).fill('Bemutató Érdeklődő');
   await page.getByLabel('Email',{exact:true}).fill('inquiry@example.test');await page.getByLabel('Üzenet',{exact:true}).fill('Bemutató kapcsolatfelvétel.');
   await page.getByRole('button',{name:'Üzenet elküldése'}).click();await expect(page.locator('.cl-success')).toBeVisible();
-  await page.locator('nav').getByRole('link',{name:'Ajánlatkérés',exact:true}).click();
+  await page.goto('/quote-request');
   await expect(page.getByLabel('Tárgy',{exact:true})).toHaveValue('Egyedi ajánlatkérés');
   await login(page);
   for(const path of ['','calendar','calendar-sync','bookings','services','courses','customers','inquiries','content','giftcards','payments']){

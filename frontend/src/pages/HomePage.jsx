@@ -3,6 +3,7 @@ import { usePageDraftState } from '../components/usePageDraft';
 import { api } from "../api/courses";
 import "../styles/HomePage.css";
 import AdminNavItem from '../components/AdminNavItem';
+import { siteLinks, siteActions } from '../components/siteNavigation';
 
 export default function HomePage() {
   const [draft, setDraft, resetDraft] = usePageDraftState('home.inquiry', {});
@@ -46,7 +47,7 @@ export default function HomePage() {
 
         <img className="logo" src="/assets/logo.png" alt="" />
 
-        <nav className="navbar navbar-expand-xl">
+        <nav className="navbar navbar-expand-xl" aria-label="Fő navigáció">
           <div className="container-fluid">
             <button
               className="navbar-toggler"
@@ -61,13 +62,9 @@ export default function HomePage() {
             </button>
 
             <div className="nav-buttons">
-              <a href="#form">
-                <button className="button-primary">Ajánlatkérés</button>
-              </a>
-
-              <a href="/courses">
-                <button className="button-secondary">Képzések</button>
-              </a>
+              {siteActions.map(link => <a href={link.to} key={link.to}>
+                <button className={link.className}>{link.label}</button>
+              </a>)}
             </div>
 
             <div
@@ -75,35 +72,11 @@ export default function HomePage() {
               id="navbarNav"
             >
               <ul className="navbar-nav mx-auto text-center">
-                <li className="nav-item">
-                  <a className="nav-link" aria-current="page" href="/">
-                    Főoldal
+                {siteLinks.map(link => <li className="nav-item" key={link.to}>
+                  <a className="nav-link" aria-current={link.to === '/' ? 'page' : undefined} href={link.to}>
+                    {link.label}
                   </a>
-                </li>
-
-                <li className="nav-item">
-                  <a className="nav-link" href="#introduction">
-                    Rólam
-                  </a>
-                </li>
-
-                <li className="nav-item">
-                  <a className="nav-link" href="/gallery">
-                    Munkáim
-                  </a>
-                </li>
-
-                <li className="nav-item">
-                  <a className="nav-link" href="#footer">
-                    Kapcsolat
-                  </a>
-                </li>
-
-                <li className="nav-item">
-                  <a className="nav-link" href="/giftcard">
-                    Ajándékutalvány
-                  </a>
-                </li>
+                </li>)}
                 <AdminNavItem itemClassName="nav-item" />
               </ul>
             </div>
