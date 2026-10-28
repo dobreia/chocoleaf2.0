@@ -55,6 +55,16 @@ admin.put("/customers", async (req, res) =>
     }),
   ),
 );
+admin.get('/inquiries/unread-count',async (_req,res)=>{
+  res.set('Cache-Control','no-store');
+  res.json(await one(pool,'SELECT count(*)::int AS unread FROM inquiries WHERE read_at IS NULL'));
+});
+admin.post('/inquiries/read',async (req,res)=>{
+  if(!Array.isArray(req.body.ids) || req.body.ids.length>500)fail('Érvénytelen megkereséslista.');
+  const ids=req.body.ids.map(id=>uuid(id));
+  const result=await pool.query('UPDATE inquiries SET read_at=now() WHERE id=ANY($1::uuid[]) AND read_at IS NULL', [ids]);
+  res.json({updated:result.rowCount});
+});
 admin.get("/inquiries", async (req, res) =>
   res.json(
     (

@@ -3,7 +3,9 @@ import { usePageDraftState } from '../../components/usePageDraft';
 import { api } from "../../api/courses";
 import { Field, Modal, SaveForm, Notice } from "../../components/admin/UI";
 import { dateTime } from "../../components/admin/format";
+import { useOutletContext } from 'react-router-dom';
 export default function Records({ kind }) {
+  const { refreshInquiryCount } = useOutletContext() || {};
   const [items, setItems] = useState([]),
     [edit, setEdit] = usePageDraftState('records.edit', null),
     [error, setError] = useState(""),
@@ -20,6 +22,21 @@ export default function Records({ kind }) {
   useEffect(() => {
     load();
   }, [load]);
+  useEffect(() => {
+    if (kind !== 'inquiries' || loading) return;
+    const ids = items.filter(item => !item.read_at).map(item => item.id);
+    if (!ids.length) return;
+    let live = true;
+    api('/admin/inquiries/read', {method:'POST',body:{ids}})
+      .then(() => {
+        if (!live) return;
+        const read = new Set(ids);
+        setItems(current => current.map(item => read.has(item.id) ? {...item,read_at:new Date().toISOString()} : item));
+        refreshInquiryCount?.();
+      })
+      .catch(error => { if (live) setError(error.message); });
+    return () => { live = false; };
+  }, [kind, loading, items, refreshInquiryCount]);
   const titles = {
     customers: "Ügyfelek",
     inquiries: "Megkeresések",

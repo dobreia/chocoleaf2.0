@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePageDraftState, useClearPageDrafts } from '../usePageDraft';
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { api } from "../../api/courses";
@@ -6,6 +6,16 @@ import { Field, SaveForm } from "./UI";
 import "../../styles/AdminWorkspace.css";
 export default function AdminShell() {
   const [user, setUser] = useState(undefined);
+  const [unreadInquiries, setUnreadInquiries] = useState(0);
+  const inquiryRequest = useRef(0);
+  const refreshInquiryCount = useCallback(() => {
+    const request = ++inquiryRequest.current;
+    return api('/admin/inquiries/unread-count')
+      .then(({unread}) => {
+        if (request === inquiryRequest.current) setUnreadInquiries(unread);
+      })
+      .catch(() => { /* Keep the last count if the connection is temporarily unavailable. */ });
+  }, []);
   const [email, setEmail, resetEmail] = usePageDraftState('login.email', ""),
     [password, setPassword] = useState("");
   const navigate = useNavigate();
@@ -18,6 +28,18 @@ export default function AdminShell() {
     window.addEventListener("admin-session-expired", expire);
     return () => window.removeEventListener("admin-session-expired", expire);
   }, [clearDrafts]);
+  useEffect(() => {
+    if (!user) return;
+    const requestState = inquiryRequest;
+    refreshInquiryCount();
+    const timer = setInterval(refreshInquiryCount, 30000);
+    window.addEventListener('focus', refreshInquiryCount);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', refreshInquiryCount);
+      requestState.current++;
+    };
+  }, [user, refreshInquiryCount]);
   if (user === undefined)
     return (
       <main className="cl-admin">
@@ -99,11 +121,13 @@ export default function AdminShell() {
           ].map(([path, label]) => (
             <NavLink end to={"/admin/" + path} key={path}>
               {label}
+              {path === 'inquiries' && unreadInquiries > 0 &&
+                <span className="cl-nav-unread" aria-label={`${unreadInquiries} olvasatlan megkeresés`}>{unreadInquiries}</span>}
             </NavLink>
           ))}
         </nav>
         <main className="cl-content">
-          <Outlet />
+          <Outlet context={{refreshInquiryCount}} />
         </main>
       </div>
     </div>

@@ -402,6 +402,39 @@ test("inquiry persists and can be marked handled", async () => {
     "handled",
   );
 });
+test('inquiry unread counts require admin and reading only marks the displayed IDs without handling or hiding later arrivals',async()=>{
+  assert.equal((await req('/admin/inquiries/unread-count','GET',undefined,false)).status,401);
+  assert.equal((await req('/admin/inquiries/read','POST',{ids:[]},false)).status,401);
+  assert.equal((await req('/admin/inquiries/read','POST',{ids:[]},true,{Origin:'https://evil.example'})).status,403);
+  const existing=(await req('/admin/inquiries')).data;
+  await req('/admin/inquiries/read','POST',{ids:existing.map(item=>item.id)});
+  const create=async name=>{
+    assert.equal((await req('/inquiries','POST',{name,email:'unread@example.test',subject:name,message:'Unread message'},false)).status,201);
+    return (await req('/admin/inquiries')).data.find(item=>item.name===name);
+  };
+  const first=await create('First unread'),second=await create('Second unread');
+  assert.equal((await req('/admin/inquiries/unread-count')).data.unread,2);
+  assert.equal(first.read_at,null);assert.equal(second.read_at,null);
+  assert.equal((await req('/admin/inquiries/read','POST',{ids:[first.id]})).data.updated,1);
+  const firstRead=(await req('/admin/inquiries')).data.find(item=>item.id===first.id);
+  assert.ok(firstRead.read_at);assert.equal(firstRead.status,'new');
+  assert.equal((await req('/admin/inquiries/unread-count')).data.unread,1);
+  const later=await create('Arrived after list was fetched');
+  assert.equal((await req('/admin/inquiries/read','POST',{ids:[first.id,second.id]})).data.updated,1);
+  assert.equal((await req('/admin/inquiries/unread-count')).data.unread,1);
+  assert.equal((await req('/admin/inquiries')).data.find(item=>item.id===later.id).read_at,null);
+  assert.equal((await req('/admin/inquiries/read','POST',{ids:[first.id]})).data.updated,0);
+  assert.equal((await req('/admin/inquiries')).data.find(item=>item.id===first.id).read_at,firstRead.read_at);
+  for(const body of [{},{ids:'invalid'},{ids:['invalid']},{ids:Array(501).fill(first.id)}])
+    assert.equal((await req('/admin/inquiries/read','POST',body)).status,400);
+  assert.equal((await req('/admin/inquiries/unread-count')).data.unread,1);
+  await req('/admin/inquiries/read','POST',{ids:[later.id]});
+  assert.equal((await req('/admin/inquiries/unread-count')).data.unread,0);
+  assert.equal((await req('/admin/inquiries/'+first.id,'PATCH',{status:'handled'})).data.status,'handled');
+  await req('/admin/inquiries/'+first.id,'PATCH',{status:'new'});
+  assert.equal((await req('/admin/inquiries/unread-count')).data.unread,0);
+});
+
 test("gift order persists and legacy GET approval is gone", async () => {
   const r = await req(
     "/giftcard/start-payment",
