@@ -231,3 +231,6 @@ JAVASOLT MEGVALÓSÍTÁSI SORREND
 Minden lépést külön, áttekinthető változtatásként érdemes elkészíteni.
 A sorrend a függőségeket és a várható komplexitást követi; üzleti prioritás
 alapján módosítható.
+
+
+dinamikus ajandekkartya árak
