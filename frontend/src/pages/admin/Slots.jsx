@@ -5,6 +5,7 @@ import SessionList from '../../components/SessionList';
 import { sessionsOf } from '../../components/courseSessions';
 import CourseSlotEditor from '../../components/admin/CourseSlotEditor';
 import { newCourseDraft } from '../../components/admin/courseSlotDraft';
+import { courseList } from '../../components/admin/courseList';
 import { Field, Notice } from "../../components/admin/UI";
 import {
   money,
@@ -16,6 +17,7 @@ export default function Slots() {
     [edit, setEdit] = usePageDraftState('slots.edit', null),
     [error, setError] = useState(""),
     [q, setQ] = usePageDraftState('slots.filter', ""),
+    [period, setPeriod] = usePageDraftState('slots.period', 'upcoming'),
     [loading, setLoading] = useState(true);
   const load = () =>
     Promise.all([
@@ -31,6 +33,7 @@ export default function Slots() {
   useEffect(() => {
     load();
   }, []);
+  const visibleItems = courseList(items, period, q);
   return (
     <>
       <div className="cl-title">
@@ -47,16 +50,25 @@ export default function Slots() {
         Az időpontok budapesti idő szerint értendők. Egy meghirdetés összes alkalma
         közösen foglalható, közös csomagárral és férőhellyel.
       </p>
-      <Field label="Szolgáltatás szűrése">
-        <select value={q} onChange={(e) => setQ(e.target.value)}>
-          <option value="">Összes</option>
-          {services.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.title}
-            </option>
-          ))}
-        </select>
-      </Field>
+      <div className="cl-filters">
+        <Field label="Időszak">
+          <select value={period} onChange={e => setPeriod(e.target.value)}>
+            <option value="upcoming">Mai és közelgő</option>
+            <option value="past">Korábbi</option>
+            <option value="all">Összes</option>
+          </select>
+        </Field>
+        <Field label="Szolgáltatás szűrése">
+          <select value={q} onChange={(e) => setQ(e.target.value)}>
+            <option value="">Összes</option>
+            {services.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.title}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
       {loading ? (
         <p>Betöltés…</p>
       ) : (
@@ -71,8 +83,7 @@ export default function Slots() {
               </tr>
             </thead>
             <tbody>
-              {items
-                .filter((s) => !q || q === s.service_id)
+              {visibleItems
                 .map((s) => (
                   <tr key={s.id}>
                     <td>
@@ -121,7 +132,7 @@ export default function Slots() {
                 ))}
             </tbody>
           </table>
-          {!items.length && <p>Még nincs meghirdetett alkalom.</p>}
+          {!visibleItems.length && <p>{!items.length ? 'Még nincs meghirdetett alkalom.' : 'Nincs a szűrésnek megfelelő meghirdetés.'}</p>}
         </div>
       )}
       {edit && (
