@@ -25,14 +25,6 @@ export default function GiftCardPage() {
   const [selectedAmount, setSelectedAmount] = usePageDraftState('gift.amount', null);
   const [quantity, setQuantity] = usePageDraftState('gift.quantity', 1);
   const [names, setNames] = usePageDraftState('gift.names', [""]);
-  const [buyerType, setBuyerType] = usePageDraftState('gift.buyerType', "private");
-  const [billingData, setBillingData] = usePageDraftState('gift.billing', {
-    privateName: "",
-    privateAddress: "",
-    companyName: "",
-    companyAddress: "",
-    taxNumber: "",
-  });
   const [email, setEmail] = usePageDraftState('gift.email', "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -70,54 +62,15 @@ export default function GiftCardPage() {
     );
   }
 
-  function updateBillingField(field, value) {
-    setBillingData((currentData) => ({
-      ...currentData,
-      [field]: value,
-    }));
-  }
-
-  function getBillingPayload() {
-    if (provider === 'stripe') return stripeBilling;
-    if (provider !== 'stripe' && buyerType === "company") {
-      return {
-        buyerType,
-        companyName: billingData.companyName.trim(),
-        companyAddress: billingData.companyAddress.trim(),
-        taxNumber: billingData.taxNumber.trim(),
-      };
-    }
-
-    return {
-      buyerType,
-      privateName: billingData.privateName.trim(),
-      privateAddress: billingData.privateAddress.trim(),
-    };
-  }
-
   async function startPayment() {
     if (isSubmitting) return;
     setErrorMessage("");
     const cleanNames = names.map((name) => name.trim());
-    const billingPayload = getBillingPayload();
+    const billingPayload = stripeBilling;
 
     if (!Number.isInteger(Number(quantity)) || Number(quantity)<1 || Number(quantity)>20) {setErrorMessage("Adj meg 1–20 közötti egész darabszámot.");return;}
     if (!selectedAmount) {
       setErrorMessage("Kérlek válassz összeget!");
-      return;
-    }
-
-    if (provider !== 'stripe' && buyerType === "company") {
-      if (
-        !billingPayload.companyName ||
-        !billingPayload.companyAddress ||
-        !billingPayload.taxNumber
-      ) {
-        setErrorMessage("Kérlek add meg a céges számlázási adatokat!");
-        return;
-      }
-    } else if (provider !== 'stripe' && (!billingPayload.privateName || !billingPayload.privateAddress)) {
-      setErrorMessage("Kérlek add meg a magánszemély számlázási adatokat!");
       return;
     }
 
@@ -190,10 +143,7 @@ export default function GiftCardPage() {
             <label className="voucher-label">Kézbesítési emailcím<input required type="email" maxLength="254" value={email} autoComplete="email" onChange={e=>setEmail(e.target.value)}/></label><p className="voucher-hint">Az összes elkészült utalványt erre az emailcímre küldjük. Megadhatod a saját címedet, ha személyesen szeretnéd átadni.</p>
           </section>
           <section className="voucher-step"><p className="experience-eyebrow">03 · Számlázás</p><h2>Kinek állítsuk ki a számlát?</h2>
-            {provider === 'stripe' ? <BillingFields value={stripeBilling} onChange={setStripeBilling}/> : <>
-            <div className="voucher-buyer">{[['private','Magánszemély'],['company','Cég']].map(([value,label])=><label key={value}><input type="radio" name="buyerType" value={value} checked={buyerType===value} onChange={()=>setBuyerType(value)}/>{label}</label>)}</div>
-            {(buyerType==='company'?[['companyName','Cégnév'],['companyAddress','Székhely'],['taxNumber','Adószám']]:[['privateName','Számlázási név'],['privateAddress','Számlázási cím']]).map(([key,label])=><label key={key} className="voucher-label">{label}<input required maxLength="500" value={billingData[key]} onChange={e=>updateBillingField(key,e.target.value)}/></label>)}
-            </>}
+            <BillingFields value={stripeBilling} onChange={setStripeBilling}/>
           </section>
         </div>
         <aside className="voucher-summary"><div className="voucher-summary-inner"><img className="voucher-photo" src="/assets/courses/alap.jpg" alt="Kézműves csokoládékészítő élmény"/><p className="experience-eyebrow">Az ajándékod</p><h2>Édes élmény, névre szólóan.</h2><div className="voucher-summary-row"><span>Utalvány értéke</span><strong>{selectedAmount?formatAmount(selectedAmount)+' Ft':'Válassz értéket'}</strong></div><div className="voucher-summary-row"><span>Mennyiség</span><strong>{quantity||'–'} db</strong></div><div className="voucher-total" aria-live="polite"><span>Fizetendő összesen</span><strong>{selectedAmount&&quantity?formatAmount(selectedAmount*Number(quantity))+' Ft':'–'}</strong></div>

@@ -35,6 +35,7 @@ before(async()=>{
   for(const s of [interval(470),interval(472)])await db.query('INSERT INTO course_sessions(course_id,start_time,end_time) VALUES($1,$2,$3)',[upgradedGroup,s.start_time,s.end_time]);
   await require('../src/migrate')();
   courses=require('../src/domain/courses');bookings=require('../src/domain/bookings');orders=require('../src/payments/orders');
+  require('../src/payments/providers').provider=()=> 'stripe';
   server=require('../src/index').listen(0,'127.0.0.1');
   await new Promise(r=>server.on('listening',r));origin='http://127.0.0.1:'+server.address().port;
 });

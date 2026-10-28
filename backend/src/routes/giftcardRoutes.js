@@ -12,7 +12,8 @@ router.post("/start-payment", async (req, res) => {
   const method = providers.provider();
   if (d.paymentMethod && d.paymentMethod !== method)
     fail('A fizetési mód megváltozott. Frissítsd az oldalt.');
-  const normalizedBilling = method === 'stripe' ? providers.billingData(d.billingData) : null;
+  const normalizedBilling = providers.billingData(d.billingData);
+  if(method==='transfer')require('../domain/transfers').configuration();
   const config = method === 'stripe' ? providers.configuration('giftcard') : null;
   const requestKey = req.get('Idempotency-Key') ? uuid(req.get('Idempotency-Key')) : null;
   const address = email(d.email),
@@ -24,10 +25,6 @@ router.post("/start-payment", async (req, res) => {
   const billing = d.billingData;
   if (!billing || !["private", "company"].includes(billing.buyerType))
     fail("Hiányzó számlázási adatok.");
-  for (const key of method === 'stripe' ? [] : billing.buyerType === "company"
-    ? ["companyName", "companyAddress", "taxNumber"]
-    : ["privateName", "privateAddress"])
-    str(billing[key], "Számlázási adat", 500);
   const id = "gift-" + token(),
     notice = "GIFT-" + token().slice(0, 12).toUpperCase();
   const intent = {
@@ -42,29 +39,41 @@ router.post("/start-payment", async (req, res) => {
       email: address,
       unitAmount: amount,
       quantity,
-      billingData: billing,
+      billingData: method==='stripe' ? billing : normalizedBilling,
       paymentMethod: method,
     },
     createdAt: Date.now(),
   };
   const result = await transaction(async (c) => {
     if (requestKey) {
+      if(method==='transfer'){
+        const old=await one(c,'SELECT * FROM gift_orders WHERE request_key=$1',[requestKey]);
+        if(old){
+          const sameBilling=JSON.stringify(old.data.meta.billingData,Object.keys(old.data.meta.billingData).sort())===JSON.stringify(normalizedBilling,Object.keys(normalizedBilling).sort());
+          if(old.data.meta.paymentMethod!==method || old.data.meta.email!==address || old.data.amount!==intent.amount || old.data.meta.unitAmount!==amount || JSON.stringify(old.data.meta.names)!==JSON.stringify(names) || !sameBilling)
+            fail('Ez a kérésazonosító már más rendeléshez tartozik.',409);
+          return {id:old.id,redirectUrl:'/transfer?id='+encodeURIComponent(old.id)};
+        }
+      }
       const old = await one(c, 'SELECT p.*,g.data FROM payment_orders p JOIN gift_orders g ON g.id=p.gift_order_id WHERE p.request_key=$1', [requestKey]);
       if (old) {
-        if (old.email !== address || old.amount !== intent.amount || JSON.stringify(old.data.meta.names) !== JSON.stringify(names) || old.data.meta.unitAmount !== amount ||
+        if (old.data.meta.paymentMethod !== method || old.email !== address || old.amount !== intent.amount || JSON.stringify(old.data.meta.names) !== JSON.stringify(names) || old.data.meta.unitAmount !== amount ||
             JSON.stringify(old.billing, Object.keys(old.billing).sort()) !== JSON.stringify(normalizedBilling, Object.keys(normalizedBilling).sort()))
           fail('Ez a kérésazonosító már más rendeléshez tartozik.', 409);
         return { id: old.gift_order_id, paymentId: old.id, redirectUrl: '/payment#' + old.id };
       }
     }
-    await c.query("INSERT INTO gift_orders(id,data) VALUES($1,$2)", [
+    await c.query("INSERT INTO gift_orders(id,data,request_key) VALUES($1,$2,$3)", [
       id,
       intent,
+      requestKey,
     ]);
-    const payment = normalizedBilling ? await payments.insert(c, { giftId: id, key: requestKey, amount: intent.amount,
+    const payment = method==='stripe' ? await payments.insert(c, { giftId: id, key: requestKey, amount: intent.amount,
       email: address, description: `ChocoLeaf ajándékutalvány – ${quantity} db`, billing: normalizedBilling, config }) : null;
     if (payment) await queue(c, address, 'ChocoLeaf – ajándékutalvány fizetése',
       `Bankkártyás fizetés folytatása (30 percig): ${(process.env.FRONTEND_URL || 'http://localhost:5173').split(',')[0]}/payment#${payment.id}`);
+    else await queue(c,address,'ChocoLeaf – ajándékutalvány rendelésed megérkezett',
+      `Kedves ${names[0]}!\n\nRendelésedet elmentettük.\nNevek: ${names.join(', ')}\nDarabszám: ${quantity}\nAz utalványokat az átutalás beérkezésének adminisztrátori jóváhagyása után küldjük.`+require('../domain/transfers').instructions(intent.amount,notice,id));
     await queue(
       c,
       process.env.MAIL_ADMIN || process.env.MAIL_FROM,

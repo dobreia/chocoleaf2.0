@@ -56,6 +56,7 @@ export default function TransferPage() {
         });
         if (!controller.signal.aborted) {
           setTransferInfo(data);
+          if (data.paid) setStatus({type:'ok',message:'A fizetés beérkezését már rögzítettük. Kérjük, ne utald el újra az összeget.'});
           if (!String(data.notice || "").trim()) {
             setStatus({
               type: "bad",
@@ -191,8 +192,8 @@ export default function TransferPage() {
                 </div>
               </div>
 
-              <Link className="transfer-back" to="/giftcards">
-                Vissza az ajándékutalványhoz
+              <Link className="transfer-back" to={transferInfo?.kind==='booking'?'/courses':'/giftcards'}>
+                {transferInfo?.kind==='booking'?'Vissza a képzésekhez':'Vissza az ajándékutalványhoz'}
               </Link>
             </div>
 

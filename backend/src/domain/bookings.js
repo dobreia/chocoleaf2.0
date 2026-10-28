@@ -16,7 +16,7 @@ const payments = require('../payments/orders');
 const {sessionsSQL,getSessions}=require('./courseSessions');
 const select = `SELECT b.*,c.title AS course_title,c.start_time,c.end_time,c.service_id,c.capacity,${sessionsSQL('c')} AS sessions FROM bookings b JOIN courses c ON c.id=b.course_id`;
 function publicBooking(b) {
-  const { manage_hash, manage_expires, request_key, admin_note, ...safe } = b;
+  const { manage_hash, manage_expires, request_key, admin_note, billing_data, ...safe } = b;
   return safe;
 }
 async function create(data, key, { manual = false } = {}) {
@@ -30,7 +30,8 @@ async function create(data, key, { manual = false } = {}) {
     const paymentMethod = manual ? 'transfer' : providers.provider();
     if (data.paymentMethod && data.paymentMethod !== paymentMethod)
       fail('A fizetési mód megváltozott. Frissítsd az oldalt.');
-    const billing = paymentMethod === 'stripe' ? providers.billingData(data.billingData) : null;
+    const billing = !manual ? providers.billingData(data.billingData) : null;
+    if (paymentMethod === 'transfer' && !manual) require('./transfers').configuration();
     const config = paymentMethod === 'stripe' ? providers.configuration('booking') : null;
     const draft = { customer_name: name, customer_phone: phone, note };
     if (key && paymentMethod === 'stripe') {
@@ -46,10 +47,14 @@ async function create(data, key, { manual = false } = {}) {
     }
     if (key) {
       uuid(key);
+      if(paymentMethod==='transfer' && await one(c,'SELECT 1 FROM payment_orders WHERE request_key=$1',[key]))
+        fail('Ez a kérésazonosító korábbi bankkártyás fizetéshez tartozik. Módosítsd az űrlapot az új foglaláshoz.',409);
       const old = await one(c, "SELECT * FROM bookings WHERE request_key=$1", [
         key,
       ]);
       if (old) {
+        if (paymentMethod === 'transfer' && JSON.stringify(old.billing_data,Object.keys(old.billing_data||{}).sort()) !== JSON.stringify(billing,Object.keys(billing||{}).sort()))
+          fail('Ez a kérésazonosító más számlázási adatokhoz tartozik.',409);
         if (
           old.customer_email !== address ||
           old.course_id !== data.courseId ||
@@ -60,7 +65,8 @@ async function create(data, key, { manual = false } = {}) {
         const payment = await one(c, 'SELECT id,billing FROM payment_orders WHERE booking_id=$1', [old.id]);
         if (payment && JSON.stringify(payment.billing, Object.keys(payment.billing).sort()) !== JSON.stringify(billing, Object.keys(billing).sort()))
           fail('Ez a kérésazonosító más számlázási adatokhoz tartozik.', 409);
-        return { booking: publicBooking(old), replayed: true, paymentId: payment?.id };
+        return { booking: publicBooking(old), replayed: true, paymentId: payment?.id,
+          ...(old.transfer_reference ? {redirectUrl:'/transfer?id='+old.id} : {}) };
       }
     }
     const slot = await checkBooking(c, data.courseId, seats, null, address);
@@ -87,13 +93,17 @@ async function create(data, key, { manual = false } = {}) {
         key || null,
       ],
     );
-    await c.query('UPDATE bookings SET payment_method=$2 WHERE id=$1', [b.id, paymentMethod]);
+    const reference = manual ? null : 'CL-'+token().slice(0,12).toUpperCase();
+    await c.query('UPDATE bookings SET payment_method=$2,billing_data=$3,transfer_reference=$4 WHERE id=$1', [b.id, paymentMethod, billing, reference]);
     b.payment_method = paymentMethod;
+    b.billing_data = billing;
+    b.transfer_reference = reference;
     await c.query('UPDATE courses SET session_count_locked=true WHERE id=$1',[slot.id]);
-    const payment = billing ? await payments.insert(c, { bookingId: b.id, amount: Number(b.total_price),
+    const payment = paymentMethod === 'stripe' && billing ? await payments.insert(c, { bookingId: b.id, amount: Number(b.total_price),
       email: address, description: `${slot.title} – ${seats} fő`, billing, config }) : null;
     await bookingNotice(c, b, slot, "Foglalásod megérkezett", t);
-    return { booking: publicBooking(b), course: slot, notification: "queued", paymentId: payment?.id };
+    return { booking: publicBooking(b), course: slot, notification: "queued", paymentId: payment?.id,
+      ...(reference ? {redirectUrl:'/transfer?id='+b.id} : {}) };
   });
 }
 async function updateIn(c, id, data) {

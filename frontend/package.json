@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "node --test test/*.test.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:transfer": "playwright test --config playwright.transfer.config.js"
   },
   "dependencies": {
     "bootstrap": "^5.3.8",

@@ -12,6 +12,8 @@ Object.assign(process.env, {
   FRONTEND_URL: "http://localhost:5173",
 });
 async function req(path, method = "GET", body, auth = true, headers = {}) {
+  if(path==='/bookings' && method==='POST' && body && !Object.hasOwn(body,'billingData'))
+    body={...body,billingData:{buyerType:'private',privateName:'Test Buyer',postCode:'1111',city:'Budapest',street:'Test street 1.'}};
   const r = await fetch(base + "/api" + path, {
     method,
     headers: {
@@ -34,6 +36,7 @@ before(async () => {
   // Legacy transfer fixtures exercise existing management, capacity and voucher behavior.
   // The real public Stripe-only flow is exercised separately in payments.test.cjs.
   require('../src/payments/providers').provider = () => 'transfer';
+  Object.assign(process.env,{TRANSFER_BENEFICIARY:'ChocoLeaf test',TRANSFER_ACCOUNT:'11111111-22222222-33333333'});
   await require("../src/migrate")();
   const { passwordHash } = require("../src/domain/auth");
   await pool.query("INSERT INTO admins(email,password_hash) VALUES($1,$2)", [
@@ -447,7 +450,7 @@ test("gift order persists and legacy GET approval is gone", async () => {
       billingData: {
         buyerType: "private",
         privateName: "Buyer",
-        privateAddress: "Test address",
+        postCode:'1111',city:'Budapest',street:'Test address',
       },
     },
     false,

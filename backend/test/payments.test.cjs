@@ -33,6 +33,8 @@ before(async () => {
   pool = await require('./database.cjs')();
   await require('../src/migrate')();
   providers = require('../src/payments/providers'); providers.stripe = () => stripeMock;
+  // Exercise the preserved Stripe implementation independently of this branch's transfer default.
+  providers.provider=()=> 'stripe';
   orders = require('../src/payments/orders'); bookings = require('../src/domain/bookings');
   const service = (await pool.query('SELECT id FROM services LIMIT 1')).rows[0];
   courseId = (await pool.query("INSERT INTO courses(title,price,capacity,start_time,end_time,service_id) VALUES('Teszt',19000,100,now()+interval '10 days',now()+interval '10 days 1 hour',$1) RETURNING id", [service.id])).rows[0].id;

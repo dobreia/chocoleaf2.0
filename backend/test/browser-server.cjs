@@ -6,6 +6,10 @@ process.env.UPLOAD_DIR=require('node:path').resolve(__dirname,'../../frontend/te
 (async()=>{
   const db=await require('./database.cjs')();
   await require('../src/migrate')();
+  // The existing suite preserves coverage of the archived Stripe path.
+  // Transfer checkout runs this fixture with BROWSER_PAYMENT_PROVIDER=transfer.
+  if(process.env.BROWSER_PAYMENT_PROVIDER!=='transfer')require('../src/payments/providers').provider=()=> 'stripe';
+  Object.assign(process.env,{TRANSFER_BENEFICIARY:'ChocoLeaf teszt',TRANSFER_BANK_NAME:'Tesztbank',TRANSFER_ACCOUNT:'11111111-22222222-33333333'});
   await require('../scripts/seed-local.cjs')(db);
   const {passwordHash}=require('../src/domain/auth');
   await db.query('INSERT INTO admins(email,password_hash) VALUES($1,$2)',['demo@example.test',await passwordHash('Demo-browser-2026!')]);

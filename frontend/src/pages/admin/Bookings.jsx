@@ -279,6 +279,7 @@ export default function Bookings() {
                     {money(b.total_price)}
                     <br />
                     {labels[b.payment_status]}
+                    {b.transfer_reference && <><br /><small>Közlemény: {b.transfer_reference}</small></>}
                   </td>
                   <td>
                     <span className={"cl-badge " + b.status}>

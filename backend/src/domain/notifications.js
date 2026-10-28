@@ -19,19 +19,23 @@ async function bookingNotice(c, b, slot, event, manageToken, { calendar = true }
     : "\nA foglalás kezeléséhez használd az eredeti visszaigazoló levélben kapott linket.";
   const payment = b.payment_method === 'stripe'
     ? (await c.query('SELECT id,billing FROM payment_orders WHERE booking_id=$1', [b.id])).rows[0] : null;
-  const billingEmail = payment?.billing?.buyerType === 'company' && payment.billing.billingEmail
-    ? `\nSzámlázási e-mail-cím: ${payment.billing.billingEmail}` : '';
+  const billing = payment?.billing || b.billing_data;
+  const billingEmail = billing?.buyerType === 'company' && billing.billingEmail
+    ? `\nSzámlázási e-mail-cím: ${billing.billingEmail}` : '';
+  const billingDetails = billing ? `\nSzámlázási név: ${billing.name}\nSzámlázási cím: ${billing.post_code} ${billing.city}, ${billing.address}${billing.taxcode?'\nAdószám: '+billing.taxcode:''}` : '';
+  const transfer = b.payment_method === 'transfer' && b.transfer_reference && b.payment_status === 'pending' && b.status !== 'cancelled'
+    ? require('./transfers').instructions(b.total_price,b.transfer_reference,b.id) : '';
   const sessions=await getSessions(c,b.course_id);
   const sessionDetails=sessions.length>1 ? '\nA foglalás az összes alkalomra szól.\n'+sessions.map((s,i)=>`${i+1}/${sessions.length}. alkalom: ${new Date(s.start_time).toLocaleString('hu-HU',{timeZone:'Europe/Budapest'})} – ${new Date(s.end_time).toLocaleString('hu-HU',{timeZone:'Europe/Budapest'})}`).join('\n') : '';
   const body = `Kedves ${b.customer_name}!\n\n${event}\n${slot.title}\n${new Date(slot.start_time).toLocaleString("hu-HU", { timeZone: "Europe/Budapest" })} (budapesti idő)\n${b.seats} fő • ${b.total_price} Ft\nStátusz: ${{ pending: "Függőben", confirmed: "Visszaigazolt", cancelled: "Lemondva", completed: "Teljesítve", "no-show": "Nem jelent meg" }[b.status]}\nAzonosító: ${b.id}${link}\n\nChocoLeaf`;
   const end = slot.end_time || b.end_time;
   const details = sessionDetails + (end ? `\nBefejezés: ${new Date(end).toLocaleString('hu-HU', {timeZone:'Europe/Budapest'})} (budapesti idő)` : '') + `\nFizetés: ${{pending:'Fizetésre vár',paid:'Fizetve',refunded:'Visszatérítve',failed:'Sikertelen'}[b.payment_status] || b.payment_status}`;
-  await queue(c, b.customer_email, "ChocoLeaf – " + event, body + details + (payment && b.payment_status === 'pending' ? `\nBankkártyás fizetés folytatása: ${origin}/payment#${payment.id}` : ''));
+  await queue(c, b.customer_email, "ChocoLeaf – " + event, body + details + transfer + (payment && b.payment_status === 'pending' ? `\nBankkártyás fizetés folytatása: ${origin}/payment#${payment.id}` : ''));
   await queue(
     c,
     process.env.MAIL_ADMIN || process.env.MAIL_FROM,
     "ChocoLeaf – " + event,
-    `${body.replace(link, '')}${details}\nEmail: ${b.customer_email}${billingEmail}\nTelefon: ${b.customer_phone || '–'}\nMegjegyzés: ${b.note || '–'}\n\nAdmin: ${origin}/admin/bookings`,
+    `${body.replace(link, '')}${details}${transfer}\nEmail: ${b.customer_email}${billingEmail}${billingDetails}\nTelefon: ${b.customer_phone || '–'}\nMegjegyzés: ${b.note || '–'}\n\nAdmin: ${origin}/admin/bookings`,
   );
   if (calendar) await syncBookingCalendar(c, b, slot, sessions);
 }

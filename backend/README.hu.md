@@ -1,5 +1,7 @@
 # ChocoLeaf – működés és indítás
 
+Az `utalás` branch aktuális fizetési módja banki átutalás. A hozzá tartozó beállításokat és adminlépéseket az „Átutalásos kiadás” fejezet tartalmazza.
+
 ## Ügyfél naptármeghívók (F09)
 
 A foglalás **Visszaigazolt** állapotba állításakor az ügyfél a meglévő összefoglaló levél mellett minden alkalomhoz külön naptármeghívót kap a foglaláskor megadott címére. A sikeres Stripe-fizetés önmagában nem indít meghívót: az admin visszaigazolása szükséges. Többalkalmas kurzusnál az események címe például „Csokoládé workshop – 1/2. alkalom”. Mindegyik a saját kezdését és befejezését tartalmazza. A helyszín az oldalon szereplő **ChocoLeaf – 1039 Budapest, Huba utca 3.** Nincs beépített naptári emlékeztető; az alkalmanként 72 órával korábbi e-mail az F20 külön feladata.
@@ -167,7 +169,21 @@ Az alap férőhely minden új szolgáltatásnál 6 fő. Az új alkalom a szolgá
 
 ## Telefonos Google-naptár – 2026. szeptember 15.
 Az admin Telefonos naptár oldalán egyirányú Google-szinkron kapcsolható be, iPhone Naptárban is megjeleníthető külön kurzusnaptárral. A funkció egyszeri Google OAuth-szerverbeállítást igényel. Részletes beállítás, működés, újrapróbálás és üzemeltetés: **CALENDAR-SYNC.hu.md**. Az átadáskor 52 backend-integrációs teszt és 11 frontendteszt sikeres; a Google-válaszokat a tesztek szimulálják, valódi Google-fiókos és telefonos próba az éles kulcsok beállítása után szükséges.
-# Stripe és Billingo
+# Stripe és Billingo (megőrzött korábbi folyamat)
 
 A bankkártyás fizetés és automatikus számlázás beállítása: [PAYMENTS.hu.md](PAYMENTS.hu.md). A konfigurációs minta: [.env.payments.example](.env.payments.example).
+
+# Átutalásos kiadás (`utalás` branch)
+
+Ezen a branchen a nyilvános kurzusfoglalás és ajándékutalvány-rendelés banki átutalást használ. A korábbi felület, számlázási mezők, többalkalmas foglalások és naptármeghívók megmaradnak. Új rendeléshez nincs Stripe- vagy Billingo-hívás, a számlázás kézi.
+
+A `backend/.env` fájlban töltsd ki a `TRANSFER_BENEFICIARY` értéket és a `TRANSFER_ACCOUNT` vagy `TRANSFER_IBAN` mezőt. A `TRANSFER_BANK_NAME` és `TRANSFER_SWIFT` opcionális. Ezek nyilvános utalási adatok: a fizetési oldalon és a vásárlói levélben is megjelennek. Hiányos kötelező adatokkal a rendszer nem fogad új rendelést.
+
+A foglalás mentéskor lefoglalja a helyeket minden alkalomra, `Függőben` foglalási és fizetési állapottal. A fizetési oldalon és a levélben egyedi közlemény szerepel. Az admin a Foglalások listában `Fizetve` állapotra állítja a fizetést; ez adatbázisban mentődik. A `Visszaigazolt` foglalási állapot továbbra is külön művelet, ekkor mennek a naptármeghívók. A befizetésre váró foglalást szükség esetén kézzel kell lemondani; nincs új automatikus lejárati szabály.
+
+Utalvány esetén az admin az Ajándékutalványok oldalon hagyja jóvá a beérkezett utalást. A rendszer elmenti a fizetés és a kiállítás időpontját, majd egyszer küldi ki a névre szóló PDF-eket.
+
+A helyi indítás továbbra is `npm run local`, de ezen a branchen nem kér Stripe-kulcsot és nem indít Stripe CLI-t. A meglévő helyi tesztadatbázis megmarad; az új adatmezőket a migráció adja hozzá. A `.env.local-test` ne írja felül üres értékkel a kitöltött `TRANSFER_*` beállításokat.
+
+Ellenőrzés: backend `npm test`; frontend `npm test`, `npm run build`, `npm run test:e2e:transfer`. A normál böngészős tesztkör külön tesztbeállítással a megőrzött Stripe-folyamatot is ellenőrzi.
 

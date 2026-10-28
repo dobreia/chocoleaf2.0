@@ -1,7 +1,7 @@
 const { fail, str, email } = require('../domain/rules');
 
 function provider() {
-  return 'stripe';
+  return 'transfer';
 }
 function configuration(kind) {
   if (process.env.PAYMENT_LOCAL_TEST === '1') {

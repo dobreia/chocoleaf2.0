@@ -8,6 +8,7 @@ require('dotenv').config({path:path.join(root,'.env'),quiet:true});
 require('dotenv').config({path:path.join(root,'.env.local-test'),override:true,quiet:true});
 const check = process.argv.includes('--check');
 const setupOnly = process.argv.includes('--setup');
+const stripeMode = require('../src/payments/providers').provider() === 'stripe';
 const mailSettings = require('../src/lib/smtp');
 const mailMode = mailSettings.localMode(process.env, check);
 const children = [];
@@ -66,7 +67,7 @@ async function main() {
   if(!setupOnly){await free(apiPort);await free(webPort);}
   await setup();
   if(setupOnly)return;
-  if(!check && !/^sk_test_[A-Za-z0-9]+$/.test(process.env.STRIPE_SECRET_KEY||'')){
+  if(stripeMode && !check && !/^sk_test_[A-Za-z0-9]+$/.test(process.env.STRIPE_SECRET_KEY||'')){
     console.log('Még ezt kell megadnod: backend/.env.local-test → STRIPE_SECRET_KEY=sk_test_...');
     console.log('Utána indítsd újra: npm run local');process.exitCode=1;return;
   }
@@ -76,7 +77,7 @@ async function main() {
     const mailbox=path.join(root,'.local-mail');fs.mkdirSync(mailbox,{recursive:true});
     mailTimer=setInterval(flushMail,1000);
   } else console.log('Valódi SMTP-emailküldés bekapcsolva: a vásárlói és adminlevelek a megadott címzettekhez mennek.');
-  if(!check){
+  if(!check && stripeMode){
     console.log('Stripe teszt-webhook csatlakoztatása…');
     const cli=require.resolve('@stripe/cli-win32-x64/package.json');
     const binary=path.join(path.dirname(cli),'bin','stripe.exe');
@@ -99,6 +100,7 @@ async function main() {
   }
   if(!ready)throw Error('A helyi szerverek nem indultak el időben.');
   console.log(`Weboldal: ${webUrl} | Admin: ${webUrl}/admin`);
+  if(!stripeMode)console.log('Átutalásos fizetés: nincs szükség Stripe-kulcsra vagy Stripe CLI-re. Az utalási adatokat a backend/.env TRANSFER_* beállításai adják.');
   console.log('Billingo kikapcsolva ebben a tesztben. '+(mailMode==='real'?'Email: valódi kézbesítés.':'A levelek: backend/.local-mail (EML fájlok).')+' Leállítás: Ctrl+C.');
   if(check){
     const slots=await(await fetch(webUrl+'/api/bookings/availability')).json();

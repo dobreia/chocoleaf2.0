@@ -23,6 +23,7 @@ async function fulfill(id, manual) {
     await queue(c, process.env.MAIL_ADMIN || process.env.MAIL_FROM,
       'ChocoLeaf – fizetett ajándékutalvány kiállítva',
       `Az utalványok elkészültek, a vásárlói email küldési sorba került.\nVásárló: ${intent.meta.email}\nNevek: ${intent.meta.names.join(', ')}\nDarabszám: ${intent.meta.quantity}\nÖsszeg: ${intent.amount} Ft\nAzonosító: ${id}\nAdmin: ${origin}/admin/giftcards`);
+    intent.paidAt ||= Date.now();
     intent.generatedAt = Date.now();
     await c.query('UPDATE gift_orders SET data=$2 WHERE id=$1', [id, intent]);
   });

@@ -236,7 +236,7 @@ export default function BookingCalendarPage() {
           ...formData,
           seats,
           paymentMethod: provider,
-          billingData: provider === 'stripe' ? resolvedBilling : undefined,
+          billingData: resolvedBilling,
         },
         requestKeyRef.current,
       );
@@ -471,7 +471,7 @@ export default function BookingCalendarPage() {
                       />
                     </label>
                   </div>
-                  {provider === 'stripe' && <BillingFields value={resolvedBilling} onChange={(value, field)=>{
+                  {<BillingFields value={resolvedBilling} onChange={(value, field)=>{
                     requestKeyRef.current=null;
                     if (field === 'privateName') setBillingNameEdited(true);
                     setBilling(value);
@@ -483,7 +483,7 @@ export default function BookingCalendarPage() {
                   >
                     {isSubmitting
                       ? "Foglalás mentése..."
-                      : provider === 'stripe' ? 'Foglalás és bankkártyás fizetés' : "Foglalás elküldése"}
+                      : provider === 'stripe' ? 'Foglalás és bankkártyás fizetés' : "Foglalás és átutalási adatok"}
                   </button>
                 </form>
               </>
