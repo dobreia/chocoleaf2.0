@@ -1,0 +1,106 @@
+.course-details-page {
+  min-height: calc(100vh - 72px);
+  background: #6c485c;
+  color: #fff;
+}
+.course-details-page .experience-back {
+  color: #eee8dc;
+}
+.course-details-page .experience-back:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+.course-details-page .experience-hero {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 48px;
+  margin-bottom: 56px;
+}
+.course-details-page .experience-hero.has-photo {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.course-details-visual {
+  overflow: hidden;
+  border: 6px solid #eee8dc;
+  border-radius: 42px;
+  background: #826579;
+  box-shadow: 0 16px 32px rgba(35, 24, 31, .24);
+}
+.course-details-page .experience-photo,
+.course-details-visual .cl-image-empty {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 0;
+}
+.course-details-page .experience-heading h1 {
+  color: #fff;
+}
+.course-details-page .experience-heading .experience-eyebrow,
+.course-details-page .experience-intro,
+.course-details-page .experience-facts span {
+  color: #eee8dc;
+}
+.course-details-page .experience-facts {
+  flex-wrap: wrap;
+  gap: 16px 28px;
+  padding: 22px 0;
+  border-top: 1px solid rgba(238, 232, 220, .35);
+  border-bottom: 1px solid rgba(238, 232, 220, .35);
+}
+.course-details-page .experience-cta {
+  background: #eee8dc;
+  color: #4d3546;
+  border-radius: 12px;
+}
+.course-details-page .experience-cta:hover,
+.course-details-page .experience-cta:focus-visible {
+  background: #fff4df;
+  color: #392732;
+}
+.course-details-page .experience-body {
+  gap: 32px;
+}
+.course-details-page .experience-story,
+.course-details-page .experience-dates {
+  min-width: 0;
+  padding: 32px;
+  background: #eee8dc;
+  color: #4d3546;
+  border: 1px solid #d8c9c3;
+  border-radius: 28px;
+}
+.course-details-page .experience-story p:last-child {
+  margin-bottom: 0;
+}
+.course-details-page .experience-dates {
+  top: 96px;
+  scroll-margin-top: 96px;
+}
+.course-details-page .experience-date {
+  border-color: #d8c9c3;
+}
+.course-details-page .experience-date:hover {
+  background: rgba(108, 72, 92, .06);
+}
+@media (max-width: 800px) {
+  .course-details-page .experience-hero.has-photo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .course-details-page .experience-hero {
+    gap: 28px;
+    margin-bottom: 32px;
+  }
+  .course-details-page .experience-photo,
+  .course-details-visual .cl-image-empty {
+    aspect-ratio: 4 / 3;
+  }
+  .course-details-visual {
+    border-radius: 28px;
+  }
+  .course-details-page .experience-story,
+  .course-details-page .experience-dates {
+    padding: 22px;
+  }
+}
