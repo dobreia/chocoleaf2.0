@@ -328,20 +328,13 @@
 }
 .cl-booking-row-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 200px;
   max-width: 300px;
 }
 .cl-bookings-feedback {
   min-height: 72px;
-}
-.cl-admin .cl-booking-approve {
-  background: #6c485c;
-  border-color: #6c485c;
-  color: #fff;
-}
-.cl-admin .cl-booking-approve:hover {
-  background: #553949;
 }
 .cl-admin .cl-booking-danger {
   color: #84283b;

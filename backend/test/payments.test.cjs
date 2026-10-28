@@ -173,6 +173,28 @@ test('paid webhook is idempotent; late expiry cannot reverse payment; admin cann
   await webhook(session);
   assert.equal((await pool.query("SELECT count(*)::int AS n FROM outbox WHERE calendar->>'uid' LIKE $1",[bookingId+'.%'])).rows[0].n,1);
 });
+test('admin records an already completed Stripe refund without changing checkout history or allowing other payment overrides',async()=>{
+  const result=await newBooking();await orders.checkout(result.paymentId);
+  const session={...sessions.get('checkout-'+result.paymentId),payment_status:'paid',status:'complete'};
+  await orders.applySession(session);
+  const bookingId=(await row(result.paymentId)).booking_id;
+  await bookings.update(bookingId,{status:'confirmed'});
+  const cancelled=await bookings.update(bookingId,{status:'cancelled'});
+  await assert.rejects(bookings.update(bookingId,{payment_status:'failed'}),{status:409});
+  await assert.rejects(bookings.update(bookingId,{payment_status:'refunded',updated_at:'2000-01-01T00:00:00Z'}),{status:409});
+  const refunded=await bookings.update(bookingId,{payment_status:'refunded',updated_at:cancelled.updated_at});
+  assert.equal(refunded.payment_status,'refunded');assert.equal(refunded.status,'cancelled');
+  assert.equal(refunded.total_price,cancelled.total_price);assert.equal(refunded.seats,cancelled.seats);
+  assert.equal((await row(result.paymentId)).status,'paid');
+  await orders.applySession(session);
+  assert.equal((await pool.query('SELECT payment_status FROM bookings WHERE id=$1',[bookingId])).rows[0].payment_status,'refunded');
+  await assert.rejects(bookings.update(bookingId,{payment_status:'paid'}),{status:409});
+  const legacy=await bookings.create({courseId,customerName:'Legacy',customerEmail:randomUUID()+'@example.test',seats:1},randomUUID(),{manual:true});
+  await pool.query("UPDATE bookings SET payment_method='stripe' WHERE id=$1",[legacy.booking.id]);
+  await assert.rejects(bookings.update(legacy.booking.id,{payment_status:'refunded'}),{status:409});
+  await assert.rejects(bookings.update(legacy.booking.id,{payment_status:'paid'}),{status:409});
+});
+
 test('expired checkout releases its hold without ever saving an unpaid booking',async()=>{
   const b=await newBooking();await orders.checkout(b.paymentId);
   await orders.applySession({...sessions.get('checkout-'+b.paymentId),status:'expired'});

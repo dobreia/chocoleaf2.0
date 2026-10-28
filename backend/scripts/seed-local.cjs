@@ -7,9 +7,12 @@ module.exports = async function seedLocal(db) {
     for(let i=existing;i<2;i++) {
       let saved=false;
       for(let attempts=0;attempts<90;attempts++) {
-        const start=new Date();start.setDate(start.getDate()+offset++);start.setHours(10,0,0,0);
+        const sessions=Array.from({length:service.session_count},()=>{
+          const start=new Date();start.setDate(start.getDate()+offset++);start.setHours(10,0,0,0);
+          return {start_time:start.toISOString()};
+        });
         try {
-          await require('../src/domain/courses').save(null,{service_id:service.id,description:'Bemutató tesztidőpont',price:service.price,capacity:6,start_time:start.toISOString(),end_time:new Date(+start+service.duration_minutes*60000).toISOString()});
+          await require('../src/domain/courses').save(null,{service_id:service.id,description:'Bemutató tesztidőpont',price:service.price,capacity:6,sessions});
           saved=true;break;
         } catch(e) {if(e.status!==409)throw e;}
       }

@@ -102,8 +102,9 @@ async function updateIn(c, id, data) {
   ]);
   if (!old) fail("A foglalás nem található.", 404);
   if (old.payment_method === 'stripe') {
-    if (data.payment_status !== undefined && data.payment_status !== old.payment_status)
-      fail('A Stripe-fizetés állapotát a fizetési szolgáltató kezeli.', 409);
+    if (data.payment_status !== undefined && data.payment_status !== old.payment_status &&
+        !(old.payment_status === 'paid' && data.payment_status === 'refunded'))
+      fail('Stripe-fizetésnél csak a már fizetett összeg visszatérítése rögzíthető kézzel.', 409);
     if ((data.total_price !== undefined && Number(data.total_price) !== Number(old.total_price)) ||
         (data.seats !== undefined && Number(data.seats) !== old.seats))
       fail('Stripe-fizetéshez tartozó összeg és létszám itt nem módosítható.', 409);

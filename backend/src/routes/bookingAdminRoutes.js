@@ -72,7 +72,7 @@ admin.patch("/bookings/:id", async (req, res) =>
 admin.delete("/bookings/:id", async (req, res) =>
   res.json(
     await transaction(async (c) => {
-      const b = await one(c, "SELECT * FROM bookings WHERE id=$1", [
+      const b = await one(c, "SELECT * FROM bookings WHERE id=$1 FOR UPDATE", [
         uuid(req.params.id),
       ]);
       if (!b) fail("Nem található.", 404);
@@ -81,6 +81,15 @@ admin.delete("/bookings/:id", async (req, res) =>
           "Csak lemondott, nem fizetett vagy visszatérített foglalás törölhető.",
           409,
         );
+      if (b.payment_status === 'refunded') {
+        // Preserve the completed payment and invoice history independently of
+        // the removed booking. Paid orders ignore repeated checkout webhooks.
+        await c.query(`UPDATE payment_orders SET booking_id=NULL,
+          course_id=COALESCE(course_id,$2), seats=COALESCE(seats,$3),
+          booking_data=COALESCE(booking_data,$4::jsonb)
+          WHERE booking_id=$1 AND status='paid'`,
+        [b.id,b.course_id,b.seats,JSON.stringify({customer_name:b.customer_name,customer_phone:b.customer_phone,note:b.note})]);
+      }
       await c.query("DELETE FROM bookings WHERE id=$1", [b.id]);
       return { ok: true };
     }),

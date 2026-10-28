@@ -621,6 +621,29 @@ test("calendar API reports sum of held seats",async()=>{
  const rows=(await req('/admin/courses')).data;
  for(const c of rows){const n=await pool.query("SELECT COALESCE(SUM(seats),0)::int AS n FROM bookings WHERE course_id=$1 AND status<>'cancelled'",[c.id]);assert.equal(c.booked_seats,n.rows[0].n);}
 });
+test('deleting a refunded legacy Stripe booking preserves its payment and invoice history',async()=>{
+ const serviceId=(await req('/courses')).data[0].id;
+ const course=(await req('/admin/courses','POST',{service_id:serviceId,start_time:at(120,10),capacity:6,price:1000})).data;
+ const created=await req('/admin/bookings','POST',{courseId:course.id,customerName:'Refund history',customerEmail:'refund-history@example.test',seats:1});
+ assert.equal(created.status,201);
+ const b=created.data.booking;
+ await pool.query("UPDATE bookings SET payment_method='stripe',payment_status='paid' WHERE id=$1",[b.id]);
+ const order=(await pool.query(`INSERT INTO payment_orders(booking_id,amount,email,description,billing,invoice_config,status,invoice_id,invoice_url,invoice_status)
+ VALUES($1,1000,$2,'Legacy payment','{}','{}','paid',12345,'https://example.test/invoice','sent') RETURNING *`,[b.id,b.customer_email])).rows[0];
+ assert.equal((await req('/admin/bookings/'+b.id,'DELETE')).status,409);
+ assert.equal((await req('/admin/bookings/'+b.id,'PATCH',{payment_status:'refunded'})).status,200);
+ assert.equal((await req('/admin/bookings/'+b.id,'DELETE')).status,409);
+ assert.equal((await req('/admin/bookings/'+b.id,'PATCH',{status:'cancelled'})).status,200);
+ assert.equal((await req('/admin/bookings/'+b.id,'DELETE')).status,200);
+ assert.equal((await req('/admin/bookings/'+b.id)).status,404);
+ const saved=(await pool.query('SELECT * FROM payment_orders WHERE id=$1',[order.id])).rows[0];
+ for(const key of ['amount','email','status','invoice_id','invoice_url','invoice_status'])assert.deepEqual(saved[key],order[key]);
+ assert.equal(saved.booking_id,null);assert.equal(saved.course_id,course.id);assert.equal(saved.seats,1);
+ assert.equal(saved.booking_data.customer_name,b.customer_name);
+ await require('../src/payments/orders').applySession({id:'cs_legacy_paid',metadata:{order_id:order.id},client_reference_id:order.id,mode:'payment',currency:'huf',amount_total:100000,payment_status:'paid'});
+ assert.equal((await pool.query('SELECT count(*)::int AS n FROM bookings WHERE id=$1',[b.id])).rows[0].n,0);
+});
+
 test("logout invalidates session", async () => {
   await req("/auth/logout", "POST");
   assert.equal((await req("/admin/bookings")).status, 401);

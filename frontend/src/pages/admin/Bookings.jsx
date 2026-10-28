@@ -114,8 +114,8 @@ export default function Bookings() {
     await refresh();
     setMessage("Foglalás mentve.");
   };
-  const changeStatus = (booking, status) => action(() => api('/admin/bookings/' + booking.id, {
-    method: 'PATCH', body: { status, updated_at: booking.updated_at },
+  const changeBooking = (booking, changes) => action(() => api('/admin/bookings/' + booking.id, {
+    method: 'PATCH', body: { ...changes, updated_at: booking.updated_at },
   }));
   return (
     <>
@@ -287,13 +287,27 @@ export default function Bookings() {
                   </td>
                   <td>
                     <div className="cl-booking-row-actions" role="group" aria-label={`${b.customer_name} foglalásának műveletei`}>
-                      {b.status === 'pending' && <>
-                        <button className="cl-booking-approve" disabled={busy || (b.payment_method === 'stripe' && b.payment_status === 'pending')}
-                          onClick={() => changeStatus(b, 'confirmed')}>Jóváhagyás</button>
-                        <button className="cl-booking-danger" disabled={busy || (b.payment_method === 'stripe' && b.payment_status === 'pending')}
-                          onClick={() => setConfirmation({ id: b.id, kind: 'reject' })}>Elutasítás</button>
-                      </>}
-                      {b.status === 'cancelled' && <button className="cl-booking-danger" disabled={busy || b.payment_status === 'paid'}
+                      <Field label="Foglalás állapota">
+                        <select value={b.status} disabled={busy || (b.payment_method === 'stripe' && b.payment_status === 'pending')}
+                          onChange={e => {
+                            setConfirmation(null);
+                            if (e.target.value === 'cancelled') setConfirmation({ id: b.id, kind: 'cancel' });
+                            else changeBooking(b, { status: e.target.value });
+                          }}>
+                          {['pending', 'confirmed', 'completed', 'cancelled', 'no-show'].map(value =>
+                            <option key={value} value={value}>{labels[value]}</option>)}
+                        </select>
+                      </Field>
+                      <Field label="Fizetés állapota">
+                        <select value={b.payment_status} disabled={busy || (b.payment_method === 'stripe' && b.payment_status !== 'paid')}
+                          onChange={e => { setConfirmation(null); changeBooking(b, { payment_status: e.target.value }); }}>
+                          {(b.payment_method === 'stripe'
+                            ? [b.payment_status, ...(b.payment_status === 'paid' ? ['refunded'] : [])]
+                            : ['pending', 'paid', 'refunded', 'failed']).map(value =>
+                            <option key={value} value={value}>{labels[value]}</option>)}
+                        </select>
+                      </Field>
+                      {b.status === 'cancelled' && b.payment_status !== 'paid' && <button className="cl-booking-danger" disabled={busy}
                         onClick={() => setConfirmation({ id: b.id, kind: 'delete' })}>Törlés</button>}
                     </div>
                     {b.payment_method === 'stripe' && b.payment_status === 'pending' && b.status === 'pending' &&
@@ -303,19 +317,20 @@ export default function Bookings() {
                     {confirmation?.id === b.id && <div className="cl-booking-confirm" role="group" aria-label="Művelet megerősítése">
                       <p>{confirmation.kind === 'delete'
                         ? 'Végleg törlöd ezt a lemondott foglalást? A művelet nem vonható vissza.'
-                        : 'Elutasítod ezt a foglalást? Az összes hozzá tartozó alkalmat lemondjuk, és értesítjük az ügyfelet.'}</p>
-                      {confirmation.kind === 'reject' && b.payment_status === 'paid' &&
-                        <p>Az elutasítás önmagában nem indít pénzvisszatérítést.</p>}
-                      <button className="cl-booking-danger" disabled={busy} onClick={() => confirmation.kind === 'reject'
-                        ? changeStatus(b, 'cancelled')
+                        : 'Lemondod ezt a foglalást? Az összes hozzá tartozó alkalmat lemondjuk, és értesítjük az ügyfelet.'}</p>
+                      {confirmation.kind === 'cancel' && b.payment_status === 'paid' &&
+                        <p>A lemondás önmagában nem indít pénzvisszatérítést.</p>}
+                      <button disabled={busy} onClick={() => setConfirmation(null)}>Mégse</button>
+                      <button className="cl-booking-danger" disabled={busy} onClick={() => confirmation.kind === 'cancel'
+                        ? changeBooking(b, { status: 'cancelled' })
                         : action(async () => {
                           await api('/admin/bookings/' + b.id, { method: 'DELETE' });
                           if (edit?.id === b.id) closeEditor();
                         })}>
-                        {confirmation.kind === 'delete' ? 'Végleges törlés' : 'Elutasítás megerősítése'}
+                        {confirmation.kind === 'delete' ? 'Végleges törlés' : 'Lemondás megerősítése'}
                       </button>
-                      <button disabled={busy} onClick={() => setConfirmation(null)}>Mégse</button>
                     </div>}
+                    <p className="cl-booking-action-note">A visszatérítés jelölése nem indít pénzvisszafizetést.</p>
                   </td>
                 </tr>
               ))}
