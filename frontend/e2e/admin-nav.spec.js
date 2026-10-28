@@ -1,0 +1,57 @@
+import {test,expect} from '@playwright/test';
+const api='http://127.0.0.1:3012';
+test('admin entry is shown only for an authenticated session on the home and public menus, including mobile',async({page,browser})=>{
+  const admin=page.getByRole('link',{name:'Admin',exact:true});
+  await page.goto('/');
+  await expect(admin).toHaveCount(0);
+  expect((await page.request.get(api+'/api/admin/bookings')).status()).toBe(401);
+  await page.goto('/admin');
+  await page.getByLabel('Email',{exact:true}).fill('demo@example.test');
+  await page.getByLabel('Jelszó',{exact:true}).fill('Demo-browser-2026!');
+  await page.getByRole('button',{name:'Bejelentkezés',exact:true}).click();
+  await expect(page.getByRole('navigation',{name:'Admin navigáció'})).toBeVisible();
+  await page.getByRole('link',{name:'Weboldal',exact:true}).click();
+  await expect(admin).toBeVisible();
+  await expect(admin).toHaveAttribute('href','/admin');
+  await page.reload();
+  await expect(admin).toBeVisible();
+  await page.goto('/courses');
+  await expect(admin).toBeVisible();
+  await page.setViewportSize({width:1024,height:768});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
+  await page.setViewportSize({width:390,height:844});
+  await page.getByRole('button',{name:'Menü megnyitása',exact:true}).click();
+  await expect(admin).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
+  await admin.click();
+  await expect(page.getByRole('navigation',{name:'Admin navigáció'})).toBeVisible();
+  await page.getByRole('button',{name:'Kilépés',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Admin belépés',exact:true})).toBeVisible();
+  await page.goto('/courses');
+  await page.getByRole('button',{name:'Menü megnyitása',exact:true}).click();
+  await expect(admin).toHaveCount(0);
+  // A separate visitor does not inherit the admin's menu or permissions.
+  const guest=await browser.newContext();
+  const visitor=await guest.newPage();
+  await visitor.goto('http://127.0.0.1:5184/');
+  await visitor.evaluate(()=>localStorage.setItem('admin','true'));
+  await visitor.reload();
+  await expect(visitor.getByRole('link',{name:'Admin',exact:true})).toHaveCount(0);
+  expect((await guest.request.get(api+'/api/admin/bookings')).status()).toBe(401);
+  await guest.close();
+});
+
+test('a session revoked in another tab hides the public admin link on window focus',async({page})=>{
+  await page.goto('/admin');
+  await page.getByLabel('Email',{exact:true}).fill('demo@example.test');
+  await page.getByLabel('Jelszó',{exact:true}).fill('Demo-browser-2026!');
+  await page.getByRole('button',{name:'Bejelentkezés',exact:true}).click();
+  await expect(page.getByRole('navigation',{name:'Admin navigáció'})).toBeVisible();
+  await page.goto('/courses');
+  const admin=page.getByRole('link',{name:'Admin',exact:true});
+  await expect(admin).toBeVisible();
+  expect((await page.request.post(api+'/api/auth/logout',{headers:{Origin:'http://127.0.0.1:5184'}})).ok()).toBe(true);
+  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  await expect(admin).toHaveCount(0);
+  expect((await page.request.get(api+'/api/admin/bookings')).status()).toBe(401);
+});

@@ -1,0 +1,7 @@
+.nav-link.admin-access-link {
+  border: 1px solid currentColor;
+  border-radius: 6px;
+}
+.navbar-menu:has(.admin-access-link) ul {
+  flex-wrap: wrap;
+}

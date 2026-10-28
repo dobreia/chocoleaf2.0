@@ -2,6 +2,7 @@ import { useState } from "react";
 import { usePageDraftState } from '../components/usePageDraft';
 import { api } from "../api/courses";
 import "../styles/HomePage.css";
+import AdminNavItem from '../components/AdminNavItem';
 
 export default function HomePage() {
   const [draft, setDraft, resetDraft] = usePageDraftState('home.inquiry', {});
@@ -103,6 +104,7 @@ export default function HomePage() {
                     Ajándékutalvány
                   </a>
                 </li>
+                <AdminNavItem itemClassName="nav-item" />
               </ul>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import "../styles/Navbar.css";
+import AdminNavItem from './AdminNavItem';
 
 const navLinks = [
   { to: "/", label: "Főoldal" },
@@ -57,6 +58,7 @@ export default function Navbar() {
                 </NavLink>
               </li>
             ))}
+            <AdminNavItem onClick={closeMenu} />
           </ul>
         </div>
       </div>
