@@ -24,9 +24,11 @@ export const customerExportFormats={
   csv:{label:'CSV (.csv)',mime:'text/csv'},
   txt:{label:'Szöveges fájl (.txt)',mime:'text/plain'},
   xlsx:{label:'Excel (.xlsx)',mime:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'},
+  gmail:{label:'Google Névjegyek / Gmail (.csv)',mime:'text/csv',extension:'csv'},
 };
+export const gmailExportFieldIds=['name','email','phone','note'];
 export function exportFileName(format,now=new Date()){
-  return `chocoleaf-ugyfelek-${dayKey(now)}.${format}`;
+  return `chocoleaf-${format==='gmail'?'gmail':'ugyfelek'}-${dayKey(now)}.${customerExportFormats[format]?.extension||format}`;
 }
 export function customerExportRows(customers,selected){
   const fields=customerExportFields.filter(field=>selected.includes(field.id));
@@ -34,10 +36,19 @@ export function customerExportRows(customers,selected){
   return [fields.map(field=>field.label),...customers.map(customer=>fields.map(field=>field.value(customer)))];
 }
 // Treat spreadsheet-looking input as text, including phone numbers beginning with +.
+const quoteCsvCell=value=>'"'+String(value??'').replaceAll('"','""')+'"';
 function csvCell(value){
   let text=String(value??'');
   if(/^[\s\uFEFF]*[=+@-]/u.test(text)||/^[\t\r\n]/u.test(text))text="'"+text;
-  return '"'+text.replaceAll('"','""')+'"';
+  return quoteCsvCell(text);
+}
+function gmailExportRows(customers,selected,label){
+  if(!selected.includes('email'))throw Error('A Gmail-exporthoz az e-mail-címet is ki kell választani.');
+  const headers={name:'First Name',email:'Email 1 - Value',phone:'Phone 1 - Value',note:'Notes'};
+  const fields=customerExportFields.filter(field=>gmailExportFieldIds.includes(field.id)&&selected.includes(field.id));
+  const group=String(label??'ChocoLeaf').trim();
+  return [[...fields.map(field=>headers[field.id]),...(group?['Labels']:[])],
+    ...customers.map(customer=>[...fields.map(field=>field.value(customer)),...(group?[group]:[])])];
 }
 // Excel dates represent the Budapest wall clock, independent of the user's timezone.
 const excelDate=value=>value?new Date(localInput(value)+'Z'):'';
@@ -66,7 +77,10 @@ export function customerWorkbookSheets(customers,selected){
   }
   return sheets;
 }
-export async function customerExportBlob(customers,selected,format){
+export async function customerExportBlob(customers,selected,format,options={}){
+  // Google Contacts consumes literal contact text. In particular, + phone prefixes
+  // must not receive the spreadsheet-specific apostrophe used by the general CSV.
+  if(format==='gmail')return new Blob(['\uFEFF'+gmailExportRows(customers,selected,options.label).map(row=>row.map(quoteCsvCell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
   const rows=format==='xlsx'?null:customerExportRows(customers,selected);
   if(format==='csv')return new Blob(['\uFEFF'+rows.map(row=>row.map(csvCell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'});
   if(format==='txt')return new Blob([rows.slice(1).map(row=>row.map((value,index)=>`${rows[0][index]}: ${value??''}`).join('\r\n')).join('\r\n\r\n--------------------\r\n\r\n')],{type:'text/plain;charset=utf-8'});

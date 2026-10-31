@@ -143,6 +143,8 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
     alkalmanként egy sorral, külön kezdéssel/befejezéssel és foglalási állapottal.
     Az Ügyfelek munkalappal ügyfélsorszám kapcsolja össze; név/e-mail csak kijelölve szerepel.
     Mindkét munkalapon szűrhető, rögzített fejléc segíti a keresést.
+    Google Névjegyek / Gmail export: közvetlenül importálható CSV,
+    kötelező e-mail-címmel, választható névvel, telefonnal, megjegyzéssel és csoportcímkével.
     Támogatott böngészőben mentési hely választható, egyébként normál letöltés indul.
 
 

@@ -128,6 +128,34 @@ test('customers filter by booked course, retain cancelled/deleted history and pr
   expect(workbook).not.toContain('Részletes foglalási előzmények');
   expect((strFromU8(files['xl/worksheets/sheet1.xml']).match(/<row\b/g)||[]).length).toBe(4);
   expect((strFromU8(files['xl/worksheets/sheet2.xml']).match(/<row\b/g)||[]).length).toBe(6);
+  await page.getByRole('button',{name:'Export',exact:true}).click();
+  await exportDialog.getByRole('combobox',{name:'Formátum',exact:true}).selectOption('gmail');
+  await expect(exportDialog.getByRole('checkbox',{name:'Név',exact:true})).toBeChecked();
+  await expect(exportDialog.getByRole('checkbox',{name:'E-mail-cím',exact:true})).toBeChecked();
+  await expect(exportDialog.getByRole('checkbox',{name:'E-mail-cím',exact:true})).toBeDisabled();
+  await expect(exportDialog.getByRole('checkbox',{name:'Foglalt kurzusok',exact:true})).toHaveCount(0);
+  await exportDialog.getByRole('checkbox',{name:'Összes kijelölése',exact:true}).check();
+  await exportDialog.getByRole('checkbox',{name:'Összes kijelölése',exact:true}).uncheck();
+  await expect(exportDialog.getByRole('checkbox',{name:'E-mail-cím',exact:true})).toBeChecked();
+  await exportDialog.getByRole('checkbox',{name:'Név',exact:true}).check();
+  await exportDialog.getByLabel('Címke a Google Névjegyekben',{exact:true}).fill('Bonbonkurzus');
+  await page.reload();
+  await expect(cards).toHaveCount(1);
+  await expect(exportDialog.getByLabel('Címke a Google Névjegyekben',{exact:true})).toHaveValue('Bonbonkurzus');
+  await expect(exportDialog.getByRole('combobox',{name:'Formátum',exact:true})).toHaveValue('gmail');
+  await page.evaluate(()=>{
+    window.showSaveFilePicker=async options=>{
+      window.__customerPicker={options};
+      return {createWritable:async()=>({write:async blob=>{window.__customerSaved=Array.from(new Uint8Array(await blob.arrayBuffer()));},close:async()=>{},abort:async()=>{}})};
+    };
+  });
+  await exportDialog.getByRole('button',{name:'Exportálás és mentés',exact:true}).click();
+  await expect(exportDialog).toHaveCount(0);
+  saved=await page.evaluate(()=>({picker:window.__customerPicker,bytes:window.__customerSaved}));
+  expect(saved.picker.options.suggestedName).toMatch(/^chocoleaf-gmail-.*\.csv$/);
+  expect(saved.picker.options.types[0].accept['text/csv']).toEqual(['.csv']);
+  const gmailCsv=new TextDecoder().decode(new Uint8Array(saved.bytes));
+  expect(gmailCsv).toBe('"First Name","Email 1 - Value","Labels"\r\n"History Alice","history-alice@example.test","Bonbonkurzus"');
   await service.selectOption(services[1].id);await expect(cards).toHaveCount(3);
   await page.setViewportSize({width:390,height:844});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);

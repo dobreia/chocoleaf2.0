@@ -21,6 +21,23 @@ test('CSV preserves UTF-8, delimiter/quote/newline data and neutralizes spreadsh
     assert.ok(output.endsWith('"\''+value+'"'));
   }
 });
+
+test('Gmail export uses Google Contacts headers, comma separators and literal international phone numbers',async()=>{
+  const blob=await customerExportBlob([customer],['name','email','phone','note','history','courses'],'gmail',{label:'Bonbonkurzus'});
+  const text=await blob.text(),bytes=new Uint8Array(await blob.arrayBuffer());
+  assert.deepEqual([...bytes.slice(0,3)],[239,187,191]);
+  assert.ok(text.startsWith('"First Name","Email 1 - Value","Phone 1 - Value","Notes","Labels"\r\n'));
+  assert.ok(text.includes('"Árvíztűrő ""Anna""; teszt"'));assert.ok(text.includes('"+36301234567"'));
+  assert.ok(!text.includes("'+36301234567"));assert.ok(text.includes('"Első sor\nMásodik sor"'));assert.ok(text.endsWith('"Bonbonkurzus"'));
+  for(const omitted of ['Csokoládé','Bonbon"','never export this','Részletes foglalási előzmények'])assert.ok(!text.includes(omitted));
+  assert.equal(exportFileName('gmail',new Date('2026-10-31T12:00:00Z')),'chocoleaf-gmail-2026-10-31.csv');
+});
+
+test('Gmail export requires email and exports optional fields and label only when selected',async()=>{
+  await assert.rejects(customerExportBlob([customer],['name'],'gmail'),/e-mail/);
+  assert.equal(await(await customerExportBlob([customer],['email'],'gmail')).text(),'"Email 1 - Value","Labels"\r\n"anna@example.test","ChocoLeaf"');
+  assert.equal(await(await customerExportBlob([customer],['email'],'gmail',{label:''})).text(),'"Email 1 - Value"\r\n"anna@example.test"');
+});
 test('TXT preserves readable multi-line notes and all sessions including archived/cancelled history',async()=>{
   const history=[{course_title:'Kétalkalmas',status:'cancelled',payment_status:'refunded',seats:1,created_at:'2026-10-01T12:00Z',archived_at:'2026-10-02T12:00Z',sessions:[{start_time:'2026-10-10T08:00Z',end_time:'2026-10-10T09:00Z'},{start_time:'2026-10-11T08:00Z',end_time:'2026-10-11T09:00Z'}]}];
   const text=await(await customerExportBlob([{...customer,history}],['note','history'],'txt')).text();
