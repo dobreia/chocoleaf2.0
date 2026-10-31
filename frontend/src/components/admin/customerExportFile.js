@@ -1,4 +1,4 @@
-import {dateTime,dayKey,labels} from './format.js';
+import {dateTime,dayKey,labels,localInput} from './format.js';
 
 function historyText(history=[]){
   return history.map(booking=>[
@@ -39,17 +39,57 @@ function csvCell(value){
   if(/^[\s\uFEFF]*[=+@-]/u.test(text)||/^[\t\r\n]/u.test(text))text="'"+text;
   return '"'+text.replaceAll('"','""')+'"';
 }
+// Excel dates represent the Budapest wall clock, independent of the user's timezone.
+const excelDate=value=>value?new Date(localInput(value)+'Z'):'';
+export function customerWorkbookSheets(customers,selected){
+  const detailed=selected.includes('history');
+  const fields=selected.filter(id=>id!=='history');
+  const rows=fields.length?customerExportRows(customers,fields):[[],...customers.map(()=>[])];
+  if(!fields.length&&!detailed)throw Error('Válassz ki legalább egy adatmezőt.');
+  if(detailed)rows.forEach((row,index)=>row.unshift(index===0?'Ügyfél sorszáma':index));
+  const sheets=[{sheet:'Ügyfelek',rows}];
+  if(detailed){
+    const identity=customerExportFields.filter(field=>['name','email'].includes(field.id)&&selected.includes(field.id));
+    const appointments=[['Ügyfél sorszáma',...identity.map(field=>field.label),'Kurzus','Foglalásazonosító','Alkalom sorszáma','Alkalmak száma',
+      'Kezdés (Budapest)','Befejezés (Budapest)','Foglalási állapot','Fizetési állapot','Létszám','Foglalás dátuma (Budapest)','Foglalás törölve']];
+    customers.forEach((customer,index)=>{
+      for(const booking of customer.history||[]){
+        const sessions=(booking.sessions?.length?[...booking.sessions]:[booking]).sort((a,b)=>new Date(a.start_time)-new Date(b.start_time));
+        sessions.forEach((session,sessionIndex)=>appointments.push([
+          index+1,...identity.map(field=>field.value(customer)),booking.course_title,booking.booking_id||'',sessionIndex+1,sessions.length,
+          excelDate(session.start_time),excelDate(session.end_time),labels[booking.status]||booking.status,
+          labels[booking.payment_status]||booking.payment_status,booking.seats,excelDate(booking.created_at),booking.archived_at?'Igen':'Nem'
+        ]));
+      }
+    });
+    sheets.push({sheet:'Kurzusalkalmak',rows:appointments});
+  }
+  return sheets;
+}
 export async function customerExportBlob(customers,selected,format){
-  const rows=customerExportRows(customers,selected);
+  const rows=format==='xlsx'?null:customerExportRows(customers,selected);
   if(format==='csv')return new Blob(['\uFEFF'+rows.map(row=>row.map(csvCell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'});
   if(format==='txt')return new Blob([rows.slice(1).map(row=>row.map((value,index)=>`${rows[0][index]}: ${value??''}`).join('\r\n')).join('\r\n\r\n--------------------\r\n\r\n')],{type:'text/plain;charset=utf-8'});
   if(format!=='xlsx')throw Error('Ismeretlen exportformátum.');
-  if(rows.some(row=>row.some(value=>String(value??'').length>32767)))throw Error('Egy mező túl hosszú az Excelhez. Válaszd a TXT vagy CSV formátumot.');
+  const sheets=customerWorkbookSheets(customers,selected);
+  if(sheets.some(sheet=>sheet.rows.length>1048576))throw Error('Túl sok sor az Excelhez. Szűkítsd az ügyfelek listáját.');
+  if(sheets.some(sheet=>sheet.rows.some(row=>row.some(value=>String(value??'').length>32767))))throw Error('Egy mező túl hosszú az Excelhez. Válaszd a TXT vagy CSV formátumot.');
   const {default:writeExcelFile}=await import('write-excel-file/browser');
-  return writeExcelFile(rows.map((row,index)=>row.map(value=>({
-    type:typeof value==='number'?Number:String,value:value??'',
-    ...(index===0?{fontWeight:'bold',backgroundColor:'#6c485c',color:'#ffffff'}:{}),wrap:true
-  }))),{sheet:'Ügyfelek',columns:rows[0].map(()=>({width:30}))}).toBlob();
+  const filters={files:{transform:{'xl/worksheets/sheet{id}.xml':{
+    transform:(xml,_options,{sheetIndex})=>{
+      const rows=sheets[sheetIndex].rows;
+      const lastColumn=String.fromCharCode(64+rows[0].length);
+      return xml.replace('</sheetData>',`</sheetData><autoFilter ref="A1:${lastColumn}${rows.length}"/>`);
+    }
+  }}}};
+  return writeExcelFile(sheets.map(({sheet,rows})=>({sheet,stickyRowsCount:1,
+    columns:rows[0].map(()=>({width:30})),
+    data:rows.map((row,index)=>row.map(value=>({
+      type:value instanceof Date?Date:typeof value==='number'?Number:String,value:value??'',
+      ...(value instanceof Date?{format:'yyyy-mm-dd hh:mm'}:{}),
+      ...(index===0?{fontWeight:'bold',backgroundColor:'#6c485c',textColor:'#ffffff'}:{}),wrap:true
+    })))
+  })),{features:[filters]}).toBlob();
 }
 export async function withCustomerHistories(customers,loadHistory){
   const result=new Array(customers.length);let next=0;

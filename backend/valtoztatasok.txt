@@ -139,6 +139,10 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
     kiválasztható adatmezőkkel (alapból csak név), összes kijelölésével.
     Az aktuálisan szűrt lista vagy az összes ügyfél exportálható.
     A foglalási előzmények minden alkalmat és a megőrzött előzményeket is tartalmazzák.
+    Excelben a részletes előzmények külön Kurzusalkalmak munkalapra kerülnek,
+    alkalmanként egy sorral, külön kezdéssel/befejezéssel és foglalási állapottal.
+    Az Ügyfelek munkalappal ügyfélsorszám kapcsolja össze; név/e-mail csak kijelölve szerepel.
+    Mindkét munkalapon szűrhető, rögzített fejléc segíti a keresést.
     Támogatott böngészőben mentési hely választható, egyébként normál letöltés indul.
 
 

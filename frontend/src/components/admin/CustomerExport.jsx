@@ -50,6 +50,7 @@ export default function CustomerExport({items,draft,setDraft,onClose,onSuccess})
           </label>)}
         </fieldset>
         {!selected.length&&<p role="status">Válassz ki legalább egy adatmezőt.</p>}
+        {draft.format==='xlsx'&&selected.includes('history')&&<p className="cl-muted">Az Excel két munkalapot tartalmaz: Ügyfelek és Kurzusalkalmak. Minden lefoglalt alkalom külön sorba kerül, külön kezdési és befejezési oszloppal. Az ügyfeleket sorszám kapcsolja össze; nevük és e-mail-címük az alkalmak lapján is csak kijelölés esetén szerepel. Mindkét lapon szűrhető, rögzített fejléc segíti a keresést.</p>}
         <p className="cl-muted">{nativeSave?'Mentéskor kiválaszthatod a fájl nevét és helyét a gépeden.':'A fájl a böngésző letöltési beállításai szerint mentődik. Ha mentési helyet szeretnél választani, kapcsold be a böngészőben a letöltések előtti rákérdezést.'}</p>
         <div className="cl-actions">
           <button type="button" onClick={onClose}>Mégse</button>
