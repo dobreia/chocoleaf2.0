@@ -5,6 +5,7 @@ import {usePageDraftState} from '../../components/usePageDraft';
 import {Field,Modal,Notice,SaveForm} from '../../components/admin/UI';
 import {dateTime,labels} from '../../components/admin/format';
 import SessionList from '../../components/SessionList';
+import CustomerExport from '../../components/admin/CustomerExport';
 import '../../styles/AdminCustomers.css';
 
 function CustomerHistory({email,revision}){
@@ -40,6 +41,7 @@ export default function Customers(){
   const [filter,setFilter]=usePageDraftState('customers.filters',{service:'',status:'active'});
   const [edit,setEdit]=usePageDraftState('records.edit',null);
   const [openHistory,setOpenHistory]=usePageDraftState('customers.history',null);
+  const [exportDraft,setExportDraft]=usePageDraftState('customers.export',null);
   useEffect(()=>{
     let live=true;
     api('/admin/customers/services').then(data=>{if(live)setServices(data);}).catch(error=>{if(live)setError(error.message);});
@@ -57,7 +59,7 @@ export default function Customers(){
   },[q,filter,revision]);
   const changeFilter=(next)=>{setLoading(true);setFilter(next);};
   return <>
-    <div className="cl-title"><h1>Ügyfelek</h1></div>
+    <div className="cl-title"><h1>Ügyfelek</h1><button disabled={loading||!!error} onClick={()=>setExportDraft({format:'csv',scope:'filtered',fields:['name']})}>Export</button></div>
     <Notice error={error} message={message}/>
     <p>Az ügyfeleket e-mail-cím alapján csoportosítjuk. A szűrők a foglalások alapján választják ki az ügyfeleket; a lenyitható előzményekben minden állapot látható.</p>
     <div className="cl-filters">
@@ -92,6 +94,8 @@ export default function Customers(){
         {openHistory===customer.email&&<CustomerHistory key={customer.email} email={customer.email} revision={revision}/>}
       </article>)}
     </>}
+    {exportDraft&&<CustomerExport items={loading?[]:items} draft={exportDraft} setDraft={setExportDraft}
+      onClose={()=>setExportDraft(null)} onSuccess={message=>{setExportDraft(null);setMessage(message);}}/>}
     {edit&&<Modal title="Szerkesztés" onClose={()=>setEdit(null)}>
       <SaveForm onSave={async()=>{
         await api('/admin/customers',{method:'PUT',body:edit});

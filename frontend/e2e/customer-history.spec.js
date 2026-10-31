@@ -1,4 +1,6 @@
 import {test,expect} from '@playwright/test';
+import {readFile} from 'node:fs/promises';
+import {unzipSync,strFromU8} from 'fflate';
 const api='http://127.0.0.1:3012';
 const options=data=>({headers:{Origin:'http://127.0.0.1:5184'},data});
 test('customers filter by booked course, retain cancelled/deleted history and preserve filters and edit drafts',async({page})=>{
@@ -64,6 +66,64 @@ test('customers filter by booked course, retain cancelled/deleted history and pr
   await expect(dialog.getByLabel('Belső megjegyzés',{exact:true})).toHaveValue('Belső ügyféljegyzet\nMásodik sor');
   await dialog.getByRole('button',{name:'Bezárás',exact:true}).click();
   await status.selectOption('all');await expect(cards).toHaveCount(3);
+  await service.selectOption(services[0].id);await expect(cards).toHaveCount(1);
+  await page.getByRole('button',{name:'Export',exact:true}).click();
+  const exportDialog=page.locator('dialog.cl-customer-export');
+  await expect(exportDialog.getByRole('checkbox',{name:'Név',exact:true})).toBeChecked();
+  await expect(exportDialog.getByRole('checkbox').filter({visible:true})).toHaveCount(9);
+  expect(await exportDialog.getByRole('checkbox').evaluateAll(inputs=>inputs.filter(input=>input.checked).length)).toBe(1);
+  await exportDialog.getByRole('checkbox',{name:'Összes kijelölése',exact:true}).check();
+  expect(await exportDialog.getByRole('checkbox').evaluateAll(inputs=>inputs.every(input=>input.checked))).toBe(true);
+  await exportDialog.getByRole('checkbox',{name:'Összes kijelölése',exact:true}).uncheck();
+  await expect(exportDialog.getByRole('button',{name:'Exportálás és mentés',exact:true})).toBeDisabled();
+  await exportDialog.getByRole('checkbox',{name:'Név',exact:true}).check();
+  await page.reload();
+  await expect(exportDialog.getByRole('checkbox',{name:'Név',exact:true})).toBeChecked();
+  await expect(cards).toHaveCount(1);
+  // Exercise the browser-download fallback without invoking a native OS dialog.
+  await page.evaluate(()=>{window.showSaveFilePicker=undefined;});
+  const downloaded=page.waitForEvent('download');
+  await exportDialog.getByRole('button',{name:'Exportálás és mentés',exact:true}).click();
+  const download=await downloaded;
+  expect(download.suggestedFilename()).toMatch(/^chocoleaf-ugyfelek-.*\.csv$/);
+  const csv=await readFile(await download.path(),'utf8');
+  expect(csv).toContain('History Alice');expect(csv).not.toContain('History Bob');expect(csv).not.toContain('@example.test');
+  await expect(exportDialog).toHaveCount(0);
+  await page.getByRole('button',{name:'Export',exact:true}).click();
+  // Mock only the OS picker boundary; the data gathering and actual file generation remain real.
+  await page.evaluate(()=>{
+    window.showSaveFilePicker=async options=>{
+      window.__customerPicker={options,active:navigator.userActivation.isActive};
+      return {createWritable:async()=>({write:async blob=>{window.__customerSaved=Array.from(new Uint8Array(await blob.arrayBuffer()));},close:async()=>{},abort:async()=>{}})};
+    };
+  });
+  await exportDialog.getByRole('combobox',{name:'Formátum',exact:true}).selectOption('txt');
+  await exportDialog.getByRole('combobox',{name:'Exportálandó ügyfelek',exact:true}).selectOption('all');
+  await exportDialog.getByRole('checkbox',{name:'E-mail-cím',exact:true}).check();
+  await exportDialog.getByRole('button',{name:'Exportálás és mentés',exact:true}).click();
+  await expect(exportDialog).toHaveCount(0);
+  let saved=await page.evaluate(()=>({picker:window.__customerPicker,bytes:window.__customerSaved}));
+  expect(saved.picker.active).toBe(true);expect(saved.picker.options.suggestedName).toMatch(/\.txt$/);
+  const txt=new TextDecoder().decode(new Uint8Array(saved.bytes));
+  expect(txt).toContain('History Bob');expect(txt).toContain('history-carol@example.test');expect(txt).not.toContain('Belső ügyféljegyzet');
+  await page.getByRole('button',{name:'Export',exact:true}).click();
+  await page.evaluate(()=>{window.__workingPicker=window.showSaveFilePicker;window.showSaveFilePicker=async()=>{throw new DOMException('Cancelled','AbortError');};});
+  await exportDialog.getByRole('button',{name:'Exportálás és mentés',exact:true}).click();
+  await expect(exportDialog.getByRole('button',{name:'Exportálás és mentés',exact:true})).toBeEnabled();
+  await expect(exportDialog.getByRole('alert')).toHaveCount(0);
+  await page.evaluate(()=>{window.showSaveFilePicker=window.__workingPicker;});
+  await exportDialog.getByRole('combobox',{name:'Formátum',exact:true}).selectOption('xlsx');
+  await exportDialog.getByRole('combobox',{name:'Exportálandó ügyfelek',exact:true}).selectOption('all');
+  await exportDialog.getByRole('checkbox',{name:'Összes kijelölése',exact:true}).check();
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:'test-results/customer-export-mobile.png',fullPage:true});
+  await exportDialog.getByRole('button',{name:'Exportálás és mentés',exact:true}).click();
+  await expect(exportDialog).toHaveCount(0);
+  saved=await page.evaluate(()=>({picker:window.__customerPicker,bytes:window.__customerSaved}));
+  expect(saved.picker.options.suggestedName).toMatch(/\.xlsx$/);
+  const workbook=Object.values(unzipSync(new Uint8Array(saved.bytes))).map(bytes=>strFromU8(bytes)).join('');
+  expect(workbook).toContain('Belső ügyféljegyzet');expect(workbook).toContain('1/2. alkalom');expect(workbook).toContain('2/2. alkalom');expect(workbook).toContain('Törölt foglalás');
+  await service.selectOption(services[1].id);await expect(cards).toHaveCount(3);
   await page.setViewportSize({width:390,height:844});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);
   await page.screenshot({path:'test-results/customer-history-mobile.png',fullPage:true});

@@ -59,3 +59,29 @@
 .cl-customer-card .cl-session-list {
   margin: 12px 0;
 }
+.cl-customer-export .cl-export-fields {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  margin: 16px 0;
+  border: 1px solid #dfd0d8;
+  border-radius: 12px;
+}
+.cl-export-fields legend {
+  float: none;
+  width: auto;
+  font-size: 18px;
+}
+.cl-export-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+.cl-customer-export .cl-export-check input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  flex-shrink: 0;
+  accent-color: #6c485c;
+}

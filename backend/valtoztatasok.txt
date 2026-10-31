@@ -135,7 +135,11 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
     Tisztázandó: A korábban foglalók vagy az aktuálisan foglalók kerüljenek
     a listába? Helyben írt üzenetet vagy sablont küldünk?
 
-[] Ügyfelek kiexportálása. Lehessen beállítani a formátumot, és hogy az elmentett adatok közül melyek legyenek benne a fájlban.
+[x] Ügyfelek kiexportálása: TXT, CSV vagy Excel (.xlsx) formátumban,
+    kiválasztható adatmezőkkel (alapból csak név), összes kijelölésével.
+    Az aktuálisan szűrt lista vagy az összes ügyfél exportálható.
+    A foglalási előzmények minden alkalmat és a megőrzött előzményeket is tartalmazzák.
+    Támogatott böngészőben mentési hely választható, egyébként normál letöltés indul.
 
 
 4. UTALVÁNYOK, KEDVEZMÉNYEK ÉS ÁRAK
