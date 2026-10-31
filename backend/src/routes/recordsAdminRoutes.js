@@ -37,6 +37,7 @@ admin.put("/customers", async (req, res) =>
         address = email(req.body.email),
         name = str(req.body.name, "Név"),
         phone = str(req.body.phone || "", "Telefon", 40, false);
+      const note=req.body.note===undefined?undefined:str(req.body.note,'Megjegyzés',10000,false);
       if (old !== address)
         fail(
           "Az email címet foglalásonként módosítsd: ilyenkor új kezelési linket küldünk.",
@@ -47,6 +48,8 @@ admin.put("/customers", async (req, res) =>
       );
       const archived=await c.query('UPDATE customer_booking_archive SET customer_name=$2,customer_phone=$3,updated_at=clock_timestamp() WHERE customer_email=$1',[old,name,phone]);
       if(!r.rowCount && !archived.rowCount)fail('Az ügyfél nem található.',404);
+      if(note!==undefined)await c.query(`INSERT INTO customer_notes(customer_email,note) VALUES($1,$2)
+        ON CONFLICT(customer_email) DO UPDATE SET note=EXCLUDED.note,updated_at=clock_timestamp()`,[old,note]);
       return { updated: r.rowCount+archived.rowCount };
     }),
   ),

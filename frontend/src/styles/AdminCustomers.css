@@ -45,6 +45,17 @@
 .cl-customer-card {
   overflow-wrap: anywhere;
 }
+.cl-customer-note {
+  margin: 16px 0;
+  padding: 14px 16px;
+  background: #faf6f2;
+  border-left: 3px solid #6c485c;
+  border-radius: 8px;
+}
+.cl-customer-note p {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+}
 .cl-customer-card .cl-session-list {
   margin: 12px 0;
 }

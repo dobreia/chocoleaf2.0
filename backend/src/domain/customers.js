@@ -28,7 +28,9 @@ async function list(query={}){
         array_agg(DISTINCT h.course_title ORDER BY h.course_title) AS courses
       FROM customer_booking_history h JOIN matched m ON m.customer_email=h.customer_email
       GROUP BY h.customer_email
-    ) SELECT p.* FROM profiles p ${search} ORDER BY p.last_booking DESC,p.email`,params)).rows;
+    ) SELECT p.*,COALESCE(n.note,'') AS note FROM profiles p
+      LEFT JOIN customer_notes n ON n.customer_email=p.email
+      ${search} ORDER BY p.last_booking DESC,p.email`,params)).rows;
 }
 async function services(){
   return (await pool.query(`SELECT DISTINCT ON(COALESCE(h.service_id,h.course_id))

@@ -53,11 +53,16 @@ test('customers filter by booked course, retain cancelled/deleted history and pr
   const dialog=page.locator('dialog');
   await dialog.getByLabel('Név',{exact:true}).fill('History Carol Updated');
   await dialog.getByLabel('Telefon',{exact:true}).fill('+36301234567');
+  await dialog.getByLabel('Belső megjegyzés',{exact:true}).fill('Belső ügyféljegyzet\nMásodik sor');
   await page.reload();
   await expect(dialog.getByLabel('Név',{exact:true})).toHaveValue('History Carol Updated');
+  await expect(dialog.getByLabel('Belső megjegyzés',{exact:true})).toHaveValue('Belső ügyféljegyzet\nMásodik sor');
   await dialog.getByRole('button',{name:'Mentés',exact:true}).click();
   await expect(dialog).toHaveCount(0);
   await expect(cards.filter({has:page.getByRole('heading',{name:'History Carol Updated',exact:true})})).toContainText('+36301234567');
+  await cards.filter({has:page.getByRole('heading',{name:'History Carol Updated',exact:true})}).getByRole('button',{name:'Szerkesztés',exact:true}).click();
+  await expect(dialog.getByLabel('Belső megjegyzés',{exact:true})).toHaveValue('Belső ügyféljegyzet\nMásodik sor');
+  await dialog.getByRole('button',{name:'Bezárás',exact:true}).click();
   await status.selectOption('all');await expect(cards).toHaveCount(3);
   await page.setViewportSize({width:390,height:844});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2)).toBe(true);

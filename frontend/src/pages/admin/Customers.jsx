@@ -79,6 +79,10 @@ export default function Customers(){
         <p><a href={'mailto:'+customer.email}>{customer.email}</a> · {customer.phone||'Nincs telefon'}</p>
         <p>{customer.bookings} foglalás összesen · legutóbbi foglalás: {dateTime(customer.last_booking)}</p>
         <ul className="cl-customer-courses" aria-label="Foglalt kurzusok">{customer.courses.map(title=><li key={title}>{title}</li>)}</ul>
+        {customer.note&&<div className="cl-customer-note">
+          <strong>Belső megjegyzés</strong>
+          <p>{customer.note}</p>
+        </div>}
         <div className="cl-actions">
           <button aria-expanded={openHistory===customer.email} onClick={()=>setOpenHistory(openHistory===customer.email?null:customer.email)}>
             {openHistory===customer.email?'Előzmények bezárása':'Foglalási előzmények'}
@@ -96,6 +100,8 @@ export default function Customers(){
         <Field label="Név" required value={edit.name} onChange={event=>setEdit({...edit,name:event.target.value})}/>
         <Field label="Email (foglalásonként módosítható)" readOnly value={edit.email}/>
         <Field label="Telefon" value={edit.phone||''} onChange={event=>setEdit({...edit,phone:event.target.value})}/>
+        <Field label="Belső megjegyzés"><textarea aria-label="Belső megjegyzés" rows={6} maxLength={10000} value={edit.note||''} onChange={event=>setEdit({...edit,note:event.target.value})}/></Field>
+        <p className="cl-muted">Csak az adminisztrátorok számára látható, az ügyfélnek nem küldjük el.</p>
       </SaveForm>
     </Modal>}
   </>;

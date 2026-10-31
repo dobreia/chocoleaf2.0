@@ -91,3 +91,25 @@ test('customer endpoints require admin, validate input and keep customer edits c
   const rows=(await req('/customers?q=Alice%20Updated')).data;assert.equal(rows.length,1);assert.equal(rows[0].bookings,2);
   assert.equal((await db.query('SELECT customer_name FROM bookings WHERE id=$1',[alice.id])).rows[0].customer_name,'Alice Updated');
 });
+
+test('internal customer notes persist independently, validate input and survive booking deletion',async()=>{
+  const profile={original_email:'BOB@example.test',email:'bob@example.test',name:'Bob',phone:''};
+  const note='Belső megjegyzés\nMásodik sor <script>teszt</script>';
+  assert.equal((await req('/customers','PUT',{...profile,note},false)).status,401);
+  assert.equal((await req('/customers','PUT',{...profile,note})).status,200);
+  const saved=async()=> (await req('/customers?status=all&q=bob@example.test')).data[0];
+  assert.equal((await saved()).note,note);
+  assert.equal((await req('/customers','PUT',profile)).status,200);
+  assert.equal((await saved()).note,note); // Older clients must not erase notes.
+  for(const invalid of ['x'.repeat(10001),null,{}])assert.equal((await req('/customers','PUT',{...profile,note:invalid})).status,400);
+  assert.equal((await saved()).note,note);
+  const unknown={...profile,original_email:'unknown@example.test',email:'unknown@example.test',note};
+  assert.equal((await req('/customers','PUT',unknown)).status,404);
+  assert.equal((await db.query('SELECT * FROM customer_notes WHERE customer_email=$1',[unknown.email])).rowCount,0);
+  await require('../src/domain/bookings').update(bob.id,{status:'cancelled'});
+  assert.equal((await req('/bookings/'+bob.id,'DELETE')).status,200);
+  assert.equal((await saved()).note,note);
+  assert.ok(!JSON.stringify((await req('/customers/history?email=bob@example.test')).data).includes(note));
+  assert.equal((await req('/customers','PUT',{...profile,note:''})).status,200);
+  assert.equal((await saved()).note,'');
+});
