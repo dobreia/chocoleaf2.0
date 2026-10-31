@@ -16,7 +16,7 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
 1. MEGJELENÉS ÉS ŰRLAPOK
 ========================
 
-[ ] F01 - Kurzus részletező oldalának felületi javítása
+[x] F01 - Kurzus részletező oldalának felületi javítása
     Komplexitás: KICSI–KÖZEPES, a felületi módosítások mértékétől függően.
     Feladat: A kurzus részletező oldalán a kép és a részletező szöveg
     helyének felcserélése, az oldal elrendezésének javításával.
@@ -124,8 +124,18 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
     Komplexitás: NAGY.
     Feladat: A címzetteket szolgáltatás alapján lehessen szűrni,
     majd a kiválasztott ügyfeleknek csoportos e-mailt küldeni.
+    Elkészült alapozás: E-mail-cím alapján összevont ügyféllista,
+    foglalt kurzus és foglalási állapot szerinti szűrés, lenyitható
+    foglalási előzményekkel. Alapból a nem lemondott foglalások számítanak;
+    a lemondottak külön vagy az összes állapottal együtt is szűrhetők.
+    Többalkalmas kurzus egy foglalásként, az összes dátumával jelenik meg.
+    Végleges foglalástörlés után rövid kurzuselőzmény marad meg, a bizalmas
+    foglaláskezelő adatok, belső megjegyzések és számlázási adatok nélkül.
+    A csoportos levélküldés még nincs megvalósítva.
     Tisztázandó: A korábban foglalók vagy az aktuálisan foglalók kerüljenek
     a listába? Helyben írt üzenetet vagy sablont küldünk?
+
+[] Ügyfelek kiexportálása. Lehessen beállítani a formátumot, és hogy az elmentett adatok közül melyek legyenek benne a fájlban.
 
 
 4. UTALVÁNYOK, KEDVEZMÉNYEK ÉS ÁRAK

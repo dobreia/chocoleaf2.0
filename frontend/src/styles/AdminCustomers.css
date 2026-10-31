@@ -1,0 +1,50 @@
+.cl-customer-courses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+.cl-customer-courses li {
+  background: #eee8dc;
+  color: #57384b;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 14px;
+}
+.cl-customer-history {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #dfd0d8;
+}
+.cl-customer-history h3 {
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+.cl-customer-bookings {
+  display: grid;
+  gap: 14px;
+  list-style: none;
+  padding: 0;
+}
+.cl-customer-bookings > li {
+  padding: 18px;
+  background: #faf6f2;
+  border: 1px solid #e3d6de;
+  border-radius: 12px;
+}
+.cl-customer-booking-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.cl-customer-card {
+  overflow-wrap: anywhere;
+}
+.cl-customer-card .cl-session-list {
+  margin: 12px 0;
+}

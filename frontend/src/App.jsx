@@ -20,6 +20,7 @@ import Calendar from "./pages/admin/Calendar";
 import Services from "./pages/admin/Services";
 import Slots from "./pages/admin/Slots";
 import Records from "./pages/admin/Records";
+import Customers from './pages/admin/Customers';
 import GiftOrders from "./pages/admin/GiftOrders";
 import ManageBooking from "./pages/ManageBooking";
 import InquiryPage from "./pages/InquiryPage";
@@ -121,7 +122,7 @@ function App() {
           <Route path="courses/:id" element={<Slots />} />
           <Route
             path="customers"
-            element={<Records key="customers" kind="customers" />}
+            element={<Customers />}
           />
           <Route
             path="inquiries"

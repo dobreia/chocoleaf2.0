@@ -27,15 +27,9 @@ admin.get("/dashboard", async (req, res) => {
     ).n,
   });
 });
-admin.get("/customers", async (req, res) =>
-  res.json(
-    (
-      await pool.query(
-        `SELECT lower(customer_email) AS email,(array_agg(customer_name ORDER BY updated_at DESC))[1] AS name,(array_agg(customer_phone ORDER BY updated_at DESC))[1] AS phone,count(*)::int AS bookings,MAX(created_at) AS last_booking FROM bookings GROUP BY lower(customer_email) ORDER BY last_booking DESC`,
-      )
-    ).rows,
-  ),
-);
+admin.get('/customers',async(req,res)=>res.json(await require('../domain/customers').list(req.query)));
+admin.get('/customers/services',async(_req,res)=>res.json(await require('../domain/customers').services()));
+admin.get('/customers/history',async(req,res)=>res.json(await require('../domain/customers').history(req.query.email)));
 admin.put("/customers", async (req, res) =>
   res.json(
     await transaction(async (c) => {
@@ -51,7 +45,9 @@ admin.put("/customers", async (req, res) =>
         "UPDATE bookings SET customer_name=$2,customer_phone=$3,updated_at=clock_timestamp() WHERE lower(customer_email)=$1",
         [old, name, phone],
       );
-      return { updated: r.rowCount };
+      const archived=await c.query('UPDATE customer_booking_archive SET customer_name=$2,customer_phone=$3,updated_at=clock_timestamp() WHERE customer_email=$1',[old,name,phone]);
+      if(!r.rowCount && !archived.rowCount)fail('Az ügyfél nem található.',404);
+      return { updated: r.rowCount+archived.rowCount };
     }),
   ),
 );
