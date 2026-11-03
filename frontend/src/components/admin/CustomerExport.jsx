@@ -48,7 +48,7 @@ export default function CustomerExport({items,draft,setDraft,onClose,onSuccess})
         {gmail?<>
           <Field label="Címke a Google Névjegyekben" maxLength={100} value={draft.gmailLabel??'ChocoLeaf'} onChange={event=>change({gmailLabel:event.target.value})}/>
           <p className="cl-muted">A CSV-fájlt a Google Névjegyek → Importálás menüpontban töltheted fel. A címkével Gmailben a teljes csoportot hozzáadhatod a titkos másolat (Bcc) mezőhöz. Az e-mail-cím kötelező; a címke üresen is hagyható.</p>
-        </>:<p className="cl-muted">Minden ügyfél egyszer szerepel az exportban. A kurzusok és az előzmények az ügyfél összes foglalását tartalmazzák, a lemondottakat és a törölt foglalások megőrzött előzményeit is. A dátumok budapesti idő szerint jelennek meg.</p>}
+        </>:<p className="cl-muted">Minden ügyfél egyszer szerepel az exportban. A kurzusok és az előzmények az ügyfél összes foglalását tartalmazzák, a lemondottakat és a törölt foglalások megőrzött előzményeit is.</p>}
         <fieldset className="cl-export-fields">
           <legend>Exportálandó adatok</legend>
           <label className="cl-export-check"><input type="checkbox" checked={selected.length===fields.length}

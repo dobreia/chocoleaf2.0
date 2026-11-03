@@ -57,12 +57,14 @@ export function customerWorkbookSheets(customers,selected){
   const fields=selected.filter(id=>id!=='history');
   const rows=fields.length?customerExportRows(customers,fields):[[],...customers.map(()=>[])];
   if(!fields.length&&!detailed)throw Error('Válassz ki legalább egy adatmezőt.');
+  const lastBookingColumn=customerExportFields.filter(field=>fields.includes(field.id)).findIndex(field=>field.id==='last_booking');
+  if(lastBookingColumn>=0)customers.forEach((customer,index)=>{rows[index+1][lastBookingColumn]=excelDate(customer.last_booking);});
   if(detailed)rows.forEach((row,index)=>row.unshift(index===0?'Ügyfél sorszáma':index));
   const sheets=[{sheet:'Ügyfelek',rows}];
   if(detailed){
     const identity=customerExportFields.filter(field=>['name','email'].includes(field.id)&&selected.includes(field.id));
     const appointments=[['Ügyfél sorszáma',...identity.map(field=>field.label),'Kurzus','Foglalásazonosító','Alkalom sorszáma','Alkalmak száma',
-      'Kezdés (Budapest)','Befejezés (Budapest)','Foglalási állapot','Fizetési állapot','Létszám','Foglalás dátuma (Budapest)','Foglalás törölve']];
+      'Kezdés','Befejezés','Foglalási állapot','Fizetési állapot','Létszám','Foglalás dátuma','Foglalás törölve']];
     customers.forEach((customer,index)=>{
       for(const booking of customer.history||[]){
         const sessions=(booking.sessions?.length?[...booking.sessions]:[booking]).sort((a,b)=>new Date(a.start_time)-new Date(b.start_time));
@@ -100,7 +102,7 @@ export async function customerExportBlob(customers,selected,format,options={}){
     columns:rows[0].map(()=>({width:30})),
     data:rows.map((row,index)=>row.map(value=>({
       type:value instanceof Date?Date:typeof value==='number'?Number:String,value:value??'',
-      ...(value instanceof Date?{format:'yyyy-mm-dd hh:mm'}:{}),
+      ...(value instanceof Date?{format:'yyyy.mm.dd h:mm'}:{}),
       ...(index===0?{fontWeight:'bold',backgroundColor:'#6c485c',textColor:'#ffffff'}:{}),wrap:true
     })))
   })),{features:[filters]}).toBlob();

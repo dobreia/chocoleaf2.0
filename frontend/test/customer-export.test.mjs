@@ -78,9 +78,9 @@ test('Excel splits every session into a sortable linked row and respects selecte
     [1,customer.name,'Kétalkalmas','booking-1',1,2],
     [1,customer.name,'Kétalkalmas','booking-1',2,2]
   ]);
-  assert.equal(details[1][column('Kezdés (Budapest)')].toISOString(),'2026-10-24T10:00:00.000Z');
-  assert.equal(details[2][column('Kezdés (Budapest)')].toISOString(),'2026-11-01T10:00:00.000Z');
-  assert.equal(details[2][column('Befejezés (Budapest)')].toISOString(),'2026-11-01T11:30:00.000Z');
+  assert.equal(details[1][column('Kezdés')].toISOString(),'2026-10-24T10:00:00.000Z');
+  assert.equal(details[2][column('Kezdés')].toISOString(),'2026-11-01T10:00:00.000Z');
+  assert.equal(details[2][column('Befejezés')].toISOString(),'2026-11-01T11:30:00.000Z');
   assert.equal(details[1][column('Foglalási állapot')],'Lemondva');
   assert.equal(details[1][column('Fizetési állapot')],'Visszatérítve');
   assert.equal(details[1][column('Foglalás törölve')],'Igen');
@@ -122,4 +122,30 @@ test('Excel handles long booking histories as separate rows and supports legacy 
   const files=unzipSync(new Uint8Array(await blob.arrayBuffer()));
   assert.equal((strFromU8(files['xl/worksheets/sheet2.xml']).match(/<row\b/g)||[]).length,451);
   assert.equal(customerWorkbookSheets([customer],['name']).length,1);
+});
+
+test('all Excel date columns use numeric values and the requested dotted date/time format, including the customer sheet',async()=>{
+  const history=[{course_title:'Kurzus',status:'confirmed',payment_status:'paid',seats:1,created_at:'2026-10-01T12:00Z',start_time:'2026-11-02T11:00Z',end_time:'2026-11-02T13:00Z'}];
+  const sheets=customerWorkbookSheets([{...customer,history},{...customer,last_booking:null,history:[]}],['last_booking','history']);
+  assert.equal(sheets[0].rows[1][1].toISOString(),'2026-10-31T13:00:00.000Z');
+  assert.equal(sheets[0].rows[2][1],'');
+  const blob=await customerExportBlob([{...customer,history}],['last_booking','history'],'xlsx');
+  const files=unzipSync(new Uint8Array(await blob.arrayBuffer()));
+  const {JSDOM}=await import('jsdom');
+  const parse=bytes=>new JSDOM(strFromU8(bytes),{contentType:'text/xml'}).window.document;
+  const styles=parse(files['xl/styles.xml']);
+  const cellStyles=[...styles.querySelectorAll('cellXfs > xf')];
+  const dateFormat=styles.querySelector('numFmt[formatCode="yyyy.mm.dd h:mm"]');
+  assert.ok(dateFormat);
+  let dates=0;
+  for(const sheet of ['sheet1','sheet2']){
+    for(const cell of parse(files[`xl/worksheets/${sheet}.xml`]).querySelectorAll('sheetData > row:not(:first-child) > c')){
+      const style=cellStyles[Number(cell.getAttribute('s')||0)];
+      if(style.getAttribute('numFmtId')===dateFormat.getAttribute('numFmtId')){
+        assert.ok(!['s','inlineStr'].includes(cell.getAttribute('t')));
+        assert.ok(Number.isFinite(Number(cell.querySelector('v').textContent)));dates++;
+      }
+    }
+  }
+  assert.equal(dates,4); // Last booking, session start, session end, booking creation.
 });
