@@ -116,6 +116,10 @@ test('customers filter by booked course, retain cancelled/deleted history and pr
   await exportDialog.getByRole('combobox',{name:'Exportálandó ügyfelek',exact:true}).selectOption('all');
   await exportDialog.getByRole('checkbox',{name:'Összes kijelölése',exact:true}).check();
   await expect(exportDialog.getByText(/Az Excel két munkalapot tartalmaz/)).toBeVisible();
+  const allCustomers=await(await page.request.get(api+'/api/admin/customers?status=all')).json();
+  const histories=await Promise.all(allCustomers.map(async customer=>
+    (await page.request.get(api+'/api/admin/customers/history?'+new URLSearchParams({email:customer.email}))).json()));
+  const totalSessions=histories.flat().reduce((sum,booking)=>sum+(booking.sessions?.length||1),0);
   await page.setViewportSize({width:390,height:844});
   await page.screenshot({path:'test-results/customer-export-mobile.png',fullPage:true});
   await exportDialog.getByRole('button',{name:'Exportálás és mentés',exact:true}).click();
@@ -126,8 +130,8 @@ test('customers filter by booked course, retain cancelled/deleted history and pr
   const workbook=Object.values(files).map(bytes=>strFromU8(bytes)).join('');
   expect(workbook).toContain('Belső ügyféljegyzet');expect(workbook).toContain('Kurzusalkalmak');expect(workbook).toContain('Foglalás törölve');
   expect(workbook).not.toContain('Részletes foglalási előzmények');
-  expect((strFromU8(files['xl/worksheets/sheet1.xml']).match(/<row\b/g)||[]).length).toBe(4);
-  expect((strFromU8(files['xl/worksheets/sheet2.xml']).match(/<row\b/g)||[]).length).toBe(6);
+  expect((strFromU8(files['xl/worksheets/sheet1.xml']).match(/<row\b/g)||[]).length).toBe(allCustomers.length+1);
+  expect((strFromU8(files['xl/worksheets/sheet2.xml']).match(/<row\b/g)||[]).length).toBe(totalSessions+1);
   await page.getByRole('button',{name:'Export',exact:true}).click();
   await exportDialog.getByRole('combobox',{name:'Formátum',exact:true}).selectOption('gmail');
   await expect(exportDialog.getByRole('checkbox',{name:'Név',exact:true})).toBeChecked();

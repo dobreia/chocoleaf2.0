@@ -1,0 +1,10 @@
+.cl-contacts-stats { display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin:24px 0; }
+.cl-contacts-stats dd { margin:4px 0 0; }
+.cl-contacts-info { background:#eee8dc;padding:16px;border-radius:12px;overflow-wrap:anywhere; }
+.cl-contacts-check { display:flex;align-items:flex-start;gap:10px;margin:12px 0;cursor:pointer; }
+.cl-admin .cl-contacts-check input { width:18px;height:18px;margin:2px 0 0;flex-shrink:0;accent-color:#6c485c; }
+.cl-admin fieldset.cl-contacts-categories { border:1px solid #dfd0d8;border-radius:12px;padding:12px 16px;margin:16px 0; }
+.cl-contacts-categories legend { float:none;width:auto;font-size:18px; }
+.cl-contacts-preview { max-height:340px;overflow:auto;overflow-wrap:anywhere; }
+.cl-contacts-preview-button { margin:16px 0; }
+.cl-contacts-issue { border-top:1px solid #dfd0d8;padding:16px 0;overflow-wrap:anywhere; }

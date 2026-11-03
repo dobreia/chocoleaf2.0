@@ -114,6 +114,7 @@ export default function AdminShell() {
             ["services", "Szolgáltatások"],
             ["courses", "Időpontok"],
             ["customers", "Ügyfelek"],
+            ["customer-sync", "Körlevél / Google"],
             ["inquiries", "Megkeresések"],
             ["content", "Oldaltartalmak"],
             ["giftcards", "Utalványok"],

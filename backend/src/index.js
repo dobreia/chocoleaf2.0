@@ -49,6 +49,8 @@ app.use("/api", require("./routes/mediaRoutes").router);
 app.use("/api/auth", routes());
 app.use("/api/admin/calendar-sync", require("./routes/calendarSyncRoutes").admin);
 app.use("/api/calendar", require("./routes/calendarSyncRoutes").callback);
+app.use('/api/admin/contacts-sync',require('./routes/contactsSyncRoutes').admin);
+app.use('/api/contacts',require('./routes/contactsSyncRoutes').callback);
 app.use("/api/admin", requireAdmin, admin);
 app.use("/api", publicRouter);
 app.use("/api/gallery", require("./routes/galleryRoutes"));
@@ -93,6 +95,7 @@ if (require.main === module)
         console.log("ChocoLeaf API elindult."),
       );
       const stopCalendarSync = require("./calendar/sync").start();
+      const stopContactsSync = require('./contacts/sync').start();
       const payments = setInterval(() => require('./payments/orders').work().catch(e => console.error('Payments worker:', e.code || e.name)), 15000);
       payments.unref();
       const worker = setInterval(
@@ -107,6 +110,7 @@ if (require.main === module)
         clearInterval(worker);
         clearInterval(payments);
         stopCalendarSync();
+        stopContactsSync();
         server.close(() => pool.end());
       });
     })

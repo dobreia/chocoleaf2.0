@@ -131,9 +131,12 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
     Többalkalmas kurzus egy foglalásként, az összes dátumával jelenik meg.
     Végleges foglalástörlés után rövid kurzuselőzmény marad meg, a bizalmas
     foglaláskezelő adatok, belső megjegyzések és számlázási adatok nélkül.
-    A csoportos levélküldés még nincs megvalósítva.
-    Tisztázandó: A korábban foglalók vagy az aktuálisan foglalók kerüljenek
-    a listába? Helyben írt üzenetet vagy sablont küldünk?
+    Elkészült Google-alapú működés: automatikus Google Névjegyek-szinkron,
+    összesített és kurzusonkénti címkékkel, több konkrét kurzusból összeállítható
+    aktuális körlevélcsoporttal, e-mail szerinti egyszeri szerepeltetéssel.
+    A régebbi foglalók is szerepelnek; a lemondottak bevonása külön állítható.
+    A levélírás és küldés Gmailben történik, a csoport a Titkos másolat mezőbe kerül.
+    Közvetlen adminos levélszerkesztő/küldő még nincs. Beállítás: GOOGLE-CONTACTS.hu.md.
 
 [x] Ügyfelek kiexportálása: TXT, CSV vagy Excel (.xlsx) formátumban,
     kiválasztható adatmezőkkel (alapból csak név), összes kijelölésével.

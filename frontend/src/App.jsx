@@ -21,6 +21,7 @@ import Services from "./pages/admin/Services";
 import Slots from "./pages/admin/Slots";
 import Records from "./pages/admin/Records";
 import Customers from './pages/admin/Customers';
+import CustomerSync from './pages/admin/CustomerSync';
 import GiftOrders from "./pages/admin/GiftOrders";
 import ManageBooking from "./pages/ManageBooking";
 import InquiryPage from "./pages/InquiryPage";
@@ -117,6 +118,7 @@ function App() {
           <Route path="bookings" element={<Bookings />} />
           <Route path="calendar" element={<Calendar />} />
           <Route path="calendar-sync" element={<CalendarSync />} />
+          <Route path="customer-sync" element={<CustomerSync />} />
           <Route path="services" element={<Services />} />
           <Route path="courses" element={<Slots />} />
           <Route path="courses/:id" element={<Slots />} />

@@ -59,7 +59,7 @@ export default function Customers(){
   },[q,filter,revision]);
   const changeFilter=(next)=>{setLoading(true);setFilter(next);};
   return <>
-    <div className="cl-title"><h1>Ügyfelek</h1><button disabled={loading||!!error} onClick={()=>setExportDraft({format:'csv',scope:'filtered',fields:['name']})}>Export</button></div>
+    <div className="cl-title"><h1>Ügyfelek</h1><div className="cl-actions"><Link to="/admin/customer-sync">Körlevél és Google-névjegyek</Link><button disabled={loading||!!error} onClick={()=>setExportDraft({format:'csv',scope:'filtered',fields:['name']})}>Export</button></div></div>
     <Notice error={error} message={message}/>
     <p>Az ügyfeleket e-mail-cím alapján csoportosítjuk. A szűrők a foglalások alapján választják ki az ügyfeleket; a lenyitható előzményekben minden állapot látható.</p>
     <div className="cl-filters">

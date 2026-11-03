@@ -1,5 +1,15 @@
 # ChocoLeaf – működés és indítás
 
+## Google Névjegyek és körlevélcímkék
+
+Admin → Körlevél / Google: automatikus névjegyszinkron, összesített és kurzusonkénti
+címkék, több konkrét kurzus nevéből összeállított körlevélcsoport, címzett-előnézet és hibakezelés.
+Az egyszeri Google Cloud- és szerverbeállítás részletesen: [GOOGLE-CONTACTS.hu.md](GOOGLE-CONTACTS.hu.md).
+A környezetváltozók mintája: `.env.contacts.example`. A `017-google-contacts.sql` és
+`018-contacts-course-audience.sql` migráció induláskor lefut. Régi kategóriaválasztás
+után a kurzusokat újra ki kell jelölni; a Google-kapcsolat megmarad.
+A tényleges levelet a kapcsolt fiók Gmail-felületén írod meg.
+
 Az `utalás` branch aktuális fizetési módja banki átutalás. A hozzá tartozó beállításokat és adminlépéseket az „Átutalásos kiadás” fejezet tartalmazza.
 
 ## Ügyfél naptármeghívók (F09)
