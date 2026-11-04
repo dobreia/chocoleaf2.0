@@ -176,11 +176,14 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
     Az átírás közben üres/túl alacsony érték a mező elhagyásakor a minimumra áll vissza.
     A választás és a beírt összeg oldalfrissítéskor megmarad, lapelhagyáskor törlődik.
 
-[ ] F15 - Utalványárak frissítése a meghirdetett időpontok alapján
-    Komplexitás: KÖZEPES–NAGY.
-    Feladat: A megjelenített összegek kövessék a meghirdetett időpontokat.
-    Tisztázandó: Pontosan mely összegek változzanak? Több eltérő árú időpont
-    esetén melyik ár legyen irányadó? Mi történjen, ha nincs meghirdetett időpont?
+[x] F15 - Utalványárak frissítése a meghirdetett időpontok alapján
+    Az előre választható összegek az aktív szolgáltatások aktív, még el nem kezdődött
+    meghirdetéseinek teljes kurzusárai. Azonos ár csak egyszer, növekvő sorrendben látszik.
+    A betelt meghirdetés ára is szerepel; a múltbeli/inaktív meghirdetéseké nem.
+    Az utalvány 1 000–1 000 000 Ft-os korlátján kívüli árak nem választhatók.
+    A lista oldalnyitáskor, visszatéréskor és 30 másodpercenként frissül.
+    Nincs fix tartalék árlista; hiba vagy meghirdetés hiányában az egyéni összeg megmarad.
+    Eltűnt ár kiválasztásakor a rendelés új választást kér, a kitöltött űrlapot megőrzi.
 
 [ ] F16 - Promóciós / utalványmező a foglalásnál
     Komplexitás: NAGY.

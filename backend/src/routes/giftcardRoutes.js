@@ -7,6 +7,13 @@ const { requireAdmin } = require("../domain/auth");
 const providers = require('../payments/providers');
 const payments = require('../payments/orders');
 const router = express.Router();
+router.get('/amounts',async(_req,res)=>{
+  res.set('Cache-Control','no-store');
+  const rows=(await pool.query(`SELECT DISTINCT c.price FROM courses c JOIN services s ON s.id=c.service_id
+    WHERE c.active AND s.active AND c.start_time>now() AND c.price BETWEEN 1000 AND 1000000
+    ORDER BY c.price`)).rows;
+  res.json(rows.map(row=>row.price));
+});
 router.post("/start-payment", async (req, res) => {
   const d = req.body;
   const method = providers.provider();
