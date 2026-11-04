@@ -3,6 +3,7 @@ import { usePageDraftState } from '../../components/usePageDraft';
 import { api } from "../../api/courses";
 import { Field, Modal, SaveForm, Notice } from "../../components/admin/UI";
 import { dateTime } from "../../components/admin/format";
+import { inquiryReplyUrl } from '../../components/admin/inquiryReply';
 import { useOutletContext } from 'react-router-dom';
 export default function Records({ kind }) {
   const { refreshInquiryCount } = useOutletContext() || {};
@@ -123,6 +124,8 @@ export default function Records({ kind }) {
               )}
               {kind === "content" && <p>{x.body.slice(0, 180)}…</p>}
               {kind === "inquiries" ? (
+                <div className="cl-actions">
+                <a className="cl-inquiry-reply" href={inquiryReplyUrl(x)} target="_blank" rel="noopener noreferrer">Válasz Gmailben</a>
                 <button
                   onClick={async () => {
                     try {
@@ -140,6 +143,7 @@ export default function Records({ kind }) {
                 >
                   {x.status === "new" ? "Kezeltnek jelölés" : "Újra megnyitás"}
                 </button>
+                </div>
               ) : (
                 <button
                   onClick={() => setEdit({ ...x, original_email: x.email })}

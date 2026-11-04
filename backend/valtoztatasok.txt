@@ -114,11 +114,10 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
     Tisztázandó: Az „árajánlatot adni” külön állapotot jelent,
     vagy az oldalon elkészíthető és elküldhető árajánlatot is?
 
-[ ] F11 - Válasz e-mail megnyitása a megkeresésből
-    Komplexitás: KICSI–NAGY, a választott megoldástól függően.
-    Tisztázandó: A saját levelezőprogram nyíljon meg előkészített válasszal,
-    vagy az adminfelületről lehessen közvetlenül választ küldeni?
-    Kapcsolódó feladat: F10, ha a válasz az állapotot is módosítja.
+[x] F11 - Válasz e-mail megnyitása a megkeresésből
+    Megvalósítva: „Válasz Gmailben” gomb új böngészőlapon,
+    előre kitöltött címzettel, válasz-tárggyal, megszólítással és az eredeti üzenettel.
+    A megkeresés állapotát a megnyitás nem módosítja; a küldés Gmailben történik.
 
 [ ] F12 - Csoportos e-mail az ügyféllistából, szolgáltatás szerinti szűréssel
     Komplexitás: NAGY.

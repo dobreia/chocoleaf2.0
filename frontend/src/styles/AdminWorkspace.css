@@ -87,6 +87,7 @@
   min-width: 0;
 }
 .cl-admin button,
+.cl-admin .cl-inquiry-reply,
 .cl-dialog button {
   font-size: 14px;
   border: 1px solid #b99cad;
@@ -99,8 +100,14 @@
   line-height: 1.4;
 }
 .cl-admin button:hover,
+.cl-admin .cl-inquiry-reply:hover,
 .cl-dialog button:hover {
   background: #ecdee6;
+}
+.cl-admin .cl-inquiry-reply {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
 }
 .cl-admin button:disabled,
 .cl-dialog button:disabled {

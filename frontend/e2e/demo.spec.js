@@ -45,6 +45,21 @@ test('contact and quote forms persist in admin; all admin screens load',async({p
     await expect(page.getByRole('alert')).toHaveCount(0);
   }
   await page.goto('/admin/inquiries');await expect(page.getByText('Bemutató kapcsolatfelvétel.')).toBeVisible();
+  const inquiry=page.locator('article.cl-card').filter({hasText:'inquiry@example.test'});
+  const reply=inquiry.getByRole('link',{name:'Válasz Gmailben',exact:true});
+  const compose=new URL(await reply.getAttribute('href'));
+  expect(compose.origin).toBe('https://mail.google.com');
+  expect(compose.searchParams.get('to')).toBe('inquiry@example.test');
+  expect(compose.searchParams.get('su')).toBe('Re: Kapcsolatfelvétel');
+  expect(compose.searchParams.get('body')).toContain('Kedves Bemutató Érdeklődő!');
+  expect(compose.searchParams.get('body')).toContain('> Bemutató kapcsolatfelvétel.');
+  await expect(reply).toHaveAttribute('target','_blank');
+  await page.context().route('https://mail.google.com/**',route=>route.fulfill({contentType:'text/html',body:'<h1>Gmail compose test</h1>'}));
+  const opened=page.waitForEvent('popup');await reply.click();const gmail=await opened;await gmail.waitForLoadState('domcontentloaded');
+  expect(new URL(gmail.url()).searchParams.get('to')).toBe('inquiry@example.test');await gmail.close();
+  await expect(inquiry.getByRole('button',{name:'Kezeltnek jelölés',exact:true})).toBeVisible();
+  const stored=await(await page.request.get(api+'/api/admin/inquiries')).json();
+  expect(stored.find(item=>item.email==='inquiry@example.test').status).toBe('new');
   await page.getByRole('button',{name:'Kezeltnek jelölés'}).first().click();await expect(page.getByRole('button',{name:'Újra megnyitás'})).toBeVisible();
 });
 test('booking and voucher checkout redirect, fulfillment and customer management',async({page,request})=>{
