@@ -251,12 +251,14 @@ test('booking submit returns Stripe directly and retries a provider failure with
 });
 
 test('gift checkout is idempotent and unpaid Stripe gift cannot be manually fulfilled',async()=>{
-  const key=randomUUID(),body={email:'gift@example.test',amount:19000,quantity:2,names:['A','B'],billingData:billing,paymentMethod:'stripe'};
+  const key=randomUUID(),body={email:'gift@example.test',amount:12345,quantity:2,names:['A','B'],billingData:billing,paymentMethod:'stripe'};
   const send=()=>fetch(base+'/api/giftcard/start-payment',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':key},body:JSON.stringify(body)});
   const first=await(await send()).json(),second=await(await send()).json();
   assert.ok(first.paymentId);assert.equal(first.paymentId,second.paymentId);
   assert.equal(first.redirectUrl,'https://checkout.stripe.com/c/pay/test');
   assert.equal(second.redirectUrl,first.redirectUrl);
+  assert.equal((await pool.query('SELECT amount FROM payment_orders WHERE id=$1',[first.paymentId])).rows[0].amount,24690);
+  assert.equal(sessions.get('checkout-'+first.paymentId).amount_total,2469000);
   await assert.rejects(require('../src/domain/gifts').fulfill(first.id,true),{status:409});
   assert.equal((await fetch(base+'/api/transfer-info?id='+first.id)).status,409);
   await orders.checkout(first.paymentId);
@@ -270,6 +272,7 @@ test('gift checkout is idempotent and unpaid Stripe gift cannot be manually fulf
     const mails=(await pool.query('SELECT * FROM outbox WHERE body LIKE $1',['%'+first.id+'%'])).rows;
     const customer=mails.filter(x=>x.recipient===body.email && x.attachments.length);
     assert.equal(customer.length,1);assert.equal(customer[0].attachments.length,2);
+    assert.ok(customer[0].body.includes('Utalványonként: 12345 Ft'));
     for(const attachment of customer[0].attachments) assert.equal(Buffer.from(attachment.content,'base64').subarray(0,4).toString(),'%PDF');
     assert.equal(mails.filter(x=>x.recipient==='gift-admin@example.test').length,1);
   } finally {process.env.MAIL_ADMIN=oldAdmin;}

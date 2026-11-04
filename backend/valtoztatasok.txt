@@ -167,10 +167,14 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
     Tisztázandó: A már kiadott utalványok azonosítója is változzon,
     vagy csak az újonnan kiadottaké?
 
-[ ] F14 - Egyedi összegű utalvány vásárlása
-    Komplexitás: NAGY.
-    Feladat: Az előre megadott értékek mellett egyéb összeg is megadható legyen.
-    Tisztázandó: Minimum, maximum és megengedett lépésköz.
+[x] F14 - Egyedi összegű utalvány vásárlása
+    Megvalósítva: Az előre megadott értékek mellett „Egyéni összeg” választás,
+    külön beviteli mezővel és azonnal frissülő utalványértékkel/végösszeggel.
+    A meglévő szerveroldali korlát maradt: 1 000–1 000 000 Ft utalványonként,
+    egész forintokban. Több utalványnál mindegyik a megadott egyéni értékre szól.
+    A mező 1 000 Ft-ról indul; csak számjegyeket és maximum 1 000 000 Ft-ot fogad el.
+    Az átírás közben üres/túl alacsony érték a mező elhagyásakor a minimumra áll vissza.
+    A választás és a beírt összeg oldalfrissítéskor megmarad, lapelhagyáskor törlődik.
 
 [ ] F15 - Utalványárak frissítése a meghirdetett időpontok alapján
     Komplexitás: KÖZEPES–NAGY.

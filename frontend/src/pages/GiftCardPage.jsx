@@ -1,6 +1,6 @@
 import { api } from "../api/courses";
 import { startStripePayment } from '../api/payments';
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePageDraftState, usePageDraftRef, useClearPageDrafts } from '../components/usePageDraft';
 import BillingFields from '../components/BillingFields';
 import { emptyBilling } from '../components/billingData';
@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import "../styles/ExperiencePages.css";
 
 const amountOptions = [19000, 39900, 29000, 185900];
+const minAmount = 1000, maxAmount = 1000000;
 
 function formatAmount(amount) {
   return new Intl.NumberFormat("hu-HU").format(amount);
@@ -23,6 +24,12 @@ export default function GiftCardPage() {
   const [errorMessage, setErrorMessage] = useState("");
   useEffect(() => { api('/payments/config').then(x => setProvider(x.provider)).catch(e => setErrorMessage(e.message)); }, []);
   const [selectedAmount, setSelectedAmount] = usePageDraftState('gift.amount', null);
+  const [customAmount, setCustomAmount] = usePageDraftState('gift.customAmount', String(minAmount));
+  const customInput = useRef(null);
+  const isCustom = selectedAmount === 'custom';
+  const candidateAmount = isCustom ? Number(customAmount) : selectedAmount;
+  const amount = Number.isSafeInteger(candidateAmount) && candidateAmount >= minAmount && candidateAmount <= maxAmount ? candidateAmount : null;
+  useEffect(() => { if (isCustom) { customInput.current?.focus(); customInput.current?.select(); } }, [isCustom]);
   const [quantity, setQuantity] = usePageDraftState('gift.quantity', 1);
   const [names, setNames] = usePageDraftState('gift.names', [""]);
   const [email, setEmail] = usePageDraftState('gift.email', "");
@@ -33,6 +40,17 @@ export default function GiftCardPage() {
       isSubmitting ? 'Rendelés mentése…' : provider === 'stripe' ? 'Megrendelés és bankkártyás fizetés' : 'Megrendelés és átutalási adatok',
     [isSubmitting, provider],
   );
+
+  function normalizeCustomAmount() {
+    const value = Number(customAmount);
+    const normalized = Number.isSafeInteger(value) ? Math.min(maxAmount, Math.max(minAmount, value)) : minAmount;
+    setCustomAmount(String(normalized));
+  }
+
+  function updateCustomAmount(value) {
+    if (!/^\d{0,7}$/.test(value) || Number(value) > maxAmount) return;
+    setCustomAmount(value);
+  }
 
   function updateQuantity(nextQuantity) {
     requestKeyRef.current = null;
@@ -73,6 +91,10 @@ export default function GiftCardPage() {
       setErrorMessage("Kérlek válassz összeget!");
       return;
     }
+    if (!amount) {
+      setErrorMessage(`Adj meg ${formatAmount(minAmount)}–${formatAmount(maxAmount)} Ft közötti egész összeget utalványonként.`);
+      return;
+    }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setErrorMessage("Kérlek add meg az email címet!");
@@ -97,7 +119,7 @@ export default function GiftCardPage() {
           name: cleanNames[0],
           names: cleanNames,
           email: email.trim(),
-          amount: selectedAmount,
+          amount,
           quantity,
           billingData: billingPayload,
           paymentMethod: provider,
@@ -135,7 +157,13 @@ export default function GiftCardPage() {
       <form className="voucher-layout" onChange={() => { requestKeyRef.current = null; }} onSubmit={e => { e.preventDefault(); startPayment(); }}>
         <div className="voucher-steps">
           <section className="voucher-step"><p className="experience-eyebrow">01 · Az ajándék</p><h2>Milyen értékben ajándékoznál?</h2>
-            <div className="voucher-amounts">{amountOptions.map(amount => <button type="button" key={amount} aria-pressed={selectedAmount === amount} className={selectedAmount === amount ? 'selected' : ''} onClick={() => { requestKeyRef.current = null; setSelectedAmount(amount); }}>{formatAmount(amount)} Ft<span>névre szóló utalvány</span></button>)}</div>
+            <div className="voucher-amounts">{amountOptions.map(amount => <button type="button" key={amount} aria-pressed={selectedAmount === amount} className={selectedAmount === amount ? 'selected' : ''} onClick={() => { requestKeyRef.current = null; setSelectedAmount(amount); }}>{formatAmount(amount)} Ft<span>névre szóló utalvány</span></button>)}
+              <button type="button" className={'voucher-custom-choice'+(isCustom?' selected':'')} aria-pressed={isCustom} aria-expanded={isCustom} aria-controls="voucher-custom-amount" onClick={() => { requestKeyRef.current = null; normalizeCustomAmount(); setSelectedAmount('custom'); }}>Egyéni összeg<span>te határozod meg az utalvány értékét</span></button>
+            </div>
+            {isCustom && <div id="voucher-custom-amount">
+              <label className="voucher-label" htmlFor="voucher-custom-value">Egyéni összeg (Ft / utalvány)<input ref={customInput} id="voucher-custom-value" type="text" inputMode="numeric" pattern="[0-9]*" required value={customAmount} aria-describedby="voucher-custom-hint" onFocus={() => { if (!amount) normalizeCustomAmount(); }} onBlur={normalizeCustomAmount} onChange={event => updateCustomAmount(event.target.value)} /></label>
+              <p className="voucher-hint" id="voucher-custom-hint">{formatAmount(minAmount)}–{formatAmount(maxAmount)} Ft közötti egész összeget adhatsz meg. A mező elhagyásakor az üres vagy túl alacsony értéket a minimumra állítjuk. Több utalványnál ez az érték mindegyikre külön vonatkozik.</p>
+            </div>}
             <label className="voucher-label" htmlFor="voucher-quantity">Utalványok száma</label><div className="voucher-quantity"><button type="button" aria-label="Egy utalvánnyal kevesebb" disabled={Number(quantity) <= 1} onClick={() => changeQuantity(-1)}>−</button><input id="voucher-quantity" type="number" required min="1" max="20" step="1" value={quantity} onChange={e => updateQuantity(e.target.value)} /><button type="button" aria-label="Egy utalvánnyal több" disabled={Number(quantity) >= 20} onClick={() => changeQuantity(1)}>+</button></div>
           </section>
           <section className="voucher-step"><p className="experience-eyebrow">02 · A megajándékozott</p><h2>Kinek szól az élmény?</h2><p>Minden utalvány 1 fő részére szól. Az alábbi nevek szerepelnek majd rajtuk.</p>
@@ -146,7 +174,7 @@ export default function GiftCardPage() {
             <BillingFields value={stripeBilling} onChange={setStripeBilling} />
           </section>
         </div>
-        <aside className="voucher-summary"><div className="voucher-summary-inner"><img className="voucher-photo" src="/assets/courses/alap.jpg" alt="Kézműves csokoládékészítő élmény" /><p className="experience-eyebrow">Az ajándékod</p><h2>Édes élmény, névre szólóan.</h2><div className="voucher-summary-row"><span>Utalvány értéke</span><strong>{selectedAmount ? formatAmount(selectedAmount) + ' Ft' : 'Válassz értéket'}</strong></div><div className="voucher-summary-row"><span>Mennyiség</span><strong>{quantity || '–'} db</strong></div><div className="voucher-total" aria-live="polite"><span>Fizetendő összesen</span><strong>{selectedAmount && quantity ? formatAmount(selectedAmount * Number(quantity)) + ' Ft' : '–'}</strong></div>
+        <aside className="voucher-summary"><div className="voucher-summary-inner"><img className="voucher-photo" src="/assets/courses/alap.jpg" alt="Kézműves csokoládékészítő élmény" /><p className="experience-eyebrow">Az ajándékod</p><h2>Édes élmény, névre szólóan.</h2><div className="voucher-summary-row"><span>Utalvány értéke</span><strong>{amount ? formatAmount(amount) + ' Ft' : isCustom ? 'Adj meg összeget' : 'Válassz értéket'}</strong></div><div className="voucher-summary-row"><span>Mennyiség</span><strong>{quantity || '–'} db</strong></div><div className="voucher-total" aria-live="polite"><span>Fizetendő összesen</span><strong>{amount && quantity ? formatAmount(amount * Number(quantity)) + ' Ft' : '–'}</strong></div>
           <p>Az utalvány a ChocoLeaf édességkészítő workshopjaira használható fel, a rajta szereplő értékben.</p><h3>Mi történik a rendelés után?</h3><ol><li>{provider === 'stripe' ? 'Bankkártyával fizetsz a Stripe biztonságos oldalán.' : 'Megkapod az átutaláshoz szükséges adatokat.'}</li><li>A fizetés beérkezését visszaigazoljuk.</li><li>A névre szóló PDF-utalványokat elküldjük a megadott email címre.</li>{provider === 'stripe' && <li>A számlát automatikusan elkészítjük és emailben elküldjük.</li>}</ol>
           {errorMessage && <p role="alert" className="voucher-error">{errorMessage}</p>}<button className="experience-cta" type="submit" disabled={isSubmitting || !provider}>{buttonText}</button><small>Fizetési mód: {provider === 'stripe' ? 'bankkártya (Stripe)' : provider ? 'banki átutalás' : 'betöltés…'}.</small>
         </div></aside>

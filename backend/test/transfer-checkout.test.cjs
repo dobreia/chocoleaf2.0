@@ -88,3 +88,15 @@ test('missing bank details and invalid billing fail before creating an order; ca
   assert.equal((await req('/admin/bookings/'+booking.id,'PATCH',{status:'cancelled'},true)).status,200);
   assert.equal((await req('/transfer-info?id='+booking.id)).status,409);
 });
+
+test('custom voucher values enforce existing limits before persistence and preserve exact unit and total amounts',async()=>{
+  const body={names:['Custom Guest','Second Guest'],email:'custom-transfer@example.test',quantity:2,amount:12345,billingData:billing,paymentMethod:'transfer'};
+  const before=(await db.query('SELECT count(*)::int AS n FROM gift_orders')).rows[0].n;
+  for(const amount of [0,999,1000001,1234.5,'invalid',null])assert.equal((await req('/giftcard/start-payment','POST',{...body,amount})).status,400);
+  assert.equal((await db.query('SELECT count(*)::int AS n FROM gift_orders')).rows[0].n,before);
+  const key=randomUUID(),result=await req('/giftcard/start-payment','POST',body,false,key);
+  assert.equal(result.status,200);const order=(await db.query('SELECT data FROM gift_orders WHERE id=$1',[result.data.id])).rows[0].data;
+  assert.equal(order.meta.unitAmount,12345);assert.equal(order.amount,24690);
+  assert.equal((await req('/giftcard/start-payment','POST',{...body,amount:12346},false,key)).status,409);
+  for(const amount of [1000,1000000])assert.equal((await req('/giftcard/start-payment','POST',{...body,amount})).status,200);
+});
