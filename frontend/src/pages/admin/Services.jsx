@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePageDraftState } from '../../components/usePageDraft';
 import { api } from "../../api/courses";
 import { Field, Modal, SaveForm, Notice } from "../../components/admin/UI";
@@ -6,6 +6,7 @@ import { money } from "../../components/admin/format";
 import ImageUpload from "../../components/admin/ImageUpload";
 import ImageAsset from "../../components/ImageAsset";
 import {hours} from '../../components/courseSessions';
+import {serviceNumberFields,serviceFormValues,servicePayload} from '../../components/admin/serviceForm';
 const empty = {
   title: "",
   description: "",
@@ -22,12 +23,22 @@ const empty = {
 export default function Services() {
   const [items, setItems] = useState([]),
     [uploading,setUploading]=useState(0),
+    [saving,setSaving]=useState(false),
     [edit, setEdit] = usePageDraftState('services.edit', null),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(true);
+  const editorSession=useRef(0);
+  const [session,setSession]=useState(0);
+  function openEditor(service){editorSession.current++;setSession(editorSession.current);setUploading(0);setEdit(serviceFormValues(service));}
+  function closeEditor(event){
+    if(saving){event?.preventDefault();return;}
+    editorSession.current++;setUploading(0);setEdit(null);
+  }
+  const imageChange=(key,value)=>{if(editorSession.current===session)setEdit(current=>current&&({...current,[key]:value}));};
+  const imageBusy=delta=>{if(editorSession.current===session)setUploading(current=>Math.max(0,current+delta));};
   const load = () =>
     api("/admin/services")
-      .then(setItems)
+      .then(data=>{setItems(data);setError('');})
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   useEffect(() => {
@@ -37,7 +48,7 @@ export default function Services() {
     <>
       <div className="cl-title">
         <h1>Szolgáltatások</h1>
-        <button className="cl-primary" onClick={() => setEdit({ ...empty })}>
+        <button className="cl-primary" onClick={() => openEditor(empty)}>
           + Új szolgáltatás
         </button>
       </div>
@@ -59,7 +70,7 @@ export default function Services() {
               <p>
                 {s.active ? "Aktív" : "Inaktív"} · {s.category}
               </p>
-              <button onClick={() => setEdit(s)}>Szerkesztés</button>
+              <button onClick={() => openEditor(s)}>Szerkesztés</button>
             </article>
           ))}
         </div>
@@ -68,16 +79,19 @@ export default function Services() {
         <Modal
           className="cl-service-dialog"
           title={edit.id ? "Szolgáltatás szerkesztése" : "Új szolgáltatás"}
-          onClose={() => setEdit(null)}
+          onClose={closeEditor}
         >
           <SaveForm disabled={uploading>0}
             onSave={async () => {
-              await api("/admin/services" + (edit.id ? "/" + edit.id : ""), {
-                method: edit.id ? "PUT" : "POST",
-                body: edit,
-              });
-              setEdit(null);
-              load();
+              const payload=servicePayload(edit);
+              setSaving(true);
+              try{
+                await api("/admin/services" + (edit.id ? "/" + edit.id : ""), {
+                  method: edit.id ? "PUT" : "POST",body:payload,
+                });
+                if(editorSession.current===session){editorSession.current++;setEdit(null);}
+                load();
+              }finally{setSaving(false);}
             }}
           >
             {[
@@ -88,6 +102,7 @@ export default function Services() {
                 key={k}
                 label={l}
                 required={k === "title"}
+                maxLength={k==='title'?200:100}
                 value={edit[k] || ""}
                 onChange={(e) => setEdit({ ...edit, [k]: e.target.value })}
               />
@@ -96,6 +111,7 @@ export default function Services() {
               <textarea
                 className="cl-service-description"
                 rows={6}
+                maxLength={4000}
                 value={edit.description || ""}
                 onChange={(e) =>
                   setEdit({ ...edit, description: e.target.value })
@@ -103,13 +119,14 @@ export default function Services() {
               />
             </Field>
             <div className="cl-form-grid">
-              <ImageUpload onBusyChange={n=>setUploading(x=>x+n)} label="Kártyakép" value={edit.image} onChange={v=>setEdit(x=>x&&({...x,image:v}))}/>
-              <ImageUpload onBusyChange={n=>setUploading(x=>x+n)} label="Részletes kép" value={edit.image_detail} onChange={v=>setEdit(x=>x&&({...x,image_detail:v}))}/>
+              <ImageUpload onBusyChange={imageBusy} label="Kártyakép" value={edit.image} onChange={value=>imageChange('image',value)}/>
+              <ImageUpload onBusyChange={imageBusy} label="Részletes kép" value={edit.image_detail} onChange={value=>imageChange('image_detail',value)}/>
             </div>
             <Field label="Részletes leírás">
               <textarea
                 className="cl-service-long-description"
                 rows={12}
+                maxLength={20000}
                 value={edit.long_description || ""}
                 onChange={(e) =>
                   setEdit({ ...edit, long_description: e.target.value })
@@ -117,28 +134,23 @@ export default function Services() {
               />
             </Field>
             <div className="cl-form-grid">
-              {[
-                ["session_count", "Alkalmak száma", 1],
-                ["duration_minutes", "Alap időtartam (óra)", 1/60],
-                ["price", "Ár (Ft)", 0],
-                ["capacity", "Alap férőhely", 1],
-              ].map(([k, l, min]) => (
+              {serviceNumberFields.map(({key:k,label:l,min,max,step}) => (
                 <Field
                   key={k}
                   required
                   label={l}
                   type="number"
                   min={min}
-                  max={k==='session_count'?100:undefined}
-                  step={k==='duration_minutes'?'any':1}
-                  value={k==='duration_minutes'?edit[k]/60:k==='session_count'?(edit[k] ?? 1):edit[k]}
+                  max={max}
+                  step={step}
+                  value={k==='duration_hours'?(edit.duration_hours??(edit.duration_minutes===''?'':edit.duration_minutes/60)):(edit[k]??'')}
                   onChange={(e) =>
-                    setEdit({ ...edit, [k]: k==='duration_minutes'?Math.round(Number(e.target.value)*60):Number(e.target.value) })
+                    setEdit({ ...edit, [k]: e.target.value })
                   }
                 />
               ))}
             </div>
-            <button type="button" disabled={(edit.session_count || 1)>=100} onClick={()=>setEdit({...edit,session_count:(edit.session_count || 1)+1})}>+ Új alkalom hozzáadása</button>
+            <button type="button" disabled={Number(edit.session_count)>=100||(edit.session_count!==''&&(!Number.isInteger(Number(edit.session_count))||Number(edit.session_count)<1))} onClick={()=>setEdit({...edit,session_count:String(Math.min(100,(Number(edit.session_count)||1)+1))})}>+ Új alkalom hozzáadása</button>
             <label className="cl-check">
               <input
                 type="checkbox"
