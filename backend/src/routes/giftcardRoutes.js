@@ -1,4 +1,5 @@
 const express = require("express");
+const { randomInt } = require('node:crypto');
 const pool = require("../db");
 const { transaction, one } = require("../domain/store");
 const { str, email, integer, token, fail, uuid } = require("../domain/rules");
@@ -44,14 +45,11 @@ router.post("/start-payment", async (req, res) => {
   const billing = d.billingData;
   if (!billing || !["private", "company"].includes(billing.buyerType))
     fail("Hiányzó számlázási adatok.");
-  const id = "gift-" + token(),
-    notice = "GIFT-" + token().slice(0, 12).toUpperCase();
+  const id = "gift-" + token();
   const intent = {
     kind: "giftcard",
     amount: amount * quantity,
     currency: "HUF",
-    notice,
-    voucherBase: notice,
     meta: {
       names,
       name: names[0],
@@ -82,6 +80,13 @@ router.post("/start-payment", async (req, res) => {
         return { id: old.gift_order_id, paymentId: old.id, redirectUrl: '/payment#' + old.id };
       }
     }
+    // Short public reference; the long internal order ID remains unchanged.
+    // transaction() serializes writes, including the collision check and insert.
+    let notice;
+    do {
+      notice = 'GIFT-' + randomInt(36 ** 6).toString(36).padStart(6, '0').toUpperCase();
+    } while (await one(c,"SELECT 1 FROM gift_orders WHERE data->>'voucherBase'=$1 OR data->>'notice'=$1",[notice]));
+    Object.assign(intent,{notice,voucherBase:notice});
     await c.query("INSERT INTO gift_orders(id,data,request_key) VALUES($1,$2,$3)", [
       id,
       intent,

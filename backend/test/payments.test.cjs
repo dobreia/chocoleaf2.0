@@ -255,6 +255,8 @@ test('gift checkout is idempotent and unpaid Stripe gift cannot be manually fulf
   const send=()=>fetch(base+'/api/giftcard/start-payment',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':key},body:JSON.stringify(body)});
   const first=await(await send()).json(),second=await(await send()).json();
   assert.ok(first.paymentId);assert.equal(first.paymentId,second.paymentId);
+  const gift=(await pool.query('SELECT data FROM gift_orders WHERE id=$1',[first.id])).rows[0].data;
+  assert.match(gift.voucherBase,/^GIFT-[A-Z0-9]{6}$/);assert.equal(gift.notice,gift.voucherBase);
   assert.equal(first.redirectUrl,'https://checkout.stripe.com/c/pay/test');
   assert.equal(second.redirectUrl,first.redirectUrl);
   assert.equal((await pool.query('SELECT amount FROM payment_orders WHERE id=$1',[first.paymentId])).rows[0].amount,24690);
@@ -272,6 +274,7 @@ test('gift checkout is idempotent and unpaid Stripe gift cannot be manually fulf
     const mails=(await pool.query('SELECT * FROM outbox WHERE body LIKE $1',['%'+first.id+'%'])).rows;
     const customer=mails.filter(x=>x.recipient===body.email && x.attachments.length);
     assert.equal(customer.length,1);assert.equal(customer[0].attachments.length,2);
+    assert.deepEqual(customer[0].attachments.map(a=>a.filename),[`voucher_${gift.voucherBase}-01.pdf`,`voucher_${gift.voucherBase}-02.pdf`]);
     assert.ok(customer[0].body.includes('Utalványonként: 12345 Ft'));
     for(const attachment of customer[0].attachments) assert.equal(Buffer.from(attachment.content,'base64').subarray(0,4).toString(),'%PDF');
     assert.equal(mails.filter(x=>x.recipient==='gift-admin@example.test').length,1);
