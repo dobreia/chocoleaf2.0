@@ -184,6 +184,9 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
     A lista oldalnyitáskor, visszatéréskor és 30 másodpercenként frissül.
     Nincs fix tartalék árlista; hiba vagy meghirdetés hiányában az egyéni összeg megmarad.
     Eltűnt ár kiválasztásakor a rendelés új választást kér, a kitöltött űrlapot megőrzi.
+    Az összeg alatt a hozzá tartozó aktuális kurzusnevek ajánlásként látszanak,
+    többalkalmas meghirdetésnél „teljes kurzus ára” jelzéssel.
+    Az ajánlás nem köti az utalványt egy konkrét kurzushoz; az utalvány értékösszegre szól.
 
 [ ] F16 - Promóciós / utalványmező a foglalásnál
     Komplexitás: NAGY.
@@ -263,3 +266,5 @@ alapján módosítható.
 
 
 dinamikus ajandekkartya árak
+
+inputnál nem lehet kirötölni a nullát

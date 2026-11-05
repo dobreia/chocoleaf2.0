@@ -20,6 +20,7 @@ export default function GiftCardPage() {
   const clearDrafts = useClearPageDrafts();
   const [provider, setProvider] = useState(null);
   const [amountOptions, setAmountOptions] = useState([]);
+  const [amountRecommendations, setAmountRecommendations] = useState([]);
   const [amountsLoading, setAmountsLoading] = useState(true);
   const [amountsError, setAmountsError] = useState('');
   const [stripeBilling, setStripeBilling] = usePageDraftState('gift.stripeBilling', emptyBilling);
@@ -31,11 +32,11 @@ export default function GiftCardPage() {
       if (pending) return;
       pending = true;
       try {
-        const values = await api('/giftcard/amounts');
-        if (!Array.isArray(values) || values.some(value => !Number.isSafeInteger(value) || value < minAmount || value > maxAmount)) throw Error('A kurzusárak nem tölthetők be.');
-        if (live) { setAmountOptions(values); setAmountsError(''); }
+        const values = await api('/giftcard/amounts?details=1');
+        if (!Array.isArray(values) || values.some(option => !Number.isSafeInteger(option.amount) || option.amount < minAmount || option.amount > maxAmount || !Array.isArray(option.courses))) throw Error('A kurzusárak nem tölthetők be.');
+        if (live) { setAmountOptions(values.map(option => option.amount)); setAmountRecommendations(values); setAmountsError(''); }
       } catch {
-        if (live) { setAmountOptions([]); setAmountsError('A kurzusárak most nem tölthetők be. Egyéni összeget továbbra is megadhatsz.'); }
+        if (live) { setAmountOptions([]); setAmountRecommendations([]); setAmountsError('A kurzusárak most nem tölthetők be. Egyéni összeget továbbra is megadhatsz.'); }
       } finally { pending = false; if (live) setAmountsLoading(false); }
     };
     const refresh = () => { if (!document.hidden) load(); };
@@ -185,11 +186,15 @@ export default function GiftCardPage() {
         <div className="voucher-steps">
           <section className="voucher-step"><p className="experience-eyebrow">01 · Az ajándék</p><h2>Milyen értékben ajándékoznál?</h2>
             <p className="voucher-hint">Az összegek az aktuálisan meghirdetett, még el nem kezdődött kurzusok teljes árai.</p>
+            <p className="voucher-hint">A kurzusnevek az összeg kiválasztását segítik. Az utalvány értékösszegre szól, nincs a feltüntetett kurzushoz kötve.</p>
             {amountsLoading && <p role="status">Kurzusárak betöltése…</p>}
             {amountsError && <p role="status" className="voucher-error">{amountsError}</p>}
             {!amountsLoading && !amountsError && !amountOptions.length && <p>Jelenleg egyéni összeggel vásárolhatsz utalványt.</p>}
             {unavailableSelection && !amountsError && <p role="status" className="voucher-error">A korábban kiválasztott kurzusár már nem érhető el. Válassz másik összeget vagy add meg egyéni értékként.</p>}
-            <div className="voucher-amounts">{amountOptions.map(amount => <button type="button" key={amount} aria-pressed={selectedAmount === amount} className={selectedAmount === amount ? 'selected' : ''} onClick={() => { requestKeyRef.current = null; setSelectedAmount(amount); }}>{formatAmount(amount)} Ft<span>névre szóló utalvány</span></button>)}
+            <div className="voucher-amounts">{amountRecommendations.map(option => <button type="button" key={option.amount} aria-pressed={selectedAmount === option.amount} className={selectedAmount === option.amount ? 'selected' : ''} onClick={() => { requestKeyRef.current = null; setSelectedAmount(option.amount); }}>{formatAmount(option.amount)} Ft
+              <span>kurzusárhoz igazítva</span>
+              {option.courses.map(course => <span className="voucher-course-suggestion" key={course.id}>{course.title}{course.multiSession && <small>teljes kurzus ára</small>}</span>)}
+            </button>)}
               <button type="button" className={'voucher-custom-choice'+(isCustom?' selected':'')} aria-pressed={isCustom} aria-expanded={isCustom} aria-controls="voucher-custom-amount" onClick={() => { requestKeyRef.current = null; normalizeCustomAmount(); setSelectedAmount('custom'); }}>Egyéni összeg<span>te határozod meg az utalvány értékét</span></button>
             </div>
             {isCustom && <div id="voucher-custom-amount">

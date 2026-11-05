@@ -8,7 +8,7 @@ async function advertise(s,price,active=true){
   const sessions=Array.from({length:s.session_count},()=>({start_time:new Date(Date.now()+(offset++)*86400000).toISOString()}));
   return courseDomain.save(null,{service_id:s.id,price,active,sessions});
 }
-async function amounts(){const r=await fetch(base+'/api/giftcard/amounts');assert.equal(r.status,200);assert.equal(r.headers.get('cache-control'),'no-store');return r.json();}
+async function amounts(details=false){const r=await fetch(base+'/api/giftcard/amounts'+(details?'?details=1':''));assert.equal(r.status,200);assert.equal(r.headers.get('cache-control'),'no-store');return r.json();}
 before(async()=>{
   db=await require('./database.cjs')();await require('../src/migrate')();courseDomain=require('../src/domain/courses');
   server=require('../src/index').listen(0,'127.0.0.1');await new Promise(resolve=>server.on('listening',resolve));base='http://127.0.0.1:'+server.address().port;
@@ -39,4 +39,20 @@ test('creating, repricing and deleting advertisements updates the next response 
   const second=await advertise(s,88888);assert.equal((await amounts()).filter(value=>value===88888).length,1);
   await courseDomain.remove(first.id);assert.ok((await amounts()).includes(88888));
   await courseDomain.remove(second.id);assert.ok(!(await amounts()).includes(88888));
+});
+test('amount recommendations include unique current course names and actual multi-session package indicators',async()=>{
+  await advertise(catalog,12500);const duplicate=await advertise(catalog,12500);
+  let options=await amounts(true),option=options.find(option=>option.amount===12500);
+  assert.equal(option.courses.length,2);
+  assert.deepEqual(option.courses.map(c=>({title:c.title,multiSession:c.multiSession})),[
+    {title:'Advertised package',multiSession:true},{title:'Other course',multiSession:false}
+  ]);
+  assert.equal(new Set(option.courses.map(c=>c.id)).size,2);
+  assert.ok(!JSON.stringify(options).includes('Inactive service'));
+  await courseDomain.serviceSave(catalog.id,{...catalog,title:'Renamed advertised package'});
+  options=await amounts(true);option=options.find(option=>option.amount===12500);
+  assert.ok(option.courses.some(c=>c.title==='Renamed advertised package'));
+  assert.ok(!JSON.stringify(options).includes('"title":"Advertised package"'));
+  await courseDomain.remove(duplicate.id);
+  assert.equal((await amounts(true)).find(option=>option.amount===12500).courses.length,2);
 });
