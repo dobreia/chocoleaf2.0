@@ -3,7 +3,7 @@ const path = require("path");
 const { PDFDocument, rgb } = require("pdf-lib");
 const fontkit = require("fontkit");
 
-async function fillVoucherDesign(recipientText, amount, forcedSerial) {
+async function fillVoucherDesign(recipientText, amount, forcedSerial, expiresOn) {
   const assetsDir = path.resolve(__dirname, "../../../frontend/public/assets");
   const voucherDir = path.join(assetsDir, "voucher");
   const pdfPath = path.join(voucherDir, "utalvany_ures_fillable.pdf");
@@ -80,7 +80,7 @@ async function fillVoucherDesign(recipientText, amount, forcedSerial) {
   const today = new Date();
   const validUntil = new Date(today);
   validUntil.setMonth(validUntil.getMonth() + 3);
-  const validText = validUntil.toISOString().split("T")[0];
+  const validText = expiresOn || validUntil.toISOString().split("T")[0];
   const pages = pdfDoc.getPages();
 
   function generateSerial() {

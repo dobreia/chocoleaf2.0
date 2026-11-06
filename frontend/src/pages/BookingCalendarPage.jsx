@@ -1,4 +1,5 @@
 import SeatCount from "../components/SeatCount";
+import VoucherFields from '../components/VoucherFields';
 import { startStripePayment } from '../api/payments';
 import {validSeatCount} from "../components/seatRules";
 import { dayKey, dateTime, money } from "../components/admin/format";
@@ -106,6 +107,9 @@ export default function BookingCalendarPage() {
     note: "",
     seats: "1",
   });
+  const [voucherItems,setVoucherItems]=usePageDraftState('booking.vouchers',[]);
+  const [voucherChecks,setVoucherChecks]=useState(0);
+  const voucherDiscount=voucherItems.reduce((sum,v)=>sum+v.amount,0);
   const [status, setStatus] = useState({ type: "", message: "" });
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -216,7 +220,7 @@ export default function BookingCalendarPage() {
   async function submitBooking(event) {
     event.preventDefault();
 
-    if (isSubmitting) return;
+    if (isSubmitting||voucherChecks>0) return;
     if (!selectedSlot) {
       setStatus({ type: "error", message: "Válassz egy szabad időpontot." });
       return;
@@ -237,6 +241,7 @@ export default function BookingCalendarPage() {
           seats,
           paymentMethod: provider,
           billingData: resolvedBilling,
+          voucherCodes:voucherItems.map(v=>v.code),
         },
         requestKeyRef.current,
       );
@@ -251,6 +256,7 @@ export default function BookingCalendarPage() {
           "A foglalás mentve, visszaigazolása adminisztrátori jóváhagyásra vár. Az emailben kapott bizalmas linkkel kérhetsz módosítást vagy lemondást. Ezek az admin jóváhagyása után lépnek életbe.",
       });
       setSelectedSlotId("");
+      setVoucherItems([]);
       setFormData({
         customerName: "",
         customerEmail: "",
@@ -471,6 +477,10 @@ export default function BookingCalendarPage() {
                       />
                     </label>
                   </div>
+                  {provider==='transfer'&&<VoucherFields key={`${selectedSlot?.id}:${formData.seats}`} courseId={selectedSlot?.id} seats={formData.seats}
+                    total={(selectedSlot?.price||0)*Number(formData.seats||0)} value={voucherItems}
+                    onBusyChange={delta=>setVoucherChecks(count=>Math.max(0,count+delta))}
+                    onChange={items=>{requestKeyRef.current=null;setVoucherItems(items);}}/>}
                   {<BillingFields value={resolvedBilling} onChange={(value, field)=>{
                     requestKeyRef.current=null;
                     if (field === 'privateName') setBillingNameEdited(true);
@@ -478,12 +488,12 @@ export default function BookingCalendarPage() {
                   }}/>}
                   <button
                     className="booking-calendar-submit"
-                    disabled={isSubmitting || isLoading || !selectedSlot || !provider}
+                    disabled={isSubmitting || voucherChecks>0 || isLoading || !selectedSlot || !provider || voucherDiscount>(selectedSlot?.price||0)*Number(formData.seats)}
                     type="submit"
                   >
                     {isSubmitting
                       ? "Foglalás mentése..."
-                      : provider === 'stripe' ? 'Foglalás és bankkártyás fizetés' : "Foglalás és átutalási adatok"}
+                      : provider === 'stripe' ? 'Foglalás és bankkártyás fizetés' : voucherItems.length&&voucherDiscount===(selectedSlot?.price||0)*Number(formData.seats) ? 'Foglalás ajándékutalvánnyal' : "Foglalás és átutalási adatok"}
                   </button>
                 </form>
               </>

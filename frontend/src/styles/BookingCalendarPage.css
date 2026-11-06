@@ -408,3 +408,10 @@
     width: 100%;
   }
 }
+.booking-vouchers { margin:24px 0; padding:20px; border:1px solid #ccb7c5; border-radius:16px; background:#faf5f8; color:#513748; }
+.booking-vouchers legend { font-weight:700; padding:0 8px; }
+.booking-vouchers button { margin:8px 8px 8px 0; padding:10px 16px; border:1px solid #6c485c; border-radius:10px; background:#6c485c; color:white; cursor:pointer; }
+.booking-vouchers button:disabled { opacity:.6; cursor:default; }
+.booking-vouchers [role="alert"] { color:#a22235; }
+.booking-voucher-item { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
+.booking-vouchers input { width:100%; box-sizing:border-box; }

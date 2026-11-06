@@ -8,6 +8,15 @@ const { requireAdmin } = require("../domain/auth");
 const providers = require('../payments/providers');
 const payments = require('../payments/orders');
 const router = express.Router();
+router.post('/check-vouchers',async(req,res)=>{
+  res.set('Cache-Control','no-store');
+  const result=await transaction(async c=>{
+    const slot=await one(c,'SELECT price FROM courses WHERE id=$1 AND active',[uuid(req.body.courseId)]);
+    if(!slot)fail('Válassz foglalható időpontot.');
+    return require('../domain/vouchers').quote(c,req.body.codes,slot.price*integer(req.body.seats,'Létszám',1,100));
+  });
+  res.json(result);
+});
 router.get('/amounts',async(req,res)=>{
   res.set('Cache-Control','no-store');
   const details=req.query.details==='1';
@@ -113,7 +122,9 @@ router.get("/admin/orders", requireAdmin, async (req, res) =>
   res.json(
     (
       await pool.query(
-        "SELECT * FROM gift_orders ORDER BY created_at DESC LIMIT 500",
+        `SELECT g.*,(SELECT jsonb_agg(jsonb_build_object('code',v.code,'name',v.recipient_name,'amount',v.amount,'valid_until',v.valid_until,'changes_used',v.changes_used,
+          'status',COALESCE((SELECT u.status FROM booking_vouchers u WHERE u.code=v.code AND u.status IN ('active','consumed') LIMIT 1),'available')) ORDER BY v.code)
+          FROM gift_vouchers v WHERE v.order_id=g.id) AS vouchers FROM gift_orders g ORDER BY created_at DESC LIMIT 500`,
       )
     ).rows,
   ),

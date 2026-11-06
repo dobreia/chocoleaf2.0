@@ -300,30 +300,33 @@ export default function Bookings() {
                         </select>
                       </Field>
                       <Field label="Fizetés állapota">
-                        <select value={b.payment_status} disabled={busy || (b.payment_method === 'stripe' && b.payment_status !== 'paid')}
+                        <select value={b.payment_status} disabled={busy || (b.voucher_codes?.length>0&&b.voucher_discount===b.total_price) || (b.payment_method === 'stripe' && b.payment_status !== 'paid')}
                           onChange={e => { setConfirmation(null); changeBooking(b, { payment_status: e.target.value }); }}>
                           {(b.payment_method === 'stripe'
                             ? [b.payment_status, ...(b.payment_status === 'paid' ? ['refunded'] : [])]
-                            : ['pending', 'paid', 'refunded', 'failed']).map(value =>
+                            : b.voucher_codes?.length ? ['pending', 'paid', 'failed'] : ['pending', 'paid', 'refunded', 'failed']).map(value =>
                             <option key={value} value={value}>{labels[value]}</option>)}
                         </select>
                       </Field>
                       {b.status === 'cancelled' && b.payment_status !== 'paid' && <button className="cl-booking-danger" disabled={busy}
                         onClick={() => setConfirmation({ id: b.id, kind: 'delete' })}>Törlés</button>}
+                      {b.voucher_codes?.length>0&&b.status!=='cancelled'&&<button disabled={busy} onClick={()=>setConfirmation({id:b.id,kind:'organizer'})}>Szervezői lemondás</button>}
                     </div>
                     {b.payment_method === 'stripe' && b.payment_status === 'pending' && b.status === 'pending' &&
                       <p className="cl-booking-action-note">A fizetés lezárásáig nem bírálható el.</p>}
                     {b.status === 'cancelled' && b.payment_status === 'paid' &&
-                      <p className="cl-booking-action-note">Fizetett foglalás csak visszatérítés után törölhető.</p>}
+                      <p className="cl-booking-action-note">{b.voucher_codes?.length ? 'Az utalványos fizetési előzményt megőrizzük; pénzbeli visszatérítés nem kérhető.' : 'Fizetett foglalás csak visszatérítés után törölhető.'}</p>}
                     {confirmation?.id === b.id && <div className="cl-booking-confirm" role="group" aria-label="Művelet megerősítése">
                       <p>{confirmation.kind === 'delete'
                         ? 'Végleg törlöd ezt a lemondott foglalást? A művelet nem vonható vissza.'
+                        : confirmation.kind==='organizer' ? 'Szervezői okból mondod le ezt a foglalást? Az utalványokat az eredeti lejáratig visszaadjuk, az egyszeri módosítási lehetőség nem fogy el.'
                         : 'Lemondod ezt a foglalást? Az összes hozzá tartozó alkalmat lemondjuk, és értesítjük az ügyfelet.'}</p>
+                      {confirmation.kind==='cancel'&&b.voucher_codes?.length>0&&<p>Az utalvány csak legalább 72 órával a kezdés előtt és a még rendelkezésre álló egyszeri lehetőséggel jár vissza. Egyébként beváltottnak minősül.</p>}
                       {confirmation.kind === 'cancel' && b.payment_status === 'paid' &&
                         <p>A lemondás önmagában nem indít pénzvisszatérítést.</p>}
                       <button disabled={busy} onClick={() => setConfirmation(null)}>Mégse</button>
-                      <button className="cl-booking-danger" disabled={busy} onClick={() => confirmation.kind === 'cancel'
-                        ? changeBooking(b, { status: 'cancelled' })
+                      <button className="cl-booking-danger" disabled={busy} onClick={() => confirmation.kind !== 'delete'
+                        ? changeBooking(b, { status: 'cancelled',organizerCancellation:confirmation.kind==='organizer' })
                         : action(async () => {
                           await api('/admin/bookings/' + b.id, { method: 'DELETE' });
                           if (edit?.id === b.id) closeEditor();
@@ -331,7 +334,7 @@ export default function Bookings() {
                         {confirmation.kind === 'delete' ? 'Végleges törlés' : 'Lemondás megerősítése'}
                       </button>
                     </div>}
-                    <p className="cl-booking-action-note">A visszatérítés jelölése nem indít pénzvisszafizetést.</p>
+                    <p className="cl-booking-action-note">{b.voucher_codes?.length ? `Utalványok: ${b.voucher_codes.join(', ')} · ${money(b.voucher_discount)}. Pénzben fizetendő: ${money(b.total_price-b.voucher_discount)}. Pénzbeli visszatérítés nem kérhető.` : 'A visszatérítés jelölése nem indít pénzvisszafizetést.'}</p>
                   </td>
                 </tr>
               ))}

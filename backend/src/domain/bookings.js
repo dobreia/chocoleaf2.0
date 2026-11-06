@@ -14,6 +14,7 @@ const { bookingNotice } = require("./notifications");
 const providers = require('../payments/providers');
 const payments = require('../payments/orders');
 const {sessionsSQL,getSessions}=require('./courseSessions');
+const vouchers=require('./vouchers');
 const select = `SELECT b.*,c.title AS course_title,c.start_time,c.end_time,c.service_id,c.capacity,${sessionsSQL('c')} AS sessions FROM bookings b JOIN courses c ON c.id=b.course_id`;
 function publicBooking(b) {
   const { manage_hash, manage_expires, request_key, admin_note, billing_data, ...safe } = b;
@@ -27,11 +28,12 @@ async function create(data, key, { manual = false } = {}) {
       note = str(data.note || "", "Megjegyzés", 2000, false),
       seats = integer(data.seats === undefined ? 1 : data.seats, "Létszám", 1, 100);
     uuid(data.courseId);
+    const voucherCodes=vouchers.codes(data.voucherCodes);
     const paymentMethod = manual ? 'transfer' : providers.provider();
     if (data.paymentMethod && data.paymentMethod !== paymentMethod)
       fail('A fizetési mód megváltozott. Frissítsd az oldalt.');
     const billing = !manual ? providers.billingData(data.billingData) : null;
-    if (paymentMethod === 'transfer' && !manual) require('./transfers').configuration();
+    if(paymentMethod==='stripe'&&voucherCodes.length)fail('Az utalványos beváltás jelenleg az átutalásos foglalásnál érhető el.');
     const config = paymentMethod === 'stripe' ? providers.configuration('booking') : null;
     const draft = { customer_name: name, customer_phone: phone, note };
     if (key && paymentMethod === 'stripe') {
@@ -53,6 +55,7 @@ async function create(data, key, { manual = false } = {}) {
         key,
       ]);
       if (old) {
+        if(JSON.stringify(old.voucher_codes)!==JSON.stringify(voucherCodes))fail('Ez a kérésazonosító más utalványokhoz tartozik.',409);
         if (paymentMethod === 'transfer' && JSON.stringify(old.billing_data,Object.keys(old.billing_data||{}).sort()) !== JSON.stringify(billing,Object.keys(billing||{}).sort()))
           fail('Ez a kérésazonosító más számlázási adatokhoz tartozik.',409);
         if (
@@ -70,6 +73,8 @@ async function create(data, key, { manual = false } = {}) {
       }
     }
     const slot = await checkBooking(c, data.courseId, seats, null, address);
+    const voucherQuote=await vouchers.quote(c,voucherCodes,Number(slot.price)*seats);
+    if(paymentMethod==='transfer'&&!manual&&(!voucherCodes.length||voucherQuote.due>0))require('./transfers').configuration();
     if (paymentMethod === 'stripe') {
       const payment = await payments.insert(c, { courseId: slot.id, seats, bookingData: draft, key,
         amount: Number(slot.price) * seats, email: address, description: `${slot.title} – ${seats} fő`, billing, config });
@@ -93,11 +98,14 @@ async function create(data, key, { manual = false } = {}) {
         key || null,
       ],
     );
-    const reference = manual ? null : 'CL-'+token().slice(0,12).toUpperCase();
-    await c.query('UPDATE bookings SET payment_method=$2,billing_data=$3,transfer_reference=$4 WHERE id=$1', [b.id, paymentMethod, billing, reference]);
+    const reference = manual || (voucherCodes.length>0&&voucherQuote.due===0) ? null : 'CL-'+token().slice(0,12).toUpperCase();
+    const paymentStatus=voucherCodes.length&&voucherQuote.due===0?'paid':'pending';
+    await c.query('UPDATE bookings SET payment_method=$2,billing_data=$3,transfer_reference=$4,voucher_codes=$5,voucher_discount=$6,payment_status=$7 WHERE id=$1', [b.id, paymentMethod, billing, reference,JSON.stringify(voucherCodes),voucherQuote.discount,paymentStatus]);
+    await vouchers.attach(c,b.id,voucherCodes);
     b.payment_method = paymentMethod;
     b.billing_data = billing;
     b.transfer_reference = reference;
+    b.voucher_codes=voucherCodes;b.voucher_discount=voucherQuote.discount;b.payment_status=paymentStatus;
     await c.query('UPDATE courses SET session_count_locked=true WHERE id=$1',[slot.id]);
     const payment = paymentMethod === 'stripe' && billing ? await payments.insert(c, { bookingId: b.id, amount: Number(b.total_price),
       email: address, description: `${slot.title} – ${seats} fő`, billing, config }) : null;
@@ -106,7 +114,7 @@ async function create(data, key, { manual = false } = {}) {
       ...(reference ? {redirectUrl:'/transfer?id='+b.id} : {}) };
   });
 }
-async function updateIn(c, id, data) {
+async function updateIn(c, id, data, voucherContext={}) {
   const old = await one(c, select + " WHERE b.id=$1 FOR UPDATE OF b", [
     uuid(id),
   ]);
@@ -177,6 +185,13 @@ async function updateIn(c, id, data) {
     b.total_price = Number(slot.price) * b.seats;
   if (data.total_price !== undefined)
     b.total_price = integer(data.total_price, "Összeg");
+  if(old.voucher_codes.length){
+    if(b.total_price<old.voucher_discount)fail('A foglalás összege nem lehet kevesebb az utalványok értékénél.',409);
+    if(b.total_price!==old.total_price&&old.payment_status==='paid')fail('Fizetett utalványos foglalás összege itt nem módosítható.',409);
+    if(data.payment_status==='refunded')fail('Utalványos foglalásnál pénzbeli visszatérítés nem kérhető.',409);
+    if(b.total_price===old.voucher_discount&&b.status!=='cancelled')b.payment_status='paid';
+    await vouchers.transition(c,old,b,{...voucherContext,organizerCancellation:data.organizerCancellation===true});
+  }
   let newToken = null;
   if (b.customer_email !== old.customer_email) newToken = token();
   const saved = await one(
@@ -230,7 +245,8 @@ async function request(id, t, data) {
     if (!["pending", "confirmed"].includes(b.status))
       fail("Ez a foglalás már nem módosítható.", 409);
     const s = await one(c, "SELECT * FROM settings WHERE id=1");
-    if (
+    if(b.voucher_codes.length&&!await vouchers.canChange(c,b))fail('Az utalványos foglalás csak egyszer, legalább 72 órával az első alkalom előtt módosítható vagy mondható le.',409);
+    if (!b.voucher_codes.length &&
       new Date(b.start_time).getTime() - Date.now() <
       s.cancellation_hours * 3600000
     )
@@ -309,6 +325,7 @@ async function resolve(id, decision) {
         r.kind === "cancel"
           ? { status: "cancelled" }
           : { course_id: r.target_course_id, status: "confirmed" },
+        {requestedAt:r.created_at},
       );
     } else {
       const b = await one(c, select + " WHERE b.id=$1", [r.booking_id]);

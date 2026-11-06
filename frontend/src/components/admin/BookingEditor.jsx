@@ -135,11 +135,11 @@ export default function BookingEditor({ booking, slots, onDone, onClose }) {
             </Field>
             <Field label="Fizetés">
               <select
-                disabled={stripe}
+                disabled={stripe||(booking?.voucher_discount>0&&booking.voucher_discount===booking.total_price)}
                 value={d.payment_status}
                 onChange={(e) => set("payment_status", e.target.value)}
               >
-                {["pending", "paid", "refunded", "failed"].map((x) => (
+                {(booking?.voucher_codes?.length ? ["pending", "paid", "failed"] : ["pending", "paid", "refunded", "failed"]).map((x) => (
                   <option key={x} value={x}>
                     {labels[x]}
                   </option>

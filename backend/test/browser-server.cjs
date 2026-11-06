@@ -1,6 +1,6 @@
 // Isolated test fixture: never imported by the application or the local launcher.
 const {randomUUID}=require('node:crypto');
-Object.assign(process.env,{NODE_ENV:'development',PAYMENT_LOCAL_TEST:'1',FRONTEND_URL:'http://127.0.0.1:5184',STRIPE_SECRET_KEY:'sk_test_browser',STRIPE_WEBHOOK_SECRET:'whsec_browser',MAIL_FROM:'test@example.test',MAIL_ADMIN:'admin@example.test',MAIL_USER:'',MAIL_PASS:'',SMTP_HOST:''});
+Object.assign(process.env,{NODE_ENV:'development',PAYMENT_LOCAL_TEST:'1',FRONTEND_URL:process.env.BROWSER_FRONTEND_URL||'http://127.0.0.1:5184',STRIPE_SECRET_KEY:'sk_test_browser',STRIPE_WEBHOOK_SECRET:'whsec_browser',MAIL_FROM:'test@example.test',MAIL_ADMIN:'admin@example.test',MAIL_USER:'',MAIL_PASS:'',SMTP_HOST:''});
 delete process.env.TEST_DATABASE_URL;
 process.env.UPLOAD_DIR=require('node:path').resolve(__dirname,'../../frontend/test-results/browser-uploads');
 (async()=>{
@@ -30,5 +30,5 @@ process.env.UPLOAD_DIR=require('node:path').resolve(__dirname,'../../frontend/te
     if(order.gift_order_id)await require('../src/domain/gifts').fulfill(order.gift_order_id,false);
     res.json({ok:true});
   });
-  app.listen(3012,'127.0.0.1',()=>console.log('Isolated browser test API ready'));
+  app.listen(Number(process.env.BROWSER_API_PORT||3012),'127.0.0.1',()=>console.log('Isolated browser test API ready'));
 })().catch(e=>{console.error(e);process.exitCode=1;});

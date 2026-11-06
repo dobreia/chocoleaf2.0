@@ -70,7 +70,8 @@ publicRouter.get("/bookings/:id/manage", rateLimit, async (req, res) => {
   );
   res.json({
     ...booking.publicBooking(b),
-    cancellation_hours: settings.cancellation_hours,
+    cancellation_hours: b.voucher_codes.length?72:settings.cancellation_hours,
+    voucher_change_available:b.voucher_codes.length?await require('../domain/vouchers').canChange(pool,b):true,
     requests: (
       await pool.query(
         "SELECT * FROM change_requests WHERE booking_id=$1 ORDER BY created_at DESC",

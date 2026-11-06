@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "node --test test/*.test.mjs",
     "test:e2e": "playwright test",
-    "test:e2e:transfer": "playwright test --config playwright.transfer.config.js"
+    "test:e2e:transfer": "playwright test --config playwright.transfer.config.js",
+    "test:e2e:vouchers": "playwright test --config playwright.vouchers.config.js"
   },
   "dependencies": {
     "bootstrap": "^5.3.8",

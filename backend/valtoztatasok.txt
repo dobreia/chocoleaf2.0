@@ -188,13 +188,27 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
     többalkalmas meghirdetésnél „teljes kurzus ára” jelzéssel.
     Az ajánlás nem köti az utalványt egy konkrét kurzushoz; az utalvány értékösszegre szól.
 
-[ ] F16 - Promóciós / utalványmező a foglalásnál
+[x] F16 - Utalványmező a foglalásnál
     Komplexitás: NAGY.
     Feladat: Utalványsorszám ellenőrzése és a megfelelő összeg levonása
     a foglalás árából.
     Függőség: F13 formátuma, valamint F14–F15 végleges árszabályai.
-    Tisztázandó: Külön promóciós kód is kell? Részben beváltható az utalvány?
-    A fennmaradó egyenleg megmarad? Több utalvány is felhasználható?
+    Elkészült: Több kiállított, érvényes utalvány ellenőrizhető és beváltható.
+    A régi, hosszabb GIFT-kódokat is elfogadjuk, a nevet csak az admin látja.
+    Az utalványok teljes értékét használjuk fel, maradványegyenleg nélkül;
+    a foglalás ára nem lehet kisebb az összesített utalványértéknél.
+    Teljes fedezetnél nincs utalás, egyébként csak a különbözet fizetendő.
+    A foglalás visszaigazolása továbbra is adminisztrátori művelet.
+    Legalább 72 órával az első alkalom előtt, utalványonként összesen egyszer
+    kérhető módosítás vagy lemondás; az időben beadott kérelem dátuma számít.
+    Jogosult lemondásnál az utalvány az eredeti lejáratig újra felhasználható.
+    Késői lemondáskor vagy az egyszeri lehetőség felhasználása után beváltott.
+    Külön szervezői lemondással az admin visszaadja az utalványokat a fenti
+    korlátoktól függetlenül, a módosítási lehetőség felhasználása nélkül.
+    Pénzbeli visszatérítés nincs. Az állapot és szabályok az adminban,
+    a foglaláskezelő oldalon és az e-mailekben is látszanak.
+    Későbbre marad: promóciós kód, részleges beváltás, egyenleglekérdező oldal.
+    A mostani megvalósítás az átutalásos kiadás része; Stripe-os beváltás külön feladat.
 
 
 5. FIZETÉSEK, FOGLALÁSKEZELÉS ÉS AUTOMATIKUS E-MAILEK

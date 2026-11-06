@@ -64,6 +64,9 @@ export default function GiftOrders() {
               Fizetés jóváhagyása és utalványküldés
             </button>
           )}
+          {x.vouchers?.map(v=><p key={v.code}><strong>{v.code}</strong> · {v.name} · {money(v.amount)} · Lejárat: {String(v.valid_until).slice(0,10)}<br/>
+            {{active:'Foglaláshoz felhasználva',consumed:'Beváltott, újra nem használható',available:new Date(v.valid_until).getTime()<new Date().setHours(0,0,0,0)?'Lejárt':'Felhasználható'}[v.status]}
+            {v.changes_used>0?' · Az egyszeri módosítási lehetőség felhasználva':''}</p>)}
         </article>
       ))}
     </>

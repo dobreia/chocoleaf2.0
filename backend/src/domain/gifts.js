@@ -11,10 +11,14 @@ async function fulfill(id, manual) {
     if (intent.meta.paymentMethod === 'stripe' && !intent.paidAt) fail('A Stripe-fizetés még nem érkezett meg.', 409);
     if (!manual && intent.meta.paymentMethod !== 'stripe') fail('Nem Stripe-rendelés.', 409);
     if (intent.generatedAt) return;
+    const expires=new Date();expires.setMonth(expires.getMonth()+3);
+    const validUntil=expires.toISOString().slice(0,10);
     const attachments = [];
     for (let i = 0; i < intent.meta.quantity; i++) {
       const serial = intent.voucherBase + '-' + String(i + 1).padStart(2, '0');
-      const { outPath } = await fillVoucherDesign(intent.meta.names[i], intent.meta.unitAmount, serial);
+      const { outPath } = await fillVoucherDesign(intent.meta.names[i], intent.meta.unitAmount, serial,validUntil);
+      await c.query('INSERT INTO gift_vouchers(code,order_id,recipient_name,amount,valid_until) VALUES($1,$2,$3,$4,$5)',
+        [serial.toUpperCase(),id,intent.meta.names[i],intent.meta.unitAmount,validUntil]);
       attachments.push({ filename: `voucher_${serial}.pdf`, content: (await fs.readFile(outPath)).toString('base64') });
     }
     await queue(c, intent.meta.email, 'ChocoLeaf – ajándékutalványod elkészült',

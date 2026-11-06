@@ -47,6 +47,7 @@ export default function ManageBooking() {
   const can =
     d &&
     ["pending", "confirmed"].includes(d.status) &&
+    d.voucher_change_available!==false &&
     new Date(d.start_time).getTime() - now >= d.cancellation_hours * 3600000;
   return (
     <section className="cl-admin">
@@ -66,6 +67,8 @@ export default function ManageBooking() {
                 {d.customer_name} · {d.seats} fő · {money(d.total_price)}
               </p>
               <p>Státusz: {labels[d.status]}</p>
+              {d.voucher_codes?.length>0&&<><p>Utalványok: {d.voucher_codes.join(', ')} · {money(d.voucher_discount)}<br/>Pénzben fizetendő különbözet: {money(d.total_price-d.voucher_discount)}</p>
+                <p>Időpontmódosítás vagy lemondás legalább 72 órával az első alkalom előtt, utalványonként összesen egyszer lehetséges. 72 órán belül az utalvány beváltottnak minősül. Pénzbeli visszatérítés nem kérhető.</p></>}
             </article>
             {pending ? (
               <p className="cl-success">

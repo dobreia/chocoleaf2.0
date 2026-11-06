@@ -12,7 +12,7 @@ router.get("/", async (req, res) => {
     if(b.status==='cancelled' || b.payment_status==='refunded')fail('Ez a foglalás már nem fizethető.',409);
     if(!b.transfer_reference)fail('Ehhez a foglaláshoz nincs utalási közlemény.',409);
     res.set('Cache-Control','no-store');
-    return res.json({kind:'booking',amount:b.total_price,currency:'HUF',notice:b.transfer_reference,
+    return res.json({kind:'booking',amount:b.total_price-b.voucher_discount,currency:'HUF',notice:b.transfer_reference,
       paid:b.payment_status==='paid',...require('../domain/transfers').configuration()});
   }
   if (!r) fail("A rendelés nem található.", 404);
