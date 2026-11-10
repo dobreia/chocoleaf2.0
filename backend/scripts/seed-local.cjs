@@ -2,7 +2,7 @@
 module.exports = async function seedLocal(db) {
   const services = (await db.query('SELECT * FROM services WHERE active AND price>=175 ORDER BY title')).rows;
   let offset=3;
-  for (const service of services) {
+  for (const service of process.env.LOCAL_SEED_COURSES==='false'?[]:services) {
     const existing=(await db.query('SELECT count(*)::int AS n FROM courses WHERE service_id=$1 AND active AND start_time>now()',[service.id])).rows[0].n;
     for(let i=existing;i<2;i++) {
       let saved=false;

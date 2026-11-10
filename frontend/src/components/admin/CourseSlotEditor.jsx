@@ -99,6 +99,8 @@ export default function CourseSlotEditor({ edit, setEdit, services, onClose, onD
               setEdit({ ...edit, capacity: Number(e.target.value) })
             }
           />
+          <Field label="Máshol már lefoglalt helyek" type="number" min="0" max={edit.capacity} step="1"
+            value={edit.reserved_seats ?? 0} onChange={e=>setEdit({...edit,reserved_seats:e.target.value})}/>
         </div>
 
         <label className="cl-check">

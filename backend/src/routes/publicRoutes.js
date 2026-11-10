@@ -31,7 +31,7 @@ publicRouter.get("/bookings/availability", async (req, res) => {
   const rows = (
     await pool.query(
       `SELECT c.*,(COALESCE((SELECT SUM(seats) FROM bookings b WHERE b.course_id=c.id AND b.status<>'cancelled'),0)
-        + COALESCE((SELECT SUM(seats) FROM payment_orders p WHERE p.course_id=c.id AND p.status='pending' AND p.booking_id IS NULL),0))::int AS booked_count
+        + c.reserved_seats + COALESCE((SELECT SUM(seats) FROM payment_orders p WHERE p.course_id=c.id AND p.status='pending' AND p.booking_id IS NULL),0))::int AS booked_count
         FROM courses c JOIN services s ON s.id=c.service_id WHERE c.active AND s.active AND c.start_time>now() ${filter} ORDER BY c.start_time LIMIT 1000`,
       values,
     )

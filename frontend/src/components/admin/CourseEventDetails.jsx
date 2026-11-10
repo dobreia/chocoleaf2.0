@@ -7,6 +7,7 @@ export default function CourseEventDetails({event,onClose,onBooking}) {
   <p>{dateTime(event.start_time)} – {dateTime(event.end_time)}</p>
   {event.session_count>1 && <><p>{event.session_index}/{event.session_count}. alkalom · A foglalások a teljes kurzusra szólnak.</p><SessionList course={event}/></>}
   <div className="cl-course-capacity"><strong>{occupancy(event)}</strong><span>foglalt létszám</span>{event.capacity!=null&&<span>{Math.max(0,event.capacity-event.booked_seats)} szabad hely</span>}</div>
+  {event.reserved_seats>0&&<p>Ebből {event.reserved_seats} hely máshol került lefoglalásra; ezekhez itt nem tartozik résztvevői adat.</p>}
   <h3>Foglalások és résztvevők</h3>
   {!event.bookings.length?<p>Még nincs foglalás erre az alkalomra.</p>:event.bookings.map(b=><article className="cl-card" key={b.id}>
     <h4>{b.customer_name} · {b.seats} fő</h4><p>{b.customer_email}{b.customer_phone&&<> · {b.customer_phone}</>}</p>

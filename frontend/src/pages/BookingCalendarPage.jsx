@@ -123,13 +123,9 @@ export default function BookingCalendarPage() {
       courses.find((course) => String(course.id) === String(id) || course.slug === id),
     [courses, id],
   );
-  const availableSlots = useMemo(
-    () => slots.filter((slot) => slot.is_available),
-    [slots],
-  );
   const slotsByDay = useMemo(
-    () => groupSlotsByDay(availableSlots),
-    [availableSlots],
+    () => groupSlotsByDay(slots),
+    [slots],
   );
   const calendarDays = useMemo(() => getCalendarDays(monthDate), [monthDate]);
   const visibleMonth = getDateKey(monthDate).slice(0,7);
@@ -140,7 +136,7 @@ export default function BookingCalendarPage() {
     ? slotsByDay[selectedDateKey] || []
     : [];
   const selectedSlot = selectedDaySlots.find(
-    (slot) => String(slot.id) === String(selectedSlotId),
+    (slot) => slot.is_available && String(slot.id) === String(selectedSlotId),
   );
   const selectedSessions = selectedSlot ? sessionsOf(selectedSlot) : [];
   const relatedDays = selectedSessions.reduce((days,session,index)=>{
@@ -179,7 +175,7 @@ export default function BookingCalendarPage() {
           // the same day cannot change an existing draft after refresh.
           setSelectedSlotId(current=>options.some(s=>s.id===current) ? current
             : options.some(s=>s.id===preferred?.id) ? preferred.id
-            : options.length===1 ? options[0].id : '');
+            : options.length===1 && options[0].is_available ? options[0].id : '');
           return nextKey;
         });
       })
@@ -205,7 +201,7 @@ export default function BookingCalendarPage() {
   function selectDay(key) {
     requestKeyRef.current = null;
     setSelectedDateKey(key);
-    const options=slotsByDay[key] || [];
+    const options=(slotsByDay[key] || []).filter(slot=>slot.is_available);
     setSelectedSlotId(options.length===1 ? options[0].id : '');
   }
 
@@ -398,6 +394,7 @@ export default function BookingCalendarPage() {
                       key={slot.id}
                       aria-pressed={String(selectedSlotId) === String(slot.id)}
                       type="button"
+                      disabled={!slot.is_available}
                       onClick={() => {
                         requestKeyRef.current = null;
                         setSelectedSlotId(slot.id);
@@ -409,8 +406,8 @@ export default function BookingCalendarPage() {
                         <b>{index+1}. alkalom</b> {dateTime(session.start_time)} – {dayKey(session.start_time)===dayKey(session.end_time) ? timeFormatter.format(new Date(session.end_time)) : dateTime(session.end_time)}
                       </span>)}</span>
                       <span className="booking-calendar-slot-price">{money(slot.price)} / fő · teljes kurzus</span>
-                      <span>{slot.available_spots} szabad hely</span>
-                      <span className="booking-calendar-slot-choice">{selectedSlotId===slot.id ? '✓ Kiválasztva' : 'Ezt a kurzust választom'}</span>
+                      <span>{slot.is_available ? `${slot.available_spots} szabad hely` : 'Betelt'}</span>
+                      <span className="booking-calendar-slot-choice">{!slot.is_available ? 'Erre az időpontra már nem lehet jelentkezni' : selectedSlotId===slot.id ? '✓ Kiválasztva' : 'Ezt a kurzust választom'}</span>
                     </button>
                   ))}
                 </div>

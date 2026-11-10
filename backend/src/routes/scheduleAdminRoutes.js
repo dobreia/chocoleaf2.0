@@ -33,7 +33,7 @@ admin.get("/courses", async (req, res) =>
   res.json(
     (await attachSessions(pool, (
       await pool.query(
-        "SELECT c.*,s.title,s.active AS service_active,COALESCE((SELECT SUM(seats) FROM bookings b WHERE b.course_id=c.id AND b.status<>'cancelled'),0)::int AS booked_seats FROM courses c JOIN services s ON s.id=c.service_id ORDER BY c.start_time",
+        "SELECT c.*,s.title,s.active AS service_active,(c.reserved_seats+COALESCE((SELECT SUM(seats) FROM bookings b WHERE b.course_id=c.id AND b.status<>'cancelled'),0))::int AS booked_seats FROM courses c JOIN services s ON s.id=c.service_id ORDER BY c.start_time",
       )
     ).rows)).map(slotResponse),
   ),
@@ -43,7 +43,7 @@ admin.get("/courses/:id/slots", async (req, res) => {
   if (!s) fail("Nem található.", 404);
   const rows = (
     await pool.query(
-      "SELECT c.*,COALESCE((SELECT SUM(seats) FROM bookings b WHERE b.course_id=c.id AND b.status<>'cancelled'),0)::int AS booked_count FROM courses c WHERE service_id=$1 ORDER BY start_time",
+      "SELECT c.*,(c.reserved_seats+COALESCE((SELECT SUM(seats) FROM bookings b WHERE b.course_id=c.id AND b.status<>'cancelled'),0))::int AS booked_count FROM courses c WHERE service_id=$1 ORDER BY start_time",
       [s.id],
     )
   ).rows;

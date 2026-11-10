@@ -227,3 +227,13 @@ Az import a forrásszöveg átvétele, a korábbi hatálybalépési dátumokkal.
 
 Célzott tesztek: backend `node --test test/legal-content.test.cjs`; frontend `node --test test/legal-content.test.mjs`; böngészőben `npm run test:e2e -- legal-content.spec.js`.
 
+## Novemberi időpontok és külső foglalt helyek
+
+A `022-reserved-course-seats.sql` migráció külön kezeli a rendszeren kívül már lefoglalt helyeket. Az időpont szerkesztőjében a **Máshol már lefoglalt helyek** mező csökkenti a szabad kapacitást, ügyfél és mesterséges foglalás létrehozása nélkül. A foglalási ellenőrzés, a publikus férőhelyszám és az admin/Google naptár ezt is figyelembe veszi. A betelt időpont megjelenik a kurzusrészleteknél és a foglalási naptárban, de nem választható foglalásra. A tényleges foglalás lemondása csak annak helyeit szabadítja fel.
+
+A `scripts/import-november-2026.cjs` a megadott hat novemberi időpont helyi importja; kizárólag a `chocoleaf_stripe_local` adatbázist célozza. Alapesetben csak előnézetet mutat, `--apply` kapcsolóval ment, előtte a korábbi szolgáltatásokat/időpontokat a figyelmen kívül hagyott `backend/logs` mappába menti. A többi időpont és szolgáltatás inaktív lesz, foglalás nem törlődik. Az árak megmaradnak, a két aktív kurzus alap időtartama 120 perc. A szabad helyek az import megadott állapotát jelentik; új foglalások után nem szabad újraimportálni a régi férőhelyadatokat.
+
+Az import `LOCAL_SEED_COURSES=false` értéket ír a helyi `.env.local-test` fájlba. Így a helyi indító újrainduláskor nem generál további bemutatóidőpontokat. Ez a beállítás a helyi adatbázist érinti, éles szerverre nem tölt át adatot. A backend újraindítása szükséges az új férőhelykezelés betöltéséhez.
+
+Célzott ellenőrzés: backend `node --test test/reserved-seats.test.cjs`; frontend `npm run test:e2e -- reserved-seats.spec.js`.
+

@@ -25,7 +25,7 @@ export function groupBookings(items) {
 export const monthSummary = bookings => ({ visible: bookings.slice(0,2), more: Math.max(0, bookings.length-2), total: bookings.length });
 
 export function courseEvents(slots, bookings) {
-  const byId = new Map(slots.map(s=>[s.id,{...s,bookings:[],booked_seats:0}]));
+  const byId = new Map(slots.map(s=>[s.id,{...s,bookings:[],booked_seats:Number(s.reserved_seats)||0}]));
   for(const b of bookings) {
     if(!byId.has(b.course_id))byId.set(b.course_id,{id:b.course_id,title:b.course_title,start_time:b.start_time,end_time:b.end_time,sessions:b.sessions,capacity:b.capacity,active:true,bookings:[],booked_seats:0});
     const event=byId.get(b.course_id);event.bookings.push(b);

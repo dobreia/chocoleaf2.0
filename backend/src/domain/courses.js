@@ -84,6 +84,7 @@ async function save(id, data) {
     const d = {...old,...data};
     const price = integer(d.price ?? service.price,'Ár');
     const capacity = integer(d.capacity ?? service.capacity,'Kapacitás',1,100);
+    const reservedSeats = integer(d.reserved_seats ?? 0,'Külső foglalt helyek',0,capacity);
     const active = d.active !== false;
     const used = old ? await one(c, "SELECT COALESCE(SUM(seats),0)::int AS n FROM bookings WHERE course_id=$1 AND status<>'cancelled'",[id]) : {n:0};
     const holds = old ? await one(c, "SELECT COALESCE(SUM(seats),0)::int AS n FROM payment_orders WHERE course_id=$1 AND status='pending' AND booking_id IS NULL",[id]) : {n:0};
@@ -102,7 +103,7 @@ async function save(id, data) {
     if (holds.n && (changed || !active || service.id!==old.service_id))
       fail('Folyamatban lévő fizetés alatt az alkalmak nem módosíthatók vagy inaktiválhatók.',409);
     if (used.n && old.service_id!==service.id) fail('Foglalásokkal rendelkező kurzus szolgáltatása nem cserélhető.',409);
-    if (used.n+holds.n>capacity) fail('A kapacitás nem lehet kisebb a lefoglalt helyek számánál.',409);
+    if (used.n+holds.n+reservedSeats>capacity) fail('A kapacitás nem lehet kisebb a lefoglalt és külső foglalt helyek számánál.',409);
     for (const session of sessions) {
       const previous = before.find(s=>s.id===session.id);
       if (previous && new Date(previous.start_time)<=new Date()) {
@@ -118,10 +119,10 @@ async function save(id, data) {
         if (pending) fail('Az új időpont ütközik egy résztvevő folyamatban lévő fizetésével.',409);
       }
     }
-    const values=[service.id,service.title,data.description ?? service.description,sessions[0].start_time,sessions.at(-1).end_time,price,capacity,active];
+    const values=[service.id,service.title,data.description ?? service.description,sessions[0].start_time,sessions.at(-1).end_time,price,capacity,active,reservedSeats];
     const slot = old
-      ? await one(c,'UPDATE courses SET service_id=$2,title=$3,description=$4,start_time=$5,end_time=$6,price=$7,capacity=$8,active=$9,updated_at=clock_timestamp() WHERE id=$1 RETURNING *',[id,...values])
-      : await one(c,'INSERT INTO courses(id,service_id,title,description,start_time,end_time,price,capacity,active) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *',[parentId,...values]);
+      ? await one(c,'UPDATE courses SET service_id=$2,title=$3,description=$4,start_time=$5,end_time=$6,price=$7,capacity=$8,active=$9,reserved_seats=$10,updated_at=clock_timestamp() WHERE id=$1 RETURNING *',[id,...values])
+      : await one(c,'INSERT INTO courses(id,service_id,title,description,start_time,end_time,price,capacity,active,reserved_seats) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *',[parentId,...values]);
     await c.query('DELETE FROM course_sessions WHERE course_id=$1',[parentId]);
     if (locked) await c.query('UPDATE courses SET session_count_locked=true WHERE id=$1',[parentId]);
     for (const session of sessions) await c.query('INSERT INTO course_sessions(id,course_id,start_time,end_time) VALUES($1,$2,$3,$4)',[session.id,parentId,session.start_time,session.end_time]);

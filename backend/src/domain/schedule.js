@@ -52,7 +52,7 @@ async function checkBooking(c, courseId, seats, exclude = null, email = null) {
     [courseId, exclude],
   );
   const holds = await one(c, "SELECT COALESCE(SUM(seats),0)::int AS n FROM payment_orders WHERE course_id=$1 AND status='pending' AND booking_id IS NULL", [courseId]);
-  if (used.n + holds.n + seats > slot.capacity)
+  if (used.n + holds.n + slot.reserved_seats + seats > slot.capacity)
     fail("Nincs elegendő szabad hely erre az időpontra.", 409);
   for (const session of slot.sessions) {
   if (

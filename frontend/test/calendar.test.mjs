@@ -25,6 +25,11 @@ test('week/month open course details; day opens individual booking',()=>{for(con
 test('course detail lists all participants and opens booking editor',()=>{let booking;const tree=elements(React.createElement(Details,{event:courseEvents(slots,items)[0],onClose:()=>{},onBooking:b=>booking=b}));tree.find(e=>e.type==='button'&&e.props.children==='Foglalás megnyitása és kezelése').props.onClick();assert.equal(booking.id,'0');const text=renderToStaticMarkup(React.createElement(Details,{event:courseEvents(slots,items)[0],onClose:()=>{},onBooking:()=>{}}));assert(text.includes('5 szabad hely'));assert(text.includes('Vendég 3'));assert(text.includes('Nem foglal férőhelyet'));});
 test('empty day has an empty state',()=>{assert(renderToStaticMarkup(React.createElement(Views,{...props('day'),items:[],slots:[]})).includes('nincs foglalás'));});
 
+test('calendar counts external occupied places without inventing participants',()=>{
+  const event=courseEvents([{...slots[0],reserved_seats:2}],[])[0];
+  assert.equal(event.booked_seats,2);assert.equal(event.bookings.length,0);
+});
+
 test('seat field preserves empty input before accepting a replacement',()=>{let value='1';let tree=SeatCount({value,available:12,onChange:v=>value=v});elements(tree).find(e=>e.type==='input').props.onChange({target:{value:''}});assert.equal(value,'');tree=SeatCount({value,available:12,onChange:v=>value=v});assert.equal(elements(tree).find(e=>e.type==='input').props.value,'');elements(tree).find(e=>e.type==='input').props.onChange({target:{value:'7'}});assert.equal(value,'7');assert(validSeatCount(value,12));});
 test('seat validation rejects blank, zero, negative, fractions and excess',()=>{for(const value of ['', '0','-1','1.5','13'])assert(!validSeatCount(value,12),value);assert(validSeatCount('12',12));});
 

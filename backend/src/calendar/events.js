@@ -22,7 +22,7 @@ async function courses(db) {
     row_number() OVER(PARTITION BY c.id ORDER BY st.start_time,st.id)::int AS session_index,
     count(*) OVER(PARTITION BY c.id)::int AS session_count,
     s.active AS service_active,
-    COALESCE((SELECT SUM(b.seats) FROM bookings b WHERE b.course_id=c.id AND b.status<>'cancelled'),0)::int AS booked_seats
+    (c.reserved_seats+COALESCE((SELECT SUM(b.seats) FROM bookings b WHERE b.course_id=c.id AND b.status<>'cancelled'),0))::int AS booked_seats
     FROM courses c JOIN services s ON s.id=c.service_id JOIN course_session_times st ON st.course_id=c.id
     WHERE c.end_time >= now()-interval '30 days' OR EXISTS (SELECT 1 FROM calendar_events e WHERE e.course_id=c.id)
     ORDER BY st.start_time,st.id`)).rows;
