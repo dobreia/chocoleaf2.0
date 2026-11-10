@@ -15,6 +15,10 @@
     "test:e2e:mail": "playwright test --config playwright.mail.config.js"
   },
   "dependencies": {
+    "@tiptap/extension-table": "^3.32.3",
+    "@tiptap/pm": "^3.32.3",
+    "@tiptap/react": "^3.32.3",
+    "@tiptap/starter-kit": "^3.32.3",
     "bootstrap": "^5.3.8",
     "react": "^19.2.6",
     "react-datepicker": "^9.1.0",

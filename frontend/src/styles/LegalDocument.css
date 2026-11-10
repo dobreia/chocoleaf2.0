@@ -4,6 +4,7 @@
 .legal-document h3 { margin:1.5rem 0 .75rem; color:#6c485c; font-size:1.2rem; }
 .legal-document ul { padding-left:1.4rem; margin:0 0 1.5rem; }
 .legal-document li { margin:.4rem 0; }
+.legal-document li > p,.legal-document th > p:last-child,.legal-document td > p:last-child { margin-bottom:0; }
 .legal-document a { color:#6c485c; text-decoration:underline; text-underline-offset:3px; }
 .legal-document-table { overflow-x:auto; margin:1rem 0 1.75rem; }
 .legal-document table { width:100%; border-collapse:collapse; min-width:450px; }

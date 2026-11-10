@@ -1,38 +1,26 @@
 import {Fragment} from 'react';
-function safeHref(value){
-  if([...value].some(char=>char==='\\'||char.charCodeAt(0)<=32))return null;
-  if(/^\/(?!\/)/.test(value))return value;
-  try{const url=new URL(value);return ['https:','http:','mailto:','tel:'].includes(url.protocol)&&!url.username&&!url.password?value:null;}catch{return null;}
-}
-function inline(value){
-  return value.split(/(\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g).filter(Boolean).map((part,i)=>{
-    if(part.startsWith('**')&&part.endsWith('**'))return <strong key={i}>{part.slice(2,-2)}</strong>;
-    const link=/^\[([^\]]+)\]\(([^)]+)\)$/.exec(part);
-    if(link){const href=safeHref(link[2]);return href?<a key={i} href={href} {...(/^https?:/.test(href)?{target:'_blank',rel:'noopener noreferrer'}:{})}>{link[1]}</a>:<Fragment key={i}>{link[1]}</Fragment>;}
-    return <Fragment key={i}>{part}</Fragment>;
-  });
-}
-const tableCells=line=>line.trim().replace(/^\||\|$/g,'').split('|').map(cell=>cell.trim());
-const separator=line=>/^\|(?:\s*:?-+:?\s*\|)+$/.test(line?.trim()||'');
-function special(lines,i){return /^(#{2,3})\s|^-\s/.test(lines[i])||(lines[i].trim().startsWith('|')&&separator(lines[i+1]));}
-export default function DocumentText({text=''}){
-  const lines=text.replace(/\r\n?/g,'\n').split('\n'),blocks=[];
-  for(let i=0;i<lines.length;){
-    if(!lines[i].trim()){i++;continue;}
-    const key=i,heading=/^(#{2,3})\s+(.+)$/.exec(lines[i]);
-    if(heading){const Tag=heading[1].length===2?'h2':'h3';blocks.push(<Tag key={key}>{inline(heading[2])}</Tag>);i++;continue;}
-    if(/^-\s/.test(lines[i])){
-      const items=[];while(i<lines.length&&/^-\s/.test(lines[i])){items.push(<li key={i}>{inline(lines[i].replace(/^-\s+/,''))}</li>);i++;}
-      blocks.push(<ul key={key}>{items}</ul>);continue;
+import {readDocument,safeDocumentHref} from './contentDocument';
+function renderNode(node,key){
+  if(node.type==='text'){
+    let value=node.text;
+    for(const [i,mark] of (node.marks||[]).entries()){
+      if(mark.type==='bold')value=<strong key={i}>{value}</strong>;
+      if(mark.type==='italic')value=<em key={i}>{value}</em>;
+      if(mark.type==='underline')value=<u key={i}>{value}</u>;
+      const href=mark.type==='link'?safeDocumentHref(mark.attrs?.href):null;
+      if(href)value=<a key={i} href={href} {...(/^https?:/i.test(href)?{target:'_blank',rel:'noopener noreferrer'}:{})}>{value}</a>;
     }
-    if(lines[i].trim().startsWith('|')&&separator(lines[i+1])){
-      const header=tableCells(lines[i]);i+=2;const rows=[];
-      while(i<lines.length&&lines[i].trim().startsWith('|')){const cells=tableCells(lines[i]);rows.push(<tr key={i}>{header.map((_,col)=><td key={col}>{inline(cells[col]||'')}</td>)}</tr>);i++;}
-      blocks.push(<div className="legal-document-table" key={key}><table><thead><tr>{header.map((cell,col)=><th key={col} scope="col">{inline(cell)}</th>)}</tr></thead><tbody>{rows}</tbody></table></div>);continue;
-    }
-    const paragraph=[];
-    do{paragraph.push(lines[i]);i++;}while(i<lines.length&&lines[i].trim()&&!special(lines,i));
-    blocks.push(<p key={key}>{inline(paragraph.join('\n'))}</p>);
+    return <Fragment key={key}>{value}</Fragment>;
   }
-  return <div className="legal-document">{blocks}</div>;
+  const content=(node.content||[]).map(renderNode);
+  if(node.type==='hardBreak')return <br key={key}/>;
+  if(node.type==='table')return <div className="legal-document-table" key={key}><table><tbody>{content}</tbody></table></div>;
+  const Tag={paragraph:'p',heading:node.attrs?.level===3?'h3':'h2',bulletList:'ul',orderedList:'ol',listItem:'li',tableRow:'tr',tableCell:'td',tableHeader:'th'}[node.type];
+  if(!Tag)return null;
+  const props={};
+  if(node.type==='orderedList')props.start=node.attrs?.start||1;
+  if(node.type==='tableHeader')props.scope='col';
+  if(['tableCell','tableHeader'].includes(node.type)){props.colSpan=node.attrs?.colspan;props.rowSpan=node.attrs?.rowspan;}
+  return <Tag key={key} {...props}>{content}</Tag>;
 }
+export default function DocumentText({text=''}){return <div className="legal-document">{readDocument(text).content.map(renderNode)}</div>;}

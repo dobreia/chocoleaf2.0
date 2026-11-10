@@ -1,17 +1,22 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, lazy, Suspense } from "react";
 import { usePageDraftState } from '../../components/usePageDraft';
 import { api } from "../../api/courses";
 import { Field, Modal, SaveForm, Notice } from "../../components/admin/UI";
 import { dateTime } from "../../components/admin/format";
 import { inquiryReplyUrl } from '../../components/admin/inquiryReply';
 import { useOutletContext } from 'react-router-dom';
+import {documentPlainText} from '../../components/contentDocument';
+const RichTextEditor=lazy(()=>import('../../components/admin/RichTextEditor'));
 export default function Records({ kind }) {
   const { refreshInquiryCount } = useOutletContext() || {};
   const [items, setItems] = useState([]),
     [edit, setEdit] = usePageDraftState('records.edit', null),
     [error, setError] = useState(""),
     [q, setQ] = usePageDraftState('records.search', ""),
-    [loading, setLoading] = useState(true);
+    [loading, setLoading] = useState(true),
+    [editorReady,setEditorReady]=useState(false),
+    [saving,setSaving]=useState(false);
+  const openEdit=value=>{setEditorReady(false);setEdit(value);};
   const load = useCallback(
     () =>
       api("/admin/" + kind)
@@ -65,8 +70,9 @@ export default function Records({ kind }) {
             ].map(([slug, title]) => (
               <button
                 key={slug}
+                disabled={loading}
                 onClick={() =>
-                  setEdit(
+                  openEdit(
                     items.find((x) => x.slug === slug) || {
                       slug,
                       title,
@@ -122,7 +128,7 @@ export default function Records({ kind }) {
                   </p>
                 </>
               )}
-              {kind === "content" && <p>{x.body.slice(0, 180)}…</p>}
+              {kind === "content" && <p>{documentPlainText(x.body).slice(0, 180)}…</p>}
               {kind === "inquiries" ? (
                 <div className="cl-actions">
                 <a className="cl-inquiry-reply" href={inquiryReplyUrl(x)} target="_blank" rel="noopener noreferrer">Válasz Gmailben</a>
@@ -146,7 +152,7 @@ export default function Records({ kind }) {
                 </div>
               ) : (
                 <button
-                  onClick={() => setEdit({ ...x, original_email: x.email })}
+                  onClick={() => openEdit({ ...x, original_email: x.email })}
                 >
                   Szerkesztés
                 </button>
@@ -156,19 +162,23 @@ export default function Records({ kind }) {
       )}
       {!loading && !items.length && <p>Még nincs bejegyzés.</p>}
       {edit && (
-        <Modal title="Szerkesztés" onClose={() => setEdit(null)}>
+        <Modal title="Szerkesztés" className={kind==='content'?'cl-content-dialog':''} onClose={event=>{if(saving){event?.preventDefault();return;}setEdit(null);}}>
           <SaveForm
+            disabled={kind==='content'&&!editorReady}
             onSave={async () => {
+              if(kind==='content'){
+                if(!documentPlainText(edit.body).trim())throw new Error('Írj szöveget az oldal tartalmába.');
+                if(edit.body.length>50000||new TextEncoder().encode(JSON.stringify(edit)).length>60*1024)throw new Error('A dokumentum túl hosszú. Rövidítsd a szöveget vagy egyszerűsítsd a formázást.');
+              }
               const path =
                 kind === "customers"
                   ? "/admin/customers"
                   : "/admin/content/" + edit.slug;
-              await api(path, {
-                method: "PUT",
-                body: edit,
-              });
-              setEdit(null);
-              load();
+              setSaving(true);
+              try{
+                await api(path, {method:"PUT",body:edit});
+                setEdit(null);load();
+              }finally{setSaving(false);}
             }}
           >
             {kind === "content" ? (
@@ -176,18 +186,15 @@ export default function Records({ kind }) {
                 <Field
                   label="Cím"
                   required
+                  maxLength={200}
                   value={edit.title}
                   onChange={(e) => setEdit({ ...edit, title: e.target.value })}
                 />
-                <Field label="Tartalom (bekezdésekkel) ">
-                  <textarea
-                    rows="14"
-                    required
-                    value={edit.body}
-                    onChange={(e) => setEdit({ ...edit, body: e.target.value })}
-                  />
-                </Field>
-                <p>Formázás: alcímhez ## vagy ###, felsoroláshoz - jel, kiemeléshez **szöveg**, hivatkozáshoz [szöveg](cím). Az egyszerű bekezdések is megmaradnak.</p>
+                <div className="cl-field"><span>Tartalom</span></div>
+                <Suspense fallback={<p role="status">Szövegszerkesztő betöltése…</p>}>
+                  <RichTextEditor key={edit.slug} value={edit.body} disabled={saving} onReady={setEditorReady}
+                    onChange={body=>setEdit(current=>current?{...current,body}:current)}/>
+                </Suspense>
               </>
             ) : (
               <>
