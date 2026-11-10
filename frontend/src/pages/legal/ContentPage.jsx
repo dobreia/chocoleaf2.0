@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { api } from "../../api/courses";
 import PageHeader from "../../components/PageHeader";
+import DocumentText from '../../components/DocumentText';
+import '../../styles/LegalDocument.css';
 export default function ContentPage({ slug, title }) {
   const [d, setD] = useState(null),
     [error, setError] = useState("");
@@ -16,7 +18,7 @@ export default function ContentPage({ slug, title }) {
         {error ? (
           <p role="status">{error}</p>
         ) : d ? (
-          <div style={{ whiteSpace: "pre-wrap" }}>{d.body}</div>
+          <DocumentText text={d.body}/>
         ) : (
           <p>Betöltés…</p>
         )}

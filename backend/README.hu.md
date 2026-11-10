@@ -215,3 +215,13 @@ Az **Emailküldés** menüpont (`/admin/mail`) lapozható várakozó, sikertelen
 
 Célzott ellenőrzés: backend `node --test test/mail-management.test.cjs`; frontend `npm run test:e2e:mail` (elkülönített tesztadatbázis, 3025/5197 portok). A tesztek nem küldenek valódi címzetteknek levelet. Új SMTP-beállítás nem szükséges, a meglevő Gmail/SMTP-konfiguráció és a helyi levélfogadó mód megmarad.
 
+## Régi oldaltartalmak átvétele
+
+A `021-legacy-legal-content.sql` egyszeri migráció a korábbi `3github_chocoleaf/chocoleaf/public` négy teljes dokumentumát veszi át: `impressum.html`, `privacy-policy.html`, `rendelesi-feltetelek.html`, `cookie-policy.html`. A régi React-oldalak csak vázak voltak, ezért nem azokból történik az import. A hiányzó, üres vagy a helyi indító által létrehozott pontos, változatlan bemutatószövegek cserélődnek; kézzel módosított tartalom és későbbi adminmódosítás nem íródik felül.
+
+A szöveg az Oldaltartalmak menüben szerkeszthető. A publikus oldalak biztonságos, egyszerű szövegformázást jelenítenek meg: `##`/`###` alcímek, `-` felsorolás, `**kiemelés**`, `[szöveg](cím)` hivatkozás és `|` táblázat. Nyers HTML nem futtatható. A régi fejlécek, stílusok, Barion Pixel-script és követőképek nem kerültek át. A dokumentumon belüli hivatkozások a jelenlegi `/legal/...` útvonalakat használják.
+
+Az import a forrásszöveg átvétele, a korábbi hatálybalépési dátumokkal. Tartalmi aktualizálás még szükséges: az adatkezelés FormSubmitot, Bariont és Cal.com-ot említ; a sütiszöveg korábbi analitikai/marketingkategóriákról és beállító bannerről ír; a fizetési és normál workshop-visszatérítési feltételek is a korábbi működésből származnak. Ezeket az aktuális átutalásos, saját foglalási rendszerrel egyeztetni kell. Az import nem változtat a program fizetési vagy lemondási szabályain.
+
+Célzott tesztek: backend `node --test test/legal-content.test.cjs`; frontend `node --test test/legal-content.test.mjs`; böngészőben `npm run test:e2e -- legal-content.spec.js`.
+

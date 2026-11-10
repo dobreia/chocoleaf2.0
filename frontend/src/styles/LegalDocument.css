@@ -1,0 +1,11 @@
+.legal-document { max-width:960px; margin:0 auto; color:#493543; line-height:1.8; overflow-wrap:anywhere; }
+.legal-document p { white-space:pre-line; margin:0 0 1.25rem; }
+.legal-document h2 { margin:2rem 0 1rem; color:#6c485c; font-size:1.6rem; }
+.legal-document h3 { margin:1.5rem 0 .75rem; color:#6c485c; font-size:1.2rem; }
+.legal-document ul { padding-left:1.4rem; margin:0 0 1.5rem; }
+.legal-document li { margin:.4rem 0; }
+.legal-document a { color:#6c485c; text-decoration:underline; text-underline-offset:3px; }
+.legal-document-table { overflow-x:auto; margin:1rem 0 1.75rem; }
+.legal-document table { width:100%; border-collapse:collapse; min-width:450px; }
+.legal-document th,.legal-document td { border:1px solid #d9c7d3; padding:12px; text-align:left; vertical-align:top; }
+.legal-document th { background:#f1e8ee; }

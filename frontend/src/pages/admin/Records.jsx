@@ -187,6 +187,7 @@ export default function Records({ kind }) {
                     onChange={(e) => setEdit({ ...edit, body: e.target.value })}
                   />
                 </Field>
+                <p>Formázás: alcímhez ## vagy ###, felsoroláshoz - jel, kiemeléshez **szöveg**, hivatkozáshoz [szöveg](cím). Az egyszerű bekezdések is megmaradnak.</p>
               </>
             ) : (
               <>
