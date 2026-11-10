@@ -3,6 +3,7 @@ const { fail } = require('./rules');
 const { fillVoucherDesign } = require('../lib/fillVoucher');
 const { queue } = require('./notifications');
 const fs = require('node:fs/promises');
+const {origin}=require('../lib/mailTemplate');
 async function fulfill(id, manual) {
   await transaction(async c => {
     const r = await one(c, 'SELECT * FROM gift_orders WHERE id=$1 FOR UPDATE', [id]);
@@ -21,12 +22,14 @@ async function fulfill(id, manual) {
         [serial.toUpperCase(),id,intent.meta.names[i],intent.meta.unitAmount,validUntil]);
       attachments.push({ filename: `voucher_${serial}.pdf`, content: (await fs.readFile(outPath)).toString('base64') });
     }
-    await queue(c, intent.meta.email, 'ChocoLeaf – ajándékutalványod elkészült',
-      `Kedves ${intent.meta.name}!\n\nKöszönjük a vásárlást! A névre szóló ajándékutalványokat PDF-csatolmányként találod.\nNevek: ${intent.meta.names.join(', ')}\nDarabszám: ${intent.meta.quantity}\nUtalványonként: ${intent.meta.unitAmount} Ft\nÖsszesen: ${intent.amount} Ft\nAzonosító: ${id}\nA felhasználás feltételei és az érvényesség az utalványon szerepelnek.\n\nChocoLeaf`, attachments);
-    const origin = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',')[0].replace(/\/$/, '');
+    const multiple=intent.meta.quantity>1;
+    const title=multiple?'Ajándékutalványaid megérkeztek':'Ajándékutalványod megérkezett';
+    await queue(c, intent.meta.email, 'ChocoLeaf – '+title,
+      `Kedves ${intent.meta.name}!\n\nKöszönjük a vásárlást! ${multiple?'Az ajándékutalványokat':'Az ajándékutalványt'} PDF-csatolmányként találod.\n\nUtalványok adatai\n${attachments.map((a,i)=>`${intent.meta.names[i]}: ${a.filename.replace(/^voucher_|\.pdf$/g,'')}`).join('\n')}\nDarabszám: ${intent.meta.quantity}\nUtalványonként: ${intent.meta.unitAmount} Ft\nÖsszesen: ${intent.amount} Ft\nÉrvényes: ${validUntil}\n\nBeváltáskor a PDF-en szereplő teljes utalványszámot add meg. A felhasználás feltételei az utalványon szerepelnek.\nRendelés azonosítója: ${id}\n\nSzeretettel,\nChocoLeaf`, attachments);
+    const adminUrl=origin()+'/admin/giftcards?order='+encodeURIComponent(id);
     await queue(c, process.env.MAIL_ADMIN || process.env.MAIL_FROM,
       'ChocoLeaf – fizetett ajándékutalvány kiállítva',
-      `Az utalványok elkészültek, a vásárlói email küldési sorba került.\nVásárló: ${intent.meta.email}\nNevek: ${intent.meta.names.join(', ')}\nDarabszám: ${intent.meta.quantity}\nÖsszeg: ${intent.amount} Ft\nAzonosító: ${id}\nAdmin: ${origin}/admin/giftcards`);
+      `Az utalványok elkészültek, a vásárlói email küldési sorba került.\n\nUtalványok adatai\nVásárló: ${intent.meta.email}\nNevek: ${intent.meta.names.join(', ')}\nDarabszám: ${intent.meta.quantity}\nÖsszeg: ${intent.amount} Ft\nAzonosító: ${id}\nAdmin: ${adminUrl}`,[],{action:{label:'Rendelés megnyitása',url:adminUrl}});
     intent.paidAt ||= Date.now();
     intent.generatedAt = Date.now();
     await c.query('UPDATE gift_orders SET data=$2 WHERE id=$1', [id, intent]);

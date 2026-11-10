@@ -153,7 +153,7 @@ A „Tisztázandó” pontok nyitott kérdések, nem eldöntött követelmények
 4. UTALVÁNYOK, KEDVEZMÉNYEK ÉS ÁRAK
 ==================================
 
-[ ] F13 - Régi utalványazonosító-formátum visszaállítása
+[x] F13 - Régi utalványazonosító-formátum visszaállítása
     Komplexitás: KÖZEPES.
     Feladat: Az utalványazonosító az ÉÉHHNN-napi_sorszám formátumot kövesse.
     Példa: 261017-1, 261017-2; a következő napon 261018-1.

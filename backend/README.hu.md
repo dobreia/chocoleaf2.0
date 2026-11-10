@@ -203,3 +203,15 @@ A helyi indítás továbbra is `npm run local`, de ezen a branchen nem kér Stri
 
 Ellenőrzés: backend `npm test`; frontend `npm test`, `npm run build`, `npm run test:e2e:transfer`. A normál böngészős tesztkör külön tesztbeállítással a megőrzött Stripe-folyamatot is ellenőrzi.
 
+## Formázott levelek és küldési sor kezelése
+
+A `020-email-management.sql` migráció hozzáadja a mentett HTML-változatot, az utolsó küldési hibát és a próbálkozás idejét. Az új levelek közös ChocoLeaf-sablont használnak mályvaszínű fejléccel, adatblokkokkal és gombokkal; a szöveges változat, a PDF-ek és a külön naptármeghívók megmaradnak. A sablon a beírt adatokat HTML-kódolja. A korábbi, HTML nélküli sorok küldéskor kapnak formázott változatot. Az utalványos levél tárgya egyes/többes számot követ, több utalvány egyetlen levélben érkezik. Az admin rendelési értesítőben a számlázási adatok is szerepelnek.
+
+Az adminlevél gombja `/admin/giftcards?order=...` vagy `/admin/bookings?booking=...` címre vezet. Megnyitása nem hagy jóvá fizetést és nem indít utalványküldést; a műveletek továbbra is a bejelentkezett adminfelületen végezhetők el.
+
+Az **Emailküldés** menüpont (`/admin/mail`) lapozható várakozó, sikertelen és elküldött listát, védett levélelőnézetet és küldési adatokat mutat. Az újrapróbálás kizárólag el nem küldött levelet ütemez, nem hoz létre új rendelést vagy utalványt. Törlés előtt megerősítést kér, és csak a küldési sort törli; elküldött levél innen nem törölhető vagy küldhető újra. Az SMTP által elfogadott állapot nem igazolja a címzett postaládájába kerülést vagy az elolvasást.
+
+Átmeneti hibánál öt perc múlva automatikus újrapróbálkozás történik, az admin érthető, hitelesítési adatokat nem tartalmazó hibaokot lát. Hibás/régi naptárformátumnál a próbálkozás leáll, a sor törölhető; az aktuális meghívókat változatlanul kezeljük. Elavult naptárverzió kézzel sem ütemezhető újra. Régebbi sikertelen kísérletek részletes hibaoka utólag nem állítható helyre.
+
+Célzott ellenőrzés: backend `node --test test/mail-management.test.cjs`; frontend `npm run test:e2e:mail` (elkülönített tesztadatbázis, 3025/5197 portok). A tesztek nem küldenek valódi címzetteknek levelet. Új SMTP-beállítás nem szükséges, a meglevő Gmail/SMTP-konfiguráció és a helyi levélfogadó mód megmarad.
+

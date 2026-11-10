@@ -119,6 +119,7 @@ export default function AdminShell() {
             ["content", "Oldaltartalmak"],
             ["giftcards", "Utalványok"],
             ["payments", "Fizetések és számlák"],
+            ['mail','Emailküldés'],
           ].map(([path, label]) => (
             <NavLink end to={"/admin/" + path} key={path}>
               {label}

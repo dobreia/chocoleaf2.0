@@ -36,6 +36,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import TransferPage from "./pages/TransferPage";
 import PaymentPage from './pages/PaymentPage';
 import Payments from './pages/admin/Payments';
+import Mail from './pages/admin/Mail';
 
 function BookingRoute() {
   const { id } = useParams();
@@ -136,6 +137,7 @@ function App() {
           />
           <Route path="giftcards" element={<GiftOrders />} />
           <Route path="payments" element={<Payments />} />
+          <Route path="mail" element={<Mail />} />
         </Route>
         {Object.entries({
           "/idopont": "/courses",

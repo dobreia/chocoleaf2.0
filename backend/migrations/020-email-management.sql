@@ -1,0 +1,5 @@
+ALTER TABLE outbox ADD COLUMN IF NOT EXISTS html TEXT;
+ALTER TABLE outbox ADD COLUMN IF NOT EXISTS last_error TEXT;
+ALTER TABLE outbox ADD COLUMN IF NOT EXISTS last_attempt_at TIMESTAMPTZ;
+ALTER TABLE outbox ADD COLUMN IF NOT EXISTS retry_stopped BOOLEAN NOT NULL DEFAULT false;
+CREATE INDEX IF NOT EXISTS outbox_waiting ON outbox(next_attempt) WHERE sent_at IS NULL AND NOT retry_stopped;

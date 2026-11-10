@@ -38,7 +38,7 @@ export default function Dashboard() {
             {d.unsent > 0 && (
               <p role="status" className="cl-error">
                 {d.unsent} email kézbesítésre vár. Ellenőrizd az emailküldés
-                beállításait, ha ez tartósan fennáll.
+                állapotát, ha ez tartósan fennáll. <Link to="/admin/mail">Levelek megtekintése</Link>
               </p>
             )}
             <section className="cl-card">

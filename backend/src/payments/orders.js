@@ -110,7 +110,7 @@ async function invoice(order) {
   await transaction(async c => {
     const current = await one(c, 'SELECT invoice_status FROM payment_orders WHERE id=$1 FOR UPDATE', [order.id]);
     if (current.invoice_status === 'sent') return;
-    await queue(c, order.email, 'ChocoLeaf – számlád elkészült', `A vásárlásodhoz tartozó számla: ${link.public_url}`);
+    await queue(c, order.email, 'ChocoLeaf – számlád elkészült', `A vásárlásodhoz tartozó számla: ${link.public_url}`,[],{action:{label:'Számla megnyitása',url:link.public_url}});
     await c.query("UPDATE payment_orders SET invoice_url=$2,invoice_status='sent',last_error=NULL WHERE id=$1", [order.id, link.public_url]);
   });
 }

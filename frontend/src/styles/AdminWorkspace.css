@@ -628,3 +628,8 @@
 .cl-sync-card details p {margin-top:12px}
 @media(max-width:900px){.cl-sync-layout{grid-template-columns:1fr}}
 @media(max-width:480px){.cl-sync-actions{flex-direction:column}.cl-sync-actions button{width:100%}.cl-sync-stats{grid-template-columns:1fr}}
+.cl-mail-list { display:grid; gap:16px; margin-top:20px; }
+.cl-mail-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.cl-mail-dialog { width:min(850px,94vw); }
+.cl-mail-dialog iframe { width:100%; height:60vh; border:1px solid #e3d4df; border-radius:8px; background:white; }
+.cl-mail-dialog pre { white-space:pre-wrap; overflow-wrap:anywhere; font:inherit; }

@@ -2,22 +2,28 @@ import { useEffect, useState } from "react";
 import { api } from "../../api/courses";
 import { Notice } from "../../components/admin/UI";
 import { dateTime, money } from "../../components/admin/format";
+import {useSearchParams} from 'react-router-dom';
 export default function GiftOrders() {
+  const [query,setQuery]=useSearchParams();
+  const order=query.get('order');
   const [items, setItems] = useState([]),
     [error, setError] = useState(""),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
   const load = () =>
-    api("/giftcard/admin/orders")
+    api("/giftcard/admin/orders"+(order?'?order='+encodeURIComponent(order):''))
       .then(setItems)
       .catch((e) => setError(e.message));
   useEffect(() => {
-    load();
-  }, []);
+    let live=true;
+    api('/giftcard/admin/orders'+(order?'?order='+encodeURIComponent(order):'')).then(data=>{if(live){setItems(data);setError('');}}).catch(e=>{if(live)setError(e.message);});
+    return()=>{live=false;};
+  }, [order]);
   return (
     <>
       <h1>Ajándékutalványok</h1>
       <Notice error={error} message={message} />
+      {order&&<p>Az emailből megnyitott rendelés. <button onClick={()=>setQuery({})}>Összes rendelés megtekintése</button></p>}
       {!items.length && <p>Nincs utalványrendelés.</p>}
       {items.map((x) => (
         <article className="cl-card" key={x.id}>

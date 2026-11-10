@@ -1,0 +1,23 @@
+import {test,expect} from '@playwright/test';
+const api='http://127.0.0.1:3025/api',origin='http://127.0.0.1:5197';
+const options=data=>({headers:{Origin:origin},data});
+test('mail preview, safe admin links, retry scheduling and confirmed deletion work without reloading the page',async({page})=>{
+ await page.goto('/admin');await page.getByLabel('Email',{exact:true}).fill('demo@example.test');await page.getByLabel('Jelszó',{exact:true}).fill('Demo-browser-2026!');await page.getByRole('button',{name:'Bejelentkezés',exact:true}).click();await expect(page.getByRole('navigation',{name:'Admin navigáció'})).toBeVisible();
+ const order=await(await page.request.post(api+'/giftcard/start-payment',options({email:'mail-preview@example.test',quantity:2,names:['First Guest','Second Guest'],amount:19000,paymentMethod:'transfer',billingData:{buyerType:'company',companyName:'Browser Test Kft.',taxNumber:'12345678-1-12',billingEmail:'billing-browser@example.test',postCode:'1111',city:'Budapest',street:'Teszt 1.'}}))).json();
+ await page.getByRole('link',{name:'Emailküldés',exact:true}).click();await expect(page.getByRole('heading',{name:'Emailküldés',exact:true})).toBeVisible();
+ const card=page.locator('article').filter({has:page.getByRole('heading',{name:'Új ajándékutalvány rendelés',exact:false})});
+ await card.getByRole('button',{name:'Előnézet',exact:true}).click();
+ const preview=page.locator('dialog');await expect(preview).toBeVisible();
+ const frame=page.frameLocator('iframe[title="Email megjelenése"]');await expect(frame.getByText('Browser Test Kft.',{exact:false})).toBeVisible();await expect(frame.getByText('billing-browser@example.test',{exact:false})).toBeVisible();
+ const target=await frame.getByRole('link',{name:'Rendelés megnyitása',exact:true}).getAttribute('href');expect(target).toContain('/admin/giftcards?order='+order.id);expect(target).not.toContain('mark-paid');
+ await preview.screenshot({path:'test-results/email-preview.png'});
+ await preview.getByRole('button',{name:'Bezárás',exact:true}).click();
+ await page.goto(target);await expect(page.getByText('Az emailből megnyitott rendelés.',{exact:false})).toBeVisible();await expect(page.locator('article')).toHaveCount(1);await expect(page.locator('article')).toContainText('mail-preview@example.test');
+ const stored=(await(await page.request.get(api+'/giftcard/admin/orders?order='+order.id)).json())[0];expect(stored.data.paidAt).toBeFalsy();
+ await page.getByRole('button',{name:'Összes rendelés megtekintése',exact:true}).click();
+ await page.goto('/admin/mail');await card.getByRole('button',{name:'Újrapróbálás',exact:true}).click();await expect(page.getByRole('status')).toContainText('ütemeztük');
+ await card.getByRole('button',{name:'Törlés',exact:true}).click();await expect(card.getByRole('group',{name:'Levél törlésének megerősítése'})).toBeVisible();await card.getByRole('button',{name:'Mégse',exact:true}).click();await expect(card).toHaveCount(1);
+ await card.getByRole('button',{name:'Törlés',exact:true}).click();await card.getByRole('button',{name:'Levél végleges törlése',exact:true}).click();await expect(card).toHaveCount(0);await expect(page.getByRole('status')).toContainText('töröltük');
+ await page.getByLabel('Levelek állapota',{exact:true}).selectOption('sent');await expect(page.getByText('Nincs a szűrésnek megfelelő levél.',{exact:true})).toBeVisible();
+ expect((await(await page.request.get(api+'/giftcard/admin/orders?order='+order.id)).json())[0].data.generatedAt).toBeFalsy();
+});

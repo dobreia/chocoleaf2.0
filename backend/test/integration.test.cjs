@@ -577,7 +577,7 @@ test("gift PDF is sent once after authorized payment approval", async () => {
     const r = await req("/giftcard/admin/mark-paid", "POST", { id });
     assert.equal(r.status, 200, JSON.stringify(r.data));
     assert.equal(smtp.messages.length, 0);
-    const queued = (await pool.query("SELECT * FROM outbox WHERE subject IN ('ChocoLeaf – ajándékutalványod elkészült','ChocoLeaf – fizetett ajándékutalvány kiállítva')")).rows;
+    const queued = (await pool.query("SELECT * FROM outbox WHERE subject IN ('ChocoLeaf – Ajándékutalványod megérkezett','ChocoLeaf – Ajándékutalványaid megérkeztek','ChocoLeaf – fizetett ajándékutalvány kiállítva')")).rows;
     assert.equal(queued.length, 2);
     const customer = queued.find(x=>x.attachments.length);
     assert.ok(customer);

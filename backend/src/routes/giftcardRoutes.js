@@ -7,6 +7,7 @@ const { queue } = require("../domain/notifications");
 const { requireAdmin } = require("../domain/auth");
 const providers = require('../payments/providers');
 const payments = require('../payments/orders');
+const {billingText,origin}=require('../lib/mailTemplate');
 const router = express.Router();
 router.post('/check-vouchers',async(req,res)=>{
   res.set('Cache-Control','no-store');
@@ -104,14 +105,16 @@ router.post("/start-payment", async (req, res) => {
     const payment = method==='stripe' ? await payments.insert(c, { giftId: id, key: requestKey, amount: intent.amount,
       email: address, description: `ChocoLeaf ajándékutalvány – ${quantity} db`, billing: normalizedBilling, config }) : null;
     if (payment) await queue(c, address, 'ChocoLeaf – ajándékutalvány fizetése',
-      `Bankkártyás fizetés folytatása (30 percig): ${(process.env.FRONTEND_URL || 'http://localhost:5173').split(',')[0]}/payment#${payment.id}`);
+      `Bankkártyás fizetés folytatása (30 percig): ${origin()}/payment#${payment.id}`,[],{action:{label:'Fizetés folytatása',url:`${origin()}/payment#${payment.id}`}});
     else await queue(c,address,'ChocoLeaf – ajándékutalvány rendelésed megérkezett',
-      `Kedves ${names[0]}!\n\nRendelésedet elmentettük.\nNevek: ${names.join(', ')}\nDarabszám: ${quantity}\nAz utalványokat az átutalás beérkezésének adminisztrátori jóváhagyása után küldjük.`+require('../domain/transfers').instructions(intent.amount,notice,id));
+      `Kedves ${names[0]}!\n\nRendelésedet elmentettük.\nNevek: ${names.join(', ')}\nDarabszám: ${quantity}\nAz utalványokat az átutalás beérkezésének adminisztrátori jóváhagyása után küldjük.`+require('../domain/transfers').instructions(intent.amount,notice,id),[],{action:{label:'Átutalási adatok',url:origin()+'/transfer?id='+encodeURIComponent(id)}});
+    const adminUrl=origin()+'/admin/giftcards?order='+encodeURIComponent(id);
     await queue(
       c,
       process.env.MAIL_ADMIN || process.env.MAIL_FROM,
       "Új ajándékutalvány rendelés",
-      `${names.join(", ")}\n${address}\n${intent.amount} Ft\nKözlemény: ${notice}\nKezelés: ${process.env.FRONTEND_URL || "http://localhost:5173"}/admin/giftcards`,
+      `Új ajándékutalvány rendelés érkezett.\n\nUtalványok adatai\nMegrendelő email: ${address}\n${names.map((name,i)=>`${i+1}. név: ${name}`).join('\n')}\nDarabszám: ${quantity}\nUtalványonként: ${amount} Ft\nÖsszeg: ${intent.amount} Ft\nKözlemény: ${notice}\n\nSzámlázási adatok\n${billingText(intent.meta.billingData)}\n\nA fizetést a rendelés adminoldalán hagyd jóvá, ha az összeg ténylegesen megérkezett. A levél gombja csak megnyitja a rendelést.\nKezelés: ${adminUrl}`,[],
+      {action:{label:'Rendelés megnyitása',url:adminUrl}},
     );
     return { id, paymentId: payment?.id, redirectUrl: payment ? '/payment#' + payment.id : '/transfer?id=' + encodeURIComponent(id) };
   });
@@ -124,7 +127,8 @@ router.get("/admin/orders", requireAdmin, async (req, res) =>
       await pool.query(
         `SELECT g.*,(SELECT jsonb_agg(jsonb_build_object('code',v.code,'name',v.recipient_name,'amount',v.amount,'valid_until',v.valid_until,'changes_used',v.changes_used,
           'status',COALESCE((SELECT u.status FROM booking_vouchers u WHERE u.code=v.code AND u.status IN ('active','consumed') LIMIT 1),'available')) ORDER BY v.code)
-          FROM gift_vouchers v WHERE v.order_id=g.id) AS vouchers FROM gift_orders g ORDER BY created_at DESC LIMIT 500`,
+          FROM gift_vouchers v WHERE v.order_id=g.id) AS vouchers FROM gift_orders g ${req.query.order?'WHERE g.id=$1':''} ORDER BY created_at DESC LIMIT 500`,
+        req.query.order?[str(req.query.order,'Rendelés',100)]:[],
       )
     ).rows,
   ),
