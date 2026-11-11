@@ -1,0 +1,20 @@
+import {test,expect} from '@playwright/test';
+test('manual customer form preserves drafts and failures; deletion confirms, retries and stays deleted without reloading',async({page})=>{
+  await page.goto('/admin');await page.getByLabel('Email',{exact:true}).fill('demo@example.test');await page.getByLabel('Jelszó',{exact:true}).fill('Demo-browser-2026!');await page.getByRole('button',{name:'Bejelentkezés',exact:true}).click();await expect(page.getByRole('navigation',{name:'Admin navigáció'})).toBeVisible();
+  await page.getByRole('link',{name:'Ügyfelek',exact:true}).click();await page.getByRole('button',{name:'+ Új ügyfél',exact:true}).click();
+  const dialog=page.getByRole('dialog');await dialog.getByLabel('Név',{exact:true}).fill('Kézzel felvett vendég');await dialog.getByLabel('E-mail-cím',{exact:true}).fill('duplicate@example.test');await dialog.getByLabel('Telefon',{exact:true}).fill('+36301234567');await dialog.getByLabel('Belső megjegyzés',{exact:true}).fill('Csak belső megjegyzés');
+  await page.reload();await expect(dialog.getByLabel('Név',{exact:true})).toHaveValue('Kézzel felvett vendég');await expect(dialog.getByLabel('E-mail-cím',{exact:true})).toHaveValue('duplicate@example.test');
+  const response=await page.request.post('/api/admin/customers',{headers:{Origin:new URL(page.url()).origin},data:{name:'Már létező vendég',email:'duplicate@example.test'}});expect(response.status()).toBe(201);
+  await dialog.getByRole('button',{name:'Mentés',exact:true}).click();await expect(dialog.getByRole('alert')).toContainText('már szerepel');await expect(dialog.getByLabel('Belső megjegyzés',{exact:true})).toHaveValue('Csak belső megjegyzés');
+  await dialog.getByLabel('E-mail-cím',{exact:true}).fill('manual-browser@example.test');await dialog.getByRole('button',{name:'Mentés',exact:true}).click();await expect(dialog).toHaveCount(0);
+  const card=page.locator('.cl-customer-card').filter({has:page.getByRole('heading',{name:'Kézzel felvett vendég',exact:true})});await expect(card).toContainText('még nincs foglalása');await expect(card).toContainText('Csak belső megjegyzés');
+  await card.getByRole('button',{name:'Foglalási előzmények',exact:true}).click();await expect(card).toContainText('Még nincs foglalási előzmény.');
+  await card.getByRole('button',{name:'Szerkesztés',exact:true}).click();await dialog.getByLabel('Telefon',{exact:true}).fill('+36307654321');await dialog.getByRole('button',{name:'Mentés',exact:true}).click();await expect(card).toContainText('+36307654321');
+  await page.evaluate(()=>{window.customerPageMarker='unchanged';});
+  await card.getByRole('button',{name:'Törlés',exact:true}).click();await card.getByRole('button',{name:'Mégse',exact:true}).click();await expect(card).toBeVisible();
+  await card.getByRole('button',{name:'Törlés',exact:true}).click();await expect(card.getByRole('group',{name:'Ügyfél törlésének megerősítése'})).toContainText('fizetési előzményei megmaradnak');
+  await page.route('**/api/admin/customers',route=>route.fulfill({status:503,json:{message:'Teszt törlési hiba'}}),{times:1});
+  await card.getByRole('button',{name:'Törlés megerősítése',exact:true}).click();await expect(page.getByRole('alert')).toContainText('Teszt törlési hiba');await expect(card).toBeVisible();
+  await card.getByRole('button',{name:'Törlés megerősítése',exact:true}).click();await expect(card).toHaveCount(0);expect(await page.evaluate(()=>window.customerPageMarker)).toBe('unchanged');
+  await page.reload();await expect(page.getByRole('heading',{name:'Már létező vendég',exact:true})).toBeVisible();await expect(page.locator('.cl-customer-card')).toHaveCount(1);
+});

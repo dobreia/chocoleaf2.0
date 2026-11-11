@@ -1,5 +1,5 @@
-const express=require('express');const pool=require('../db');const{one,transaction}=require('../domain/store');
-const{fail,uuid,str,email}=require('../domain/rules');const booking=require('../domain/bookings');
+const express=require('express');const pool=require('../db');const{one}=require('../domain/store');
+const{fail,uuid,str}=require('../domain/rules');const booking=require('../domain/bookings');
 const admin=express.Router();
 admin.get("/dashboard", async (req, res) => {
   const counts = await one(
@@ -30,30 +30,9 @@ admin.get("/dashboard", async (req, res) => {
 admin.get('/customers',async(req,res)=>res.json(await require('../domain/customers').list(req.query)));
 admin.get('/customers/services',async(_req,res)=>res.json(await require('../domain/customers').services()));
 admin.get('/customers/history',async(req,res)=>res.json(await require('../domain/customers').history(req.query.email)));
-admin.put("/customers", async (req, res) =>
-  res.json(
-    await transaction(async (c) => {
-      const old = email(req.body.original_email),
-        address = email(req.body.email),
-        name = str(req.body.name, "Név"),
-        phone = str(req.body.phone || "", "Telefon", 40, false);
-      const note=req.body.note===undefined?undefined:str(req.body.note,'Megjegyzés',10000,false);
-      if (old !== address)
-        fail(
-          "Az email címet foglalásonként módosítsd: ilyenkor új kezelési linket küldünk.",
-        );
-      const r = await c.query(
-        "UPDATE bookings SET customer_name=$2,customer_phone=$3,updated_at=clock_timestamp() WHERE lower(customer_email)=$1",
-        [old, name, phone],
-      );
-      const archived=await c.query('UPDATE customer_booking_archive SET customer_name=$2,customer_phone=$3,updated_at=clock_timestamp() WHERE customer_email=$1',[old,name,phone]);
-      if(!r.rowCount && !archived.rowCount)fail('Az ügyfél nem található.',404);
-      if(note!==undefined)await c.query(`INSERT INTO customer_notes(customer_email,note) VALUES($1,$2)
-        ON CONFLICT(customer_email) DO UPDATE SET note=EXCLUDED.note,updated_at=clock_timestamp()`,[old,note]);
-      return { updated: r.rowCount+archived.rowCount };
-    }),
-  ),
-);
+admin.post('/customers',async(req,res)=>res.status(201).json(await require('../domain/customers').create(req.body)));
+admin.put('/customers',async(req,res)=>res.json(await require('../domain/customers').save(req.body)));
+admin.delete('/customers',async(req,res)=>res.json(await require('../domain/customers').remove(req.body.email)));
 admin.get('/inquiries/unread-count',async (_req,res)=>{
   res.set('Cache-Control','no-store');
   res.json(await one(pool,'SELECT count(*)::int AS unread FROM inquiries WHERE read_at IS NULL'));

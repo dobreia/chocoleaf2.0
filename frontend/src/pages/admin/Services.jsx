@@ -58,19 +58,19 @@ export default function Services() {
       ) : (
         <div className="cl-service-grid">
           {items.map((s) => (
-            <article className="cl-card" key={s.id}>
-              {s.image && (
-                <ImageAsset className="cl-service-image" src={s.image} alt="" />
-              )}
+            <article className="cl-card cl-service-card" key={s.id}>
+              <div className="cl-service-image-frame">
+                {s.image ? <ImageAsset className="cl-service-image" src={s.image} alt={s.title} /> : <span>Nincs kép</span>}
+              </div>
               <h2>{s.title}</h2>
               <p>{s.description}</p>
-              <p>
+              <p className="cl-service-meta">
                 {s.session_count || 1} alkalom · {hours(s.duration_minutes)} / alkalom · {money(s.price)} · {s.capacity} fő
               </p>
               <p>
                 {s.active ? "Aktív" : "Inaktív"} · {s.category}
               </p>
-              <button onClick={() => openEditor(s)}>Szerkesztés</button>
+              <button className="cl-service-edit" onClick={() => openEditor(s)}>Szerkesztés</button>
             </article>
           ))}
         </div>

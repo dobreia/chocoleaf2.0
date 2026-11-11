@@ -4,9 +4,10 @@ const courseKey=id=>'course:'+id;
 const courseName=title=>'ChocoLeaf – kurzus: '+title;
 const GROUP_NAMES={all:'ChocoLeaf – összes ügyfél',campaign:'ChocoLeaf – aktuális körlevél'};
 async function audience(db,settings){
-  const history=(await db.query(`SELECT customer_email,customer_name,updated_at,booking_id,status,
+  const history=(await db.query(`SELECT h.customer_email,d.name AS customer_name,h.updated_at,h.booking_id,h.status,
     COALESCE(service_id,course_id)::text AS course_key,course_title
-    FROM customer_booking_history ORDER BY updated_at DESC,booking_id`)).rows;
+    FROM customer_booking_history h JOIN customer_directory d ON d.email=h.customer_email
+    ORDER BY h.updated_at DESC,h.booking_id`)).rows;
   const catalog=new Map((await db.query('SELECT id,title FROM services')).rows.map(s=>[s.id,{value:s.id,title:s.title,archived:false}]));
   for(const h of history)if(!catalog.has(h.course_key))catalog.set(h.course_key,{value:h.course_key,title:h.course_title,archived:true});
   const courses=[...catalog.values()].sort((a,b)=>a.title.localeCompare(b.title,'hu')||a.value.localeCompare(b.value));
@@ -16,9 +17,11 @@ async function audience(db,settings){
     const person=people.get(h.customer_email);
     if(settings.include_cancelled||h.status!=='cancelled')person.courses.add(h.course_key);
   }
+  for(const person of (await db.query('SELECT email,name FROM customer_directory WHERE bookings=0')).rows)
+    people.set(person.email,{...person,courses:new Set(),manual:true});
   const rows=[];
   for(const person of people.values()){
-    if(!person.courses.size)continue;
+    if(!person.courses.size&&!person.manual)continue;
     const groups=['all',...Array.from(person.courses).sort().map(courseKey)];
     if(settings.campaign_mode==='all'||[...person.courses].some(c=>(settings.campaign_courses||[]).includes(c)))groups.push('campaign');
     rows.push({name:person.name,email:person.email,groups});

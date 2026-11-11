@@ -85,3 +85,6 @@
   flex-shrink: 0;
   accent-color: #6c485c;
 }
+.cl-customer-card .cl-customer-delete { color:#922f42; border-color:#c88e9c; }
+.cl-customer-delete-confirm { padding:16px; margin-top:16px; border:1px solid #e2bcc5; border-radius:12px; background:#fff5f7; }
+.cl-customer-delete-confirm p { margin:0 0 12px; }

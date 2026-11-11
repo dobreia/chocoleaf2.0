@@ -113,3 +113,76 @@ test('internal customer notes persist independently, validate input and survive 
   assert.equal((await req('/customers','PUT',{...profile,note:''})).status,200);
   assert.equal((await saved()).note,'');
 });
+
+test('manual customers require admin, validate fields, reject duplicates and appear without invented bookings',async()=>{
+  const data={name:'Manual Customer',email:'MANUAL@example.test',phone:'+36111222333',note:'Private note'};
+  const before=(await db.query('SELECT count(*)::int n FROM bookings')).rows[0].n;
+  const mail=(await db.query('SELECT count(*)::int n FROM outbox')).rows[0].n;
+  assert.equal((await req('/customers','POST',data,false)).status,401);
+  for(const invalid of [{...data,name:''},{...data,email:'bad'},{...data,phone:'1'.repeat(41)},{...data,note:null}])assert.equal((await req('/customers','POST',invalid)).status,400);
+  assert.equal((await req('/customers','POST',data)).status,201);
+  assert.equal((await req('/customers','POST',{...data,email:'manual@example.test'})).status,409);
+  const manual=(await req('/customers?q=manual@example.test')).data[0];
+  assert.equal(manual.email,'manual@example.test');assert.equal(manual.bookings,0);assert.equal(manual.last_booking,null);assert.deepEqual(manual.courses,[]);assert.equal(manual.note,data.note);
+  assert.deepEqual((await req('/customers/history?email=manual@example.test')).data,[]);
+  assert.deepEqual((await req('/customers?status=cancelled&q=manual@example.test')).data,[]);
+  assert.deepEqual((await req('/customers?service='+services[0].id+'&q=manual@example.test')).data,[]);
+  assert.equal((await db.query('SELECT count(*)::int n FROM bookings')).rows[0].n,before);
+  assert.equal((await db.query('SELECT count(*)::int n FROM outbox')).rows[0].n,mail);
+  assert.equal((await req('/customers','PUT',{...data,email:'manual@example.test',original_email:'manual@example.test',name:'Updated Manual'})).status,200);
+  assert.equal((await req('/customers?q=Updated%20Manual')).data[0].name,'Updated Manual');
+  const audience=await require('../src/contacts/model').audience(db,{include_cancelled:false,campaign_mode:'all'});
+  assert.deepEqual(audience.people.find(p=>p.email==='manual@example.test').groups,['all','campaign']);
+  const selected=await require('../src/contacts/model').audience(db,{include_cancelled:false,campaign_mode:'courses',campaign_courses:[services[0].id]});
+  assert.deepEqual(selected.people.find(p=>p.email==='manual@example.test').groups,['all']);
+});
+
+test('deleting a contact removes it from lists and audiences while preserving reservations and history exactly',async()=>{
+  await db.query(`INSERT INTO payment_orders(booking_id,amount,email,description,billing,invoice_config,status,paid_at)
+    VALUES($1,1000,'alice@example.test','Paid reservation','{}','{}','paid',now())`,[alice.id]);
+  const snapshot=(await db.query('SELECT * FROM bookings ORDER BY id')).rows;
+  const archive=(await db.query('SELECT * FROM customer_booking_archive ORDER BY booking_id')).rows;
+  const payments=(await db.query('SELECT * FROM payment_orders ORDER BY id')).rows;
+  const address='alice@example.test';
+  await req('/customers','PUT',{original_email:address,email:address,name:'Alice Updated',phone:'',note:'Remove this internal note'});
+  const bookingsBeforeDelete=(await db.query('SELECT * FROM bookings ORDER BY id')).rows;
+  assert.equal((await req('/customers','DELETE',{email:address},false)).status,401);
+  for(const method of ['POST','DELETE']){
+    const denied=await fetch(base+'/api/admin/customers',{method,headers:{'Content-Type':'application/json',cookie,Origin:'https://foreign.example.test'},body:JSON.stringify({email:address,name:'Blocked'})});
+    assert.equal(denied.status,403);
+  }
+  assert.equal((await req('/customers','DELETE',{email:'invalid'})).status,400);
+  assert.equal((await req('/customers','DELETE',{email:'unknown@example.test'})).status,404);
+  assert.equal((await req('/customers','DELETE',{email:'ALICE@example.test'})).status,200);
+  for(const suffix of ['', '?status=all','?status=cancelled','?service='+services[0].id])assert.ok(!emails((await req('/customers'+suffix)).data).includes(address));
+  assert.equal((await req('/customers/history?email='+address)).data.length,2);
+  assert.deepEqual((await db.query('SELECT * FROM bookings ORDER BY id')).rows,bookingsBeforeDelete);
+  assert.equal(snapshot.length,bookingsBeforeDelete.length);
+  assert.deepEqual((await db.query('SELECT * FROM customer_booking_archive ORDER BY booking_id')).rows,archive);
+  assert.deepEqual((await db.query('SELECT * FROM payment_orders ORDER BY id')).rows,payments);
+  assert.equal((await db.query('SELECT 1 FROM customer_notes WHERE customer_email=$1',[address])).rowCount,0);
+  const settings={include_cancelled:true,campaign_mode:'all'};
+  const audience=await require('../src/contacts/model').reconcile(db,settings);
+  assert.ok(!audience.people.some(p=>p.email===address));
+  assert.equal((await req('/customers','PUT',{original_email:address,email:address,name:'Stale edit',phone:''})).status,404);
+  assert.equal((await req('/customers','DELETE',{email:address})).status,404);
+});
+
+test('manual deletion stays deleted after refresh; explicitly adding the same address restores exactly one profile',async()=>{
+  assert.equal((await req('/customers','DELETE',{email:'manual@example.test'})).status,200);
+  for(let i=0;i<2;i++)assert.deepEqual((await req('/customers?status=all&q=manual@example.test')).data,[]);
+  assert.equal((await req('/customers','POST',{email:'manual@example.test',name:'Restored Manual',phone:'',note:''})).status,201);
+  assert.equal((await req('/customers?q=manual@example.test')).data.length,1);
+  const results=await Promise.all([1,2].map(()=>req('/customers','POST',{email:'race@example.test',name:'Concurrent customer'})));
+  assert.deepEqual(results.map(r=>r.status).sort(),[201,409]);
+});
+
+test('editing old bookings does not resurrect a deleted contact; a new reservation does',async()=>{
+  const address='dana@example.test';
+  assert.equal((await req('/customers','DELETE',{email:address})).status,200);
+  await db.query('UPDATE bookings SET updated_at=clock_timestamp() WHERE id=$1',[dana.id]);
+  assert.deepEqual((await req('/customers?status=all&q='+address)).data,[]);
+  await require('../src/domain/bookings').create({courseId:groups[0].id,customerName:'Returning Dana',customerEmail:address,seats:1},randomUUID(),{manual:true});
+  assert.equal((await req('/customers?q='+address)).data[0].name,'Returning Dana');
+  assert.equal((await req('/customers?q='+address)).data[0].bookings,2);
+});

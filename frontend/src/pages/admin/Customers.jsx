@@ -20,7 +20,7 @@ function CustomerHistory({email,revision}){
   return <section className="cl-customer-history" aria-label={'Foglalási előzmények: '+email}>
     <h3>Foglalási előzmények</h3>
     <Notice error={error}/>
-    {!history&&!error?<p role="status">Előzmények betöltése…</p>:history&&<ol className="cl-customer-bookings">
+    {!history&&!error?<p role="status">Előzmények betöltése…</p>:history?.length===0?<p>Még nincs foglalási előzmény.</p>:history&&<ol className="cl-customer-bookings">
       {history.map(booking=><li key={booking.booking_id}>
         <div className="cl-customer-booking-title"><strong>{booking.course_title}</strong>
           <span className={'cl-badge '+booking.status}>{labels[booking.status]}</span>
@@ -42,6 +42,8 @@ export default function Customers(){
   const [edit,setEdit]=usePageDraftState('records.edit',null);
   const [openHistory,setOpenHistory]=usePageDraftState('customers.history',null);
   const [exportDraft,setExportDraft]=usePageDraftState('customers.export',null);
+  const [saving,setSaving]=useState(false),[confirmDelete,setConfirmDelete]=useState(null),[deleting,setDeleting]=useState(false);
+  const closeEditor=event=>{if(saving){event?.preventDefault();return;}setEdit(null);};
   useEffect(()=>{
     let live=true;
     api('/admin/customers/services').then(data=>{if(live)setServices(data);}).catch(error=>{if(live)setError(error.message);});
@@ -59,7 +61,7 @@ export default function Customers(){
   },[q,filter,revision]);
   const changeFilter=(next)=>{setLoading(true);setFilter(next);};
   return <>
-    <div className="cl-title"><h1>Ügyfelek</h1><div className="cl-actions"><Link to="/admin/customer-sync">Körlevél és Google-névjegyek</Link><button disabled={loading||!!error} onClick={()=>setExportDraft({format:'csv',scope:'filtered',fields:['name']})}>Export</button></div></div>
+    <div className="cl-title"><h1>Ügyfelek</h1><div className="cl-actions"><button className="cl-primary" onClick={()=>setEdit({name:'',email:'',phone:'',note:'',isNew:true})}>+ Új ügyfél</button><Link to="/admin/customer-sync">Körlevél és Google-névjegyek</Link><button disabled={loading||!!error} onClick={()=>setExportDraft({format:'csv',scope:'filtered',fields:['name']})}>Export</button></div></div>
     <Notice error={error} message={message}/>
     <p>Az ügyfeleket e-mail-cím alapján csoportosítjuk. A szűrők a foglalások alapján választják ki az ügyfeleket; a lenyitható előzményekben minden állapot látható.</p>
     <div className="cl-filters">
@@ -79,7 +81,7 @@ export default function Customers(){
       {items.map(customer=><article className="cl-card cl-customer-card" key={customer.email}>
         <h2>{customer.name}</h2>
         <p><a href={'mailto:'+customer.email}>{customer.email}</a> · {customer.phone||'Nincs telefon'}</p>
-        <p>{customer.bookings} foglalás összesen · legutóbbi foglalás: {dateTime(customer.last_booking)}</p>
+        <p>{customer.bookings?`${customer.bookings} foglalás összesen · legutóbbi foglalás: ${dateTime(customer.last_booking)}`:'Kézzel felvett ügyfél · még nincs foglalása'}</p>
         <ul className="cl-customer-courses" aria-label="Foglalt kurzusok">{customer.courses.map(title=><li key={title}>{title}</li>)}</ul>
         {customer.note&&<div className="cl-customer-note">
           <strong>Belső megjegyzés</strong>
@@ -90,20 +92,39 @@ export default function Customers(){
             {openHistory===customer.email?'Előzmények bezárása':'Foglalási előzmények'}
           </button>
           <button onClick={()=>setEdit({...customer,original_email:customer.email})}>Szerkesztés</button>
+          <button className="cl-customer-delete" disabled={deleting} onClick={()=>setConfirmDelete(customer.email)}>Törlés</button>
         </div>
+        {confirmDelete===customer.email&&<div className="cl-customer-delete-confirm" role="group" aria-label="Ügyfél törlésének megerősítése">
+          <p>Törlöd {customer.name} ügyféladatlapját és belső megjegyzését? Az ügyfél eltűnik a listából, az exportból és a körlevél címzettjei közül. A foglalásai és fizetési előzményei megmaradnak. Új foglaláskor vagy kézi hozzáadáskor ismét megjelenhet.</p>
+          <div className="cl-actions"><button disabled={deleting} onClick={()=>setConfirmDelete(null)}>Mégse</button>
+            <button className="cl-customer-delete" disabled={deleting} onClick={async()=>{
+              setDeleting(true);setError('');setMessage('');
+              try{
+                await api('/admin/customers',{method:'DELETE',body:{email:customer.email}});
+                setItems(current=>current.filter(item=>item.email!==customer.email));setConfirmDelete(null);
+                if(openHistory===customer.email)setOpenHistory(null);
+                setMessage('Az ügyfél törölve az ügyféllistából. A foglalásai és fizetési előzményei megmaradtak.');setRevision(value=>value+1);
+              }catch(error){setError(error.message);}finally{setDeleting(false);}
+            }}>{deleting?'Törlés…':'Törlés megerősítése'}</button>
+          </div>
+        </div>}
         {openHistory===customer.email&&<CustomerHistory key={customer.email} email={customer.email} revision={revision}/>}
       </article>)}
     </>}
     {exportDraft&&<CustomerExport items={loading?[]:items} draft={exportDraft} setDraft={setExportDraft}
       onClose={()=>setExportDraft(null)} onSuccess={message=>{setExportDraft(null);setMessage(message);}}/>}
-    {edit&&<Modal title="Szerkesztés" onClose={()=>setEdit(null)}>
+    {edit&&<Modal title={edit.isNew?'Új ügyfél':'Szerkesztés'} onClose={closeEditor}>
       <SaveForm onSave={async()=>{
-        await api('/admin/customers',{method:'PUT',body:edit});
-        setEdit(null);setMessage('Az ügyfél adatai mentve.');setRevision(value=>value+1);
+        setSaving(true);
+        try{
+          await api('/admin/customers',{method:edit.isNew?'POST':'PUT',body:{name:edit.name,email:edit.email,phone:edit.phone,note:edit.note,...(!edit.isNew?{original_email:edit.original_email}:{})}});
+          if(edit.isNew){setQ('');setFilter({service:'',status:'active'});}
+          setEdit(null);setMessage(edit.isNew?'Az új ügyfél hozzáadva.':'Az ügyfél adatai mentve.');setRevision(value=>value+1);
+        }finally{setSaving(false);}
       }}>
-        <Field label="Név" required value={edit.name} onChange={event=>setEdit({...edit,name:event.target.value})}/>
-        <Field label="Email (foglalásonként módosítható)" readOnly value={edit.email}/>
-        <Field label="Telefon" value={edit.phone||''} onChange={event=>setEdit({...edit,phone:event.target.value})}/>
+        <Field label="Név" required maxLength={200} value={edit.name} onChange={event=>setEdit({...edit,name:event.target.value})}/>
+        <Field label={edit.isNew?'E-mail-cím':'Email (foglalásonként módosítható)'} type="email" required maxLength={254} readOnly={!edit.isNew} value={edit.email} onChange={event=>setEdit({...edit,email:event.target.value})}/>
+        <Field label="Telefon" type="tel" maxLength={40} value={edit.phone||''} onChange={event=>setEdit({...edit,phone:event.target.value})}/>
         <Field label="Belső megjegyzés"><textarea aria-label="Belső megjegyzés" rows={6} maxLength={10000} value={edit.note||''} onChange={event=>setEdit({...edit,note:event.target.value})}/></Field>
         <p className="cl-muted">Csak az adminisztrátorok számára látható, az ügyfélnek nem küldjük el.</p>
       </SaveForm>

@@ -237,3 +237,11 @@ Az import `LOCAL_SEED_COURSES=false` értéket ír a helyi `.env.local-test` fá
 
 Célzott ellenőrzés: backend `node --test test/reserved-seats.test.cjs`; frontend `npm run test:e2e -- reserved-seats.spec.js`.
 
+## Ügyfelek kézi hozzáadása és törlése
+
+Az Ügyfelek oldalon a **+ Új ügyfél** gombbal foglalás nélkül is felvehető név, e-mail-cím, telefon és belső megjegyzés. A név és az e-mail kötelező; a cím alapján történik az egyediség ellenőrzése, kis- és nagybetűtől függetlenül. A hozzáadás nem hoz létre foglalást, fizetést vagy ügyféllevelet. A piszkozat frissítés után megmarad, hibás mentésnél javítható. A kézi ügyfelek alapból látszanak, kurzus szerinti vagy csak lemondott foglalásra szűréskor foglalási előzmény szükséges.
+
+A **Törlés** megerősítés után az ügyféladatlapot és a belső megjegyzést távolítja el az ügyféllistából, exportból és a kezelt körlevélcsoportokból. A foglalási, fizetési és megőrzött kurzuselőzmények nem változnak. Ez nem a foglalási adatok anonimizálása. A Google-csoporttagságokat a szokásos szinkron frissíti; a személyes Google-névjegyet nem töröljük. Új foglalás vagy kifejezett kézi újrafelvétel ismét megjelenítheti az ügyfelet; egy régi foglalás szerkesztése nem.
+
+A `023-customer-profiles.sql` hozzáadja az önálló ügyféladatlapokat és az egységes `customer_directory` nézetet. A korábbi ügyfelek továbbra is a foglalási előzményekből jelennek meg, adatmásolás nélkül. A migrációt és az új backendkódot együtt kell kiadni. Ellenőrzés: `node --test test/customers.test.cjs test/contacts-sync.test.cjs`; frontend `npm run test:e2e -- customer-management.spec.js`.
+
