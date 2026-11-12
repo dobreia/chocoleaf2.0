@@ -2,7 +2,7 @@ const {test,before,after}=require('node:test');
 const assert=require('node:assert/strict');
 const {randomUUID}=require('node:crypto');
 Object.assign(process.env,{NODE_ENV:'development',FRONTEND_URL:'http://localhost:5173',MAIL_FROM:'transfer@example.test',MAIL_ADMIN:'admin@example.test',MAIL_USER:'',MAIL_PASS:'',SMTP_HOST:'',STRIPE_SECRET_KEY:'',STRIPE_WEBHOOK_SECRET:'',BILLINGO_API_KEY:'',
-  TRANSFER_BENEFICIARY:'ChocoLeaf teszt',TRANSFER_BANK_NAME:'Tesztbank',TRANSFER_ACCOUNT:'11111111-22222222-33333333'});
+  TRANSFER_BENEFICIARY:'ChocoLeaf teszt',TRANSFER_BANK_NAME:'Tesztbank',TRANSFER_ACCOUNT:'11111111-22222222-33333333',TRANSFER_IBAN:'LEGACY_IBAN',TRANSFER_SWIFT:'LEGACY_SWIFT'});
 const billing={buyerType:'company',companyName:'Teszt Kft.',taxNumber:'12345678-1-12',billingEmail:' Accounts@Example.Test ',postCode:'1111',city:'Budapest',street:'Teszt utca 1.'};
 let db,server,base,cookie,course,booking;
 async function req(path,method='GET',body,auth=false,key){
@@ -34,8 +34,10 @@ test('public booking opens transfer details, reserves all sessions, preserves bi
   const stored=(await db.query('SELECT * FROM bookings WHERE id=$1',[booking.id])).rows[0];
   assert.equal(stored.billing_data.billingEmail,'accounts@example.test');assert.equal(stored.billing_data.name,billing.companyName);
   const info=await req('/transfer-info?id='+booking.id);assert.equal(info.status,200);assert.equal(info.data.kind,'booking');assert.equal(info.data.amount,38000);assert.equal(info.data.account,process.env.TRANSFER_ACCOUNT);assert.equal(info.data.notice,stored.transfer_reference);assert.equal(info.data.email,undefined);
+  assert.equal(info.data.iban,undefined);assert.equal(info.data.swift,undefined);
   const mail=(await db.query('SELECT * FROM outbox WHERE recipient=$1',[body.customerEmail])).rows;
   assert.equal(mail.length,1);assert.ok(mail[0].body.includes(stored.transfer_reference));assert.ok(mail[0].body.includes('1/2. alkalom'));assert.ok(mail[0].body.includes('2/2. alkalom'));assert.ok(!mail[0].body.includes('accounts@example.test'));
+  assert.ok(!/IBAN|SWIFT/.test(mail[0].body));
   assert.ok((await db.query("SELECT body FROM outbox WHERE recipient='admin@example.test'")).rows.some(item=>item.body.includes('accounts@example.test')));
   const replay=await req('/bookings','POST',body,false,key);assert.equal(replay.status,201);assert.equal(replay.data.booking.id,booking.id);assert.equal(replay.data.redirectUrl,result.data.redirectUrl);
   assert.equal((await db.query('SELECT count(*)::int AS n FROM bookings WHERE request_key=$1',[key])).rows[0].n,1);

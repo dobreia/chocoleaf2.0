@@ -212,8 +212,20 @@
 .cl-filters {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0 12px;
+  gap: 12px;
   align-items: end;
+  margin: 12px 0;
+}
+.cl-filters > .cl-field {
+  margin: 0;
+}
+.cl-filters > .cl-field input,
+.cl-filters > .cl-field select {
+  height: 46px;
+}
+.cl-filters > button {
+  min-height: 46px;
+  margin: 0;
 }
 .cl-table {
   overflow-x: auto;

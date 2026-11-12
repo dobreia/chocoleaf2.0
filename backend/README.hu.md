@@ -120,7 +120,7 @@ A foglalási értesítések és megkeresések tranzakcióban kerülnek az `outbo
 
 Az utalványrendelések a `gift_orders` táblában maradnak meg. Átutalás jóváhagyása kizárólag bejelentkezett admin által, POST-kéréssel történik. A PDF-sablon és a korábbi generálási design megmarad. A generált, névre szóló PDF-ek a backend `private/vouchers` mappájába kerülnek, nem a publikus webes assets közé. A korábban mellékelt generált utalványmásolat nincs a publikus csomagban.
 
-Banki adatok: `TRANSFER_BENEFICIARY`, `TRANSFER_BANK_NAME`, `TRANSFER_ACCOUNT`, `TRANSFER_IBAN`, `TRANSFER_SWIFT`. A korábban még be nem kötött Barion továbbra sem aktív fizetési lehetőség; nincs szimulált kártyás fizetés.
+Banki adatok: `TRANSFER_BENEFICIARY`, `TRANSFER_BANK_NAME`, `TRANSFER_ACCOUNT`. Jelenleg banki átutalással lehet fizetni; a megőrzött Stripe-integráció külön bekapcsolást igényel.
 
 ## Adatkonzisztencia és jogosultságok
 
@@ -187,7 +187,7 @@ A bankkártyás fizetés és automatikus számlázás beállítása: [PAYMENTS.h
 
 Ezen a branchen a nyilvános kurzusfoglalás és ajándékutalvány-rendelés banki átutalást használ. A korábbi felület, számlázási mezők, többalkalmas foglalások és naptármeghívók megmaradnak. Új rendeléshez nincs Stripe- vagy Billingo-hívás, a számlázás kézi.
 
-A `backend/.env` fájlban töltsd ki a `TRANSFER_BENEFICIARY` értéket és a `TRANSFER_ACCOUNT` vagy `TRANSFER_IBAN` mezőt. A `TRANSFER_BANK_NAME` és `TRANSFER_SWIFT` opcionális. Ezek nyilvános utalási adatok: a fizetési oldalon és a vásárlói levélben is megjelennek. Hiányos kötelező adatokkal a rendszer nem fogad új rendelést.
+A `backend/.env` fájlban töltsd ki a `TRANSFER_BENEFICIARY` értéket és a `TRANSFER_ACCOUNT` belföldi bankszámlaszámot. A `TRANSFER_BANK_NAME` opcionális. IBAN- és SWIFT-mezőt nem használunk. Ezek nyilvános utalási adatok: a fizetési oldalon és a vásárlói levélben is megjelennek. Hiányos kötelező adatokkal a rendszer nem fogad új rendelést.
 
 A foglalás mentéskor lefoglalja a helyeket minden alkalomra, `Függőben` foglalási és fizetési állapottal. A fizetési oldalon és a levélben egyedi közlemény szerepel. Az admin a Foglalások listában `Fizetve` állapotra állítja a fizetést; ez adatbázisban mentődik. A `Visszaigazolt` foglalási állapot továbbra is külön művelet, ekkor mennek a naptármeghívók. A befizetésre váró foglalást szükség esetén kézzel kell lemondani; nincs új automatikus lejárati szabály.
 
@@ -223,7 +223,7 @@ A szöveg az **Oldaltartalmak → Szerkesztés** alatt, vizuális szerkesztőben
 
 A régi szöveges/Markdown-tartalom továbbra is olvasható, és szerkesztéshez automatikusan átalakul. Az új mentés verziózott dokumentumként, JSON-szövegben kerül a meglévő `body` mezőbe; új adatbázis-migráció nem szükséges. Az adminfelületet és a publikus megjelenítőt együtt kell kiadni. A megjelenítő csak engedélyezett elemeket és biztonságos hivatkozásokat fogad el, nyers HTML nem futtatható. A régi fejlécek, stílusok, Barion Pixel-script és követőképek nem kerültek át. A dokumentumon belüli hivatkozások a jelenlegi `/legal/...` útvonalakat használják.
 
-Az import a forrásszöveg átvétele, a korábbi hatálybalépési dátumokkal. Tartalmi aktualizálás még szükséges: az adatkezelés FormSubmitot, Bariont és Cal.com-ot említ; a sütiszöveg korábbi analitikai/marketingkategóriákról és beállító bannerről ír; a fizetési és normál workshop-visszatérítési feltételek is a korábbi működésből származnak. Ezeket az aktuális átutalásos, saját foglalási rendszerrel egyeztetni kell. Az import nem változtat a program fizetési vagy lemondási szabályain.
+Az import a forrásszöveg átvétele, a korábbi hatálybalépési dátumokkal. A `024-transfer-legal-content.sql` eltávolítja a korábbi fizetési szolgáltató említéseit a három érintett oldalról, és a rendelési feltételek fizetési részét a jelenlegi banki átutaláshoz igazítja. A hagyományos és a vizuális szerkesztővel mentett formátumot is kezeli, az egyéb szövegek megőrzésével. A Stripe-ot nem tünteti fel már elérhető fizetésként. További tartalmi aktualizálás szükséges: az adatkezelés FormSubmitot és Cal.com-ot említ; a sütiszöveg korábbi analitikai/marketingkategóriákról és beállító bannerről ír; a normál workshop-visszatérítési feltételek is a korábbi működésből származnak. Ezeket az aktuális átutalásos, saját foglalási rendszerrel egyeztetni kell. A migráció nem változtat a program lemondási szabályain.
 
 Célzott tesztek: backend `node --test test/legal-content.test.cjs`; frontend `node --test test/legal-content.test.mjs`; böngészőben `npm run test:e2e -- legal-content.spec.js`.
 

@@ -16,6 +16,8 @@ test('legacy legal content imports complete text and safe current links once, pr
   assert.ok(cookies.body.includes('| Név / Szolgáltató | Cél | Tárolás ideje |'));assert.ok(cookies.body.includes('### 3. Marketing sütik'));
   assert.ok(privacy.body.includes('(/legal/cookies)'));assert.ok(terms.body.includes('(/legal/privacy)'));
   for(const row of rows){assert.ok(!row.body.includes('<script'));assert.ok(!row.body.includes('pixel.barion.com'));assert.ok(!row.body.includes('cookie-policy.html'));}
+  for(const page of [privacy,terms,cookies])assert.ok(!/barion/i.test(page.body));
+  assert.ok(terms.body.includes('előre, banki átutalással'));assert.ok(!terms.body.includes('Stripe'));
   // A fresh import also includes the full imprint when there is no existing page.
   await db.query("DELETE FROM content_pages WHERE slug='imprint'");
   const sql=require('node:fs').readFileSync(require('node:path').join(__dirname,'../migrations/021-legacy-legal-content.sql'),'utf8');
@@ -24,5 +26,31 @@ test('legacy legal content imports complete text and safe current links once, pr
   await db.query("UPDATE content_pages SET body='Admin által frissített szöveg' WHERE slug='terms'");
   await db.query(sql);await require('../src/migrate')();
   rows=(await db.query('SELECT * FROM content_pages')).rows;assert.equal(rows.length,4);assert.equal(rows.find(p=>p.slug==='terms').body,'Admin által frissített szöveg');
+ }finally{await db.end();}
+});
+
+test('payment cleanup handles formatted documents, preserves unrelated edits and runs only once',async()=>{
+ const db=await require('./database.cjs')();
+ try{
+  delete require.cache[require.resolve('../src/migrate')];
+  await require('../src/migrate')();
+  const paragraph=text=>({type:'paragraph',content:[{type:'text',text}]});
+  const barionText={type:'text',text:'Barion',marks:[{type:'bold'}]};
+  const row=text=>({type:'tableRow',content:[{type:'tableCell',content:[paragraph(text)]}]});
+  const documents={
+   terms:{type:'doc',content:[{type:'heading',attrs:{level:2},content:[{type:'text',text:'Saját fejléc'}]},
+    {type:'bulletList',content:[{type:'listItem',content:[{type:'paragraph',content:[{type:'text',text:'Fizetés előre '},barionText,{type:'text',text:'on keresztül.'}]}]},
+    {type:'listItem',content:[{type:'paragraph',content:[{type:'text',text:'A '},barionText,{type:'text',text:' rendszer biztonságos.'}]}]}]},paragraph('Saját egyedi feltétel')]},
+   privacy:{type:'doc',content:[{type:'paragraph',content:[{type:'text',text:'Sütik: '},barionText]},paragraph('Saját adatkezelési kiegészítés')]},
+   cookies:{type:'doc',content:[{type:'table',content:[row('Szolgáltató'),row('Barion Payment'),row('Saját munkamenetsüti')]},paragraph('Saját sütiszöveg')]},
+  };
+  for(const [slug,document] of Object.entries(documents))await db.query('UPDATE content_pages SET body=$2 WHERE slug=$1',[slug,JSON.stringify({format:'chocoleaf-document',version:1,document})]);
+  await db.query("DELETE FROM schema_migrations WHERE name='024-transfer-legal-content.sql'");
+  await require('../src/migrate')();
+  const rows=(await db.query("SELECT slug,body FROM content_pages WHERE slug IN('terms','privacy','cookies') ORDER BY slug")).rows;
+  for(const page of rows){assert.ok(!/barion/i.test(page.body));assert.equal(JSON.parse(page.body).format,'chocoleaf-document');assert.ok(page.body.includes('Saját'));}
+  assert.ok(rows.find(p=>p.slug==='terms').body.includes('előre, banki átutalással'));
+  assert.equal(JSON.parse(rows.find(p=>p.slug==='cookies').body).document.content[0].content.length,2);
+  await require('../src/migrate')();assert.deepEqual((await db.query("SELECT slug,body FROM content_pages WHERE slug IN('terms','privacy','cookies') ORDER BY slug")).rows,rows);
  }finally{await db.end();}
 });

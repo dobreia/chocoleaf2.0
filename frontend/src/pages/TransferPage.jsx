@@ -112,8 +112,6 @@ export default function TransferPage() {
           transferInfo.account,
           transferInfo.account,
         ],
-        transferInfo.iban && ["IBAN", transferInfo.iban, transferInfo.iban],
-        transferInfo.swift && ["SWIFT", transferInfo.swift, transferInfo.swift],
         ["Összeg", amountText, amountText],
         [
           "Pénznem",
@@ -207,7 +205,7 @@ export default function TransferPage() {
               <div className="transfer-steps">
                 <div className="transfer-step">
                   <b>1) Utalás indítása</b>
-                  <p>Írd be a kedvezményezettet és a számlaszámot / IBAN-t.</p>
+                  <p>Írd be a kedvezményezettet és a bankszámlaszámot.</p>
                 </div>
                 <div className="transfer-step">
                   <b>2) Közlemény pontosan</b>
