@@ -14,7 +14,12 @@ async function verifyReal(env = process.env) {
   validateReal(env);
   const transport=require('nodemailer').createTransport(options(env));
   try {await transport.verify();}
-  catch {throw Error('Az SMTP-kapcsolat ellenőrzése sikertelen. Ellenőrizd a kiszolgálót, portot, felhasználónevet és jelszót a backend/.env fájlban.');}
+  catch(error){
+    const code=['EAUTH','ECONNECTION','ECONNREFUSED','ENOTFOUND','ETIMEDOUT','ESOCKET','ETLS','EPROTOCOL'].includes(error.code)?error.code:'';
+    const response=Number.isInteger(error.responseCode)&&error.responseCode>=100&&error.responseCode<=599?String(error.responseCode):'';
+    const detail=[code,response].filter(Boolean).join(' / ');
+    throw Error('Az SMTP-kapcsolat ellenőrzése sikertelen'+(detail?' ('+detail+')':'')+'. Ellenőrizd a kiszolgálót, portot, felhasználónevet és jelszót a backend/.env fájlban.');
+  }
   finally {transport.close();}
 }
 function localMode(env = process.env, check = false) {

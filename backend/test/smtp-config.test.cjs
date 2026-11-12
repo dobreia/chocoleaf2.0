@@ -20,5 +20,8 @@ test('SMTP verification does not send emails and sanitizes provider errors',asyn
     mailer.createTransport=()=>({verify:async()=>{throw Error('private-password');},close:()=>closed++});
     await assert.rejects(smtp.verifyReal(env),e=>e.message.includes('SMTP')&&!e.message.includes('private-password'));
     assert.equal(closed,2);
+    mailer.createTransport=()=>({verify:async()=>{throw Object.assign(Error('private-password'),{code:'EAUTH',responseCode:535});},close:()=>closed++});
+    await assert.rejects(smtp.verifyReal(env),e=>e.message.includes('EAUTH / 535')&&!e.message.includes('private-password'));
+    assert.equal(closed,3);
   } finally {mailer.createTransport=original;}
 });
