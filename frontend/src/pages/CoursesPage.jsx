@@ -1,7 +1,7 @@
 import ImageAsset from "../components/ImageAsset";
 import CourseBookingNotice from '../components/CourseBookingNotice.jsx';
 import { useEffect, useState } from "react";
-import {hours} from '../components/courseSessions';
+import { hours } from '../components/courseSessions';
 import { Link } from "react-router-dom";
 import { getCourses, getCourseAvailability } from "../api/courses";
 import "../styles/CoursesPage.css";
@@ -27,7 +27,7 @@ function formatPrice(course) {
 
   if (!Number.isFinite(Number(price))) return "";
 
-  return `${Number(price).toLocaleString("hu-HU")} Ft`;
+  return `${Number(price).toLocaleString("hu-HU")} Ft / fő`;
 }
 
 function getImageSrc(course) {
@@ -52,8 +52,8 @@ export default function CoursesPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    Promise.all([getCourses(),getCourseAvailability({}).catch(()=>null)])
-      .then(([courses,offers])=>{setCourses(courses);setOffers(offers);})
+    Promise.all([getCourses(), getCourseAvailability({}).catch(() => null)])
+      .then(([courses, offers]) => { setCourses(courses); setOffers(offers); })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
@@ -85,7 +85,7 @@ export default function CoursesPage() {
 
               <div className="course-card__content">
                 <h2>{course.title}</h2>
-                <CourseBookingNotice service={course} offers={offers?.filter(offer=>offer.service_id===course.id && offer.is_available)}/>
+                <CourseBookingNotice service={course} offers={offers?.filter(offer => offer.service_id === course.id && offer.is_available)} />
                 <p className="course-card__description">{course.description}</p>
               </div>
 
