@@ -1,5 +1,7 @@
 # RackForest – telepítési állapot, 2026. november 12.
 
+**Frissítés – 2026. november 21.:** a prod-push alapú GitHub Actions-telepítés szerveroldala előkészítve. Az Nginx és a systemd már a `/var/www/chocoleaf-current` linket használja; ez az első automatikus élesítésig az eredeti `/var/www/chocoleaf2` könyvtárra mutat, változatlan éles kóddal. A tartós adatok az eredeti helyükön maradnak. A GitHub-secrets és a workflow prod branchre kerülése szükséges az aktiváláshoz. Használat és korlátozások: [GitHub Actions élesítés](GITHUB-ACTIONS.hu.md). Az alábbi korábbi konkrét kódútvonalakat az aktuális release-linkkel együtt kell értelmezni.
+
 **Aktuális állapot: a tulajdonos újabb kérésére az új rendszer ismét éles a `https://www.chocoleaf.hu` címen.** A www nélküli domain a www-s HTTPS-címre irányít. A `chocoleaf.service` fut, automatikus indulása engedélyezett. Az újraélesítés előtt friss mentés készült: `/root/chocoleaf-atvitel/ujraelesites-t3ej3uZX`. A frontend, az API, az adminvédelem és az átirányítás ellenőrzése sikeres.
 
 A helyi adatbázisból 5 szolgáltatás, 6 meghirdetett kurzus és 2 admin került át, a meglévő adminjelszavakkal. A korábbi visszakapcsoláskor az új adatbázisban 1 foglalás és 0 utalványrendelés volt; ezek megmaradtak. Az akkori mentés: `/root/chocoleaf-atvitel/visszakapcsolas-RH2FTqwJ/chocoleaf-uj.dump`. Egyik domaincsere sem írt felül adatbázist. A köztes leállítás alatt az új rendszer levél- és szinkronfolyamatai nem futottak; most a normál alkalmazásfolyamat részeként ismét működnek.

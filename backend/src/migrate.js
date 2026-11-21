@@ -18,7 +18,7 @@ async function migrate() {
       )
         continue;
       await c.query(
-        fs.readFileSync(path.join(__dirname, "../migrations", name), "utf8"),
+        fs.readFileSync(path.join(__dirname, "../migrations", name), "utf8").replace(/\r\n/g, "\n"),
       );
       await c.query("INSERT INTO schema_migrations(name) VALUES($1)", [name]);
     }

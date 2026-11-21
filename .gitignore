@@ -17,6 +17,10 @@ dist-ssr/
 test-results/
 playwright-report/
 
+# Deployment helper bytecode
+__pycache__/
+*.py[cod]
+
 # Logs
 logs/
 *.log

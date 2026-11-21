@@ -1,5 +1,7 @@
 # ChocoLeaf – működés és indítás
 
+Automatikus prod-élesítés: [GitHub Actions beállítása és használata](../deploy/GITHUB-ACTIONS.hu.md). A szerveroldal előkészítve; a három repository secret és a workflow `prod` branchre pusholása szükséges az induláshoz.
+
 Az új rendszer ismét éles a **https://www.chocoleaf.hu** címen. A 2026. november 12-i újraélesítés előtt friss mentés készült; a szolgáltatás fut, automatikus indulása engedélyezett, a HTTPS- és API-ellenőrzések sikeresek. A tényleges szerverbeállításokat és frissítési tudnivalókat a [RackForest üzemeltetési jegyzet](../deploy/RACKFOREST.hu.md) tartalmazza. A domain- és Google OAuth-beállítások általános leírása: [Élesítési előkészítés](../deploy/ELESITES.hu.md). A `.env.production.example` általános minta; a tényleges PostgreSQL-port a szerveren **5433**, a feltöltések könyvtára `/var/www/chocoleaf2/backend/uploads`.
 
 ## Google Névjegyek és körlevélcímkék
