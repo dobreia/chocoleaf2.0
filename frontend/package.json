@@ -12,7 +12,8 @@
     "test:e2e": "playwright test",
     "test:e2e:transfer": "playwright test --config playwright.transfer.config.js",
     "test:e2e:vouchers": "playwright test --config playwright.vouchers.config.js",
-    "test:e2e:mail": "playwright test --config playwright.mail.config.js"
+    "test:e2e:mail": "playwright test --config playwright.mail.config.js",
+    "test:e2e:admin-gifts": "playwright test --config playwright.admin-gifts.config.js"
   },
   "dependencies": {
     "@tiptap/extension-table": "^3.32.3",

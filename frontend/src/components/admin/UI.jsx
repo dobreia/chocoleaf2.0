@@ -35,7 +35,7 @@ export function Modal({ title, children, onClose, className = "" }) {
     };
   }, []);
   return (
-    <dialog className={`cl-dialog ${className}`} ref={ref} onCancel={onClose}>
+    <dialog className={`cl-dialog ${className}`} ref={ref} onCancel={onClose} aria-label={title}>
       <div className="cl-modal-title">
         <h2>{title}</h2>
         <button type="button" aria-label="Bezárás" onClick={onClose}>

@@ -17,6 +17,7 @@ router.get("/", async (req, res) => {
   }
   if (!r) fail("A rendelés nem található.", 404);
   const intent = r.data;
+  if(intent.source==='admin')fail('Ez az utalvány adminisztrátori kiállítással készült, nem igényel fizetést.',409);
   if (intent.meta.paymentMethod === 'stripe') fail('Ez a rendelés bankkártyával fizethető.', 409);
   res.set("Cache-Control", "no-store");
   res.json({

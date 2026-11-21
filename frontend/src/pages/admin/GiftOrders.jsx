@@ -3,9 +3,12 @@ import { api } from "../../api/courses";
 import { Notice } from "../../components/admin/UI";
 import { dateTime, money } from "../../components/admin/format";
 import {useSearchParams} from 'react-router-dom';
+import {usePageDraftState} from '../../components/usePageDraft';
+import GiftIssueForm from '../../components/admin/GiftIssueForm';
 export default function GiftOrders() {
   const [query,setQuery]=useSearchParams();
   const order=query.get('order');
+  const [issuing,setIssuing]=usePageDraftState('giftOrders.issueOpen',false);
   const [items, setItems] = useState([]),
     [error, setError] = useState(""),
     [message, setMessage] = useState(""),
@@ -21,7 +24,10 @@ export default function GiftOrders() {
   }, [order]);
   return (
     <>
-      <h1>Ajándékutalványok</h1>
+      <div className="cl-title">
+        <h1>Ajándékutalványok</h1>
+        <button type="button" className="cl-primary" disabled={busy} onClick={()=>{setError('');setMessage('');setIssuing(true);}}>+ Utalvány kiállítása</button>
+      </div>
       <Notice error={error} message={message} />
       {order&&<p>Az emailből megnyitott rendelés. <button onClick={()=>setQuery({})}>Összes rendelés megtekintése</button></p>}
       {!items.length && <p>Nincs utalványrendelés.</p>}
@@ -35,9 +41,11 @@ export default function GiftOrders() {
             {money(x.data.amount)} · {dateTime(x.created_at)}
           </p>
           <p>
-            {Object.values(x.data.meta.billingData).filter(Boolean).join(" · ")}
+            {Object.values(x.data.meta.billingData||{}).filter(Boolean).join(" · ")}
           </p>
-          {x.data.generatedAt ? (
+          {x.data.source==='admin' ? (
+            <p><strong>Admin által kiállítva · fizetés nélkül</strong><br/>Kiállító: {x.data.issuedBy?.email}<br/>Kiállítva, e-mail küldési sorba helyezve: {dateTime(x.data.generatedAt)}</p>
+          ) : x.data.generatedAt ? (
             <p>Kiállítva, emailküldésre átadva: {dateTime(x.data.generatedAt)}</p>
           ) : x.data.meta.paymentMethod === 'stripe' ? (
             <p>{x.data.paidAt ? 'Fizetve, automatikus utalványküldés folyamatban.' : 'Stripe-fizetésre vár.'}</p>
@@ -75,6 +83,10 @@ export default function GiftOrders() {
             {v.changes_used>0?' · Az egyszeri módosítási lehetőség felhasználva':''}</p>)}
         </article>
       ))}
+      {issuing&&<GiftIssueForm onClose={()=>setIssuing(false)} onIssued={result=>{
+        setError('');setMessage(result.message);
+        if(order)setQuery({});else load();
+      }}/>}
     </>
   );
 }

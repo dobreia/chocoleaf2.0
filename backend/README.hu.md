@@ -1,5 +1,13 @@
 # ChocoLeaf – működés és indítás
 
+## Admin által kiállított ajándékutalvány
+
+Admin → Utalványok → **+ Utalvány kiállítása**: a kézbesítési e-mail-cím, az utalványonkénti név és érték megadásával fizetés nélkül lehet utalványt kiállítani. Egy kiállításban 1–20 darab, darabonként 1 000–1 000 000 Ft értékű utalvány készülhet; az aktuális kurzusárak gyors kitöltésként választhatók. Az azonosító, PDF, 3 hónapos érvényesség, kiküldési sor és beváltási szabályok a vásárolt utalványokéval közösek. Az űrlap frissítéskor megmarad, bezáráskor, sikeres beküldéskor vagy lapváltáskor törlődik.
+
+Az új `POST /api/giftcard/admin/issue` végpont adminmunkamenetet és UUID `Idempotency-Key` fejlécet kér. Az ismételt, azonos beküldés nem készít új utalványt vagy levelet. A nyilvántartás külön jelöli az adminos kiállítást és a kiállító admin azonosítóját/e-mail-címét. Nem készül fizetési rekord, számla vagy `paidAt` jelölés; utólagos fizetési jóváhagyás és átutalási oldal ehhez a kiállításhoz nem használható. A vásárlói kiállítás és fizetési folyamat megmaradt.
+
+Az automatizált próba izolált adatbázissal és helyi SMTP-fogadóval dolgozik (`backend/test/admin-gifts.test.cjs`). Böngészős ellenőrzés a frontend könyvtárból: `npm run test:e2e:admin-gifts`.
+
 Automatikus prod-élesítés: [GitHub Actions beállítása és használata](../deploy/GITHUB-ACTIONS.hu.md). A szerveroldal előkészítve; a három repository secret és a workflow `prod` branchre pusholása szükséges az induláshoz.
 
 Az új rendszer ismét éles a **https://www.chocoleaf.hu** címen. A 2026. november 12-i újraélesítés előtt friss mentés készült; a szolgáltatás fut, automatikus indulása engedélyezett, a HTTPS- és API-ellenőrzések sikeresek. A tényleges szerverbeállításokat és frissítési tudnivalókat a [RackForest üzemeltetési jegyzet](../deploy/RACKFOREST.hu.md) tartalmazza. A domain- és Google OAuth-beállítások általános leírása: [Élesítési előkészítés](../deploy/ELESITES.hu.md). A `.env.production.example` általános minta; a tényleges PostgreSQL-port a szerveren **5433**, a feltöltések könyvtára `/var/www/chocoleaf2/backend/uploads`.

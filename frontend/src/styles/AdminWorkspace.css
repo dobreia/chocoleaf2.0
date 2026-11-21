@@ -137,6 +137,16 @@
 .cl-title h1 {
   margin: 0;
 }
+.cl-gift-quantity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+.cl-gift-quantity button {
+  flex-shrink: 0;
+  margin: 0;
+}
 .cl-card {
   background: #fff;
   border: 1px solid #e0d3da;

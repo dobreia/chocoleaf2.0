@@ -1,5 +1,4 @@
 const express = require("express");
-const { randomInt } = require('node:crypto');
 const pool = require("../db");
 const { transaction, one } = require("../domain/store");
 const { str, email, integer, token, fail, uuid } = require("../domain/rules");
@@ -9,6 +8,12 @@ const providers = require('../payments/providers');
 const payments = require('../payments/orders');
 const {billingText,origin}=require('../lib/mailTemplate');
 const router = express.Router();
+router.use('/admin',(_req,res,next)=>{res.set('Cache-Control','no-store');next();});
+router.post('/admin/issue',requireAdmin,async(req,res)=>{
+  const key=uuid(req.get('Idempotency-Key'));
+  const result=await require('../domain/gifts').issueByAdmin(req.body,key,req.admin);
+  res.status(201).json({...result,message:'Az utalványok elkészültek, az e-mail küldési sorba került.'});
+});
 router.post('/check-vouchers',async(req,res)=>{
   res.set('Cache-Control','no-store');
   const result=await transaction(async c=>{
@@ -92,10 +97,7 @@ router.post("/start-payment", async (req, res) => {
     }
     // Short public reference; the long internal order ID remains unchanged.
     // transaction() serializes writes, including the collision check and insert.
-    let notice;
-    do {
-      notice = 'GIFT-' + randomInt(36 ** 6).toString(36).padStart(6, '0').toUpperCase();
-    } while (await one(c,"SELECT 1 FROM gift_orders WHERE data->>'voucherBase'=$1 OR data->>'notice'=$1",[notice]));
+    const notice=await require('../domain/gifts').nextReference(c);
     Object.assign(intent,{notice,voucherBase:notice});
     await c.query("INSERT INTO gift_orders(id,data,request_key) VALUES($1,$2,$3)", [
       id,
