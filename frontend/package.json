@@ -23,8 +23,16 @@
     "react": "^19.2.6",
     "react-datepicker": "^9.1.0",
     "react-dom": "^19.2.6",
-    "react-router-dom": "^7.16.0",
+    "react-router-dom": "7.18.5",
     "write-excel-file": "^4.1.1"
+  },
+  "overrides": {
+    "eslint": {
+      "minimatch": "11.0.8"
+    },
+    "@eslint/config-array": {
+      "minimatch": "11.0.8"
+    }
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

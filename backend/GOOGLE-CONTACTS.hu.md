@@ -44,7 +44,7 @@ A régi kategóriacímkéket nem törli, de a szinkron eltávolítja belőlük a
 5. A Clients / Credentials oldalon **Web application** típusú OAuth-kliens kell.
    Az Authorized redirect URIs listába add hozzá pontosan:
    - helyben: `http://127.0.0.1:5174/api/contacts/google/callback`
-   - élesben: `https://A-SAJAT-DOMAINED/api/contacts/google/callback`
+   - élesben: `https://www.chocoleaf.hu/api/contacts/google/callback`
    Az éles cím HTTPS legyen. A helyi cím egyezzen a ténylegesen megnyitott
    böngészőcímmel; localhost és 127.0.0.1 között ne váltogass a belépés során.
 6. A `backend/.env.contacts.example` mintája alapján állítsd be a backend `.env` fájlját.

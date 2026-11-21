@@ -12,7 +12,7 @@ async function insert(c, { bookingId, giftId, courseId, seats, bookingData, key,
   [bookingId || null, giftId || null, key || null, amount, email, description, billing, config, courseId || null, seats || null, bookingData || null]);
 }
 function returnUrl(order) {
-  const origin = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',')[0].replace(/\/$/, '');
+  const {origin} = require('../lib/siteConfig')();
   return `${origin}/payment#${order.id}`;
 }
 async function checkout(id) {

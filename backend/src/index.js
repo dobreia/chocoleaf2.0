@@ -11,9 +11,7 @@ const { publicRouter, admin } = require("./routes/systemRoutes");
 const app = express();
 app.disable("x-powered-by");
 if (process.env.TRUST_PROXY === "1") app.set("trust proxy", 1);
-const origins = (process.env.FRONTEND_URL || "http://localhost:5173").split(
-  ",",
-);
+const {origins} = require('./lib/siteConfig')();
 app.use(cors({ origin: origins, credentials: true }));
 app.post('/api/payments/webhook', express.raw({ type: 'application/json', limit: '256kb' }), require('./routes/paymentRoutes').webhook);
 app.use(express.json({ limit: "64kb" }));

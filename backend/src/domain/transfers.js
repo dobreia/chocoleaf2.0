@@ -9,7 +9,7 @@ function configuration(){
 }
 function instructions(amount,notice,id){
   const details=configuration();
-  const origin=(process.env.FRONTEND_URL||'http://localhost:5173').split(',')[0].replace(/\/$/,'');
+  const {origin}=require('../lib/siteConfig')();
   return `\n\nÁtutalási adatok\nKedvezményezett: ${details.beneficiary}${details.bankName?'\nBank: '+details.bankName:''}\nBankszámlaszám: ${details.account}\nÖsszeg: ${amount} Ft\nKözlemény: ${notice}\nUtalási adatok: ${origin}/transfer?id=${encodeURIComponent(id)}\nA fizetés beérkezését az adminisztrátor ellenőrzi.`;
 }
 module.exports={configuration,instructions};

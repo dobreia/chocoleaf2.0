@@ -12,10 +12,7 @@ async function queue(c, to, subject, body, attachments = [], options={}) {
     );
 }
 async function bookingNotice(c, b, slot, event, manageToken, { calendar = true } = {}) {
-  const origin = (process.env.FRONTEND_URL || "http://localhost:5173").split(',')[0].replace(
-    /\/$/,
-    "",
-  );
+  const {origin} = require('../lib/siteConfig')();
   const link = manageToken
     ? `\nFoglalás kezelése: ${origin}/booking/manage#${b.id}.${manageToken}\nA módosítás és lemondás adminisztrátori jóváhagyás után lép életbe. A linket tartsd bizalmasan.`
     : "\nA foglalás kezeléséhez használd az eredeti visszaigazoló levélben kapott linket.";

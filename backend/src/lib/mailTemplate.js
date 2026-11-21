@@ -2,7 +2,7 @@ function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':
 function safeUrl(value){
   try{const url=new URL(value);return ['http:','https:'].includes(url.protocol)?url.href:null;}catch{return null;}
 }
-function origin(){return (process.env.FRONTEND_URL||'http://localhost:5173').split(',')[0].replace(/\/$/,'');}
+function origin(){return require('./siteConfig')().origin;}
 function lineHtml(value){
   return String(value).split(/(https?:\/\/[^\s<>"']+)/g).map(part=>{
     const url=safeUrl(part);

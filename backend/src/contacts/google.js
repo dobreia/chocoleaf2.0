@@ -3,7 +3,7 @@ const {request,GoogleError,authFailure}=require('../calendar/google');
 const SCOPES=['https://www.googleapis.com/auth/contacts','https://www.googleapis.com/auth/userinfo.email'];
 const FIELDS='names,emailAddresses,memberships,clientData,metadata';
 function config(){
-  const origin=(process.env.FRONTEND_URL||'').split(',')[0];
+  const origin=require('../lib/siteConfig')().origin;
   const redirect=process.env.GOOGLE_CONTACTS_REDIRECT_URI||origin+'/api/contacts/google/callback';
   const clientId=process.env.GOOGLE_CONTACTS_CLIENT_ID||process.env.GOOGLE_CALENDAR_CLIENT_ID;
   const clientSecret=process.env.GOOGLE_CONTACTS_CLIENT_SECRET||process.env.GOOGLE_CALENDAR_CLIENT_SECRET;

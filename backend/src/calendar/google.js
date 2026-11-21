@@ -5,7 +5,7 @@ const SCOPES = [
   'https://www.googleapis.com/auth/userinfo.email',
 ];
 function config() {
-  const origin = (process.env.FRONTEND_URL || '').split(',')[0];
+  const origin = require('../lib/siteConfig')().origin;
   const redirect = process.env.GOOGLE_CALENDAR_REDIRECT_URI || origin + '/api/calendar/google/callback';
   const key = process.env.CALENDAR_TOKEN_KEY || '';
   let validURLs = false;

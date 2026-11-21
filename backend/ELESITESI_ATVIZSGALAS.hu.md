@@ -1,5 +1,7 @@
 # Élesítési áttekintés – 2026. november 10.
 
+**Frissítés – 2026. november 12.:** az E01 csomagfrissítés elkészült. Express 5.3.0, Nodemailer 10.5.0, Sharp 0.35.5 és React Router 7.18.5 került telepítésre, a közvetett és fejlesztői függőségek javításaival együtt. Mindkét projekt teljes npm auditja 0 ismert sérülékenységet jelez. A lentebbi verziók és audittalálatok a november 10-i vizsgálat történeti állapotát mutatják; az E02 és a többi nyitott feladat ettől külön kezelendő.
+
 ## Döntési összefoglaló
 
 A rendszer működő foglalási alkalmazás, nem pusztán bemutatófelület. Az átutalásos induláshoz nem szükséges előbb elkészíteni a Stripe-ot, a Billingót, a saját körlevélszerkesztőt vagy az összes hátralévő F-feladatot.
@@ -131,7 +133,7 @@ Az ellenőrzött statikus assethivatkozásoknál nem találtam hiányzó vagy cs
 
 ## Indulási ellenőrzőlista
 
-- [ ] E01 függőségfrissítés és utóellenőrzés kész.
+- [x] E01 függőségfrissítés és utóellenőrzés kész (2026. november 12.).
 - [ ] E02 elavult fizetési levél javítva és próbával lefedve.
 - [ ] Éles tartalmak, banki adatok és utalványfeltételek ellenőrizve.
 - [ ] Fizetési határidő, napi adminellenőrzés és kézi számlázás rögzítve.

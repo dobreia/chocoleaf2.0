@@ -1,5 +1,7 @@
 # ChocoLeaf – működés és indítás
 
+Az új rendszer ismét éles a **https://www.chocoleaf.hu** címen. A 2026. november 12-i újraélesítés előtt friss mentés készült; a szolgáltatás fut, automatikus indulása engedélyezett, a HTTPS- és API-ellenőrzések sikeresek. A tényleges szerverbeállításokat és frissítési tudnivalókat a [RackForest üzemeltetési jegyzet](../deploy/RACKFOREST.hu.md) tartalmazza. A domain- és Google OAuth-beállítások általános leírása: [Élesítési előkészítés](../deploy/ELESITES.hu.md). A `.env.production.example` általános minta; a tényleges PostgreSQL-port a szerveren **5433**, a feltöltések könyvtára `/var/www/chocoleaf2/backend/uploads`.
+
 ## Google Névjegyek és körlevélcímkék
 
 Admin → Körlevél / Google: automatikus névjegyszinkron, összesített és kurzusonkénti
@@ -53,7 +55,7 @@ A két archívumot egymás melletti `backend` és `frontend` könyvtárba bontsd
 Követelmény: Node.js 24, npm és PostgreSQL 16 vagy újabb. A forráshoz lockfile tartozik.
 
 1. Készíts egy `chocoleaf` PostgreSQL-adatbázist és hozzá megfelelő jogosultságú alkalmazásfelhasználót. Meglévő adatbázisnál először biztonsági mentésen vagy tesztmásolaton dolgozz.
-2. A `backend/.env.example` másolata legyen `backend/.env`. Add meg a `DATABASE_URL` értékét. A régi `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` beállítás is támogatott, ha nincs `DATABASE_URL`.
+2. Éles telepítéskor a `backend/.env.production.example` alapján készítsd el a `backend/.env` fájlt, a saját titkokkal. A mintában a `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` mezők vannak; helyettük `DATABASE_URL` is használható. Helyi fejlesztéshez `NODE_ENV=development`, helyi `FRONTEND_URL` és `TRUST_PROXY=0` szükséges, vagy használd az `npm run local` indítót.
 3. A backend könyvtárában:
 
 ```sh
@@ -137,7 +139,7 @@ Admin jelszó: sózott scrypt. Munkamenet: szerveroldali, tokenlenyomattal; 8 ó
 - Az `/api` útvonal reverse proxyval menjen a folyamatosan futó Node backendhez. Célszerű ugyanazon publikus origint használni, hogy az admin sütik megfelelően működjenek. A sima statikus/PHP tárhely önmagában nem futtatja az Express szervert.
 - A `FRONTEND_URL` a valódi frontend origin legyen, útvonal és záró perjel nélkül. Ez határozza meg a levelekben küldött linkek címét is.
 - HTTPS mögött állítsd `NODE_ENV=production` értékre. Ha a backend kizárólag egy megbízható reverse proxy mögött érhető el, `TRUST_PROXY=1` teszi lehetővé a valódi kliens-IP használatát. Közvetlenül kitett backendnél maradjon 0.
-- Adatbázis- és SMTP-titkokat ne tölts a frontendbe. Az eredeti feltöltött `.env` értékeit nem csomagoltuk tovább; `.env.example` mutatja a szükséges kulcsokat.
+- Adatbázis- és SMTP-titkokat ne tölts a frontendbe. A `.env.production.example` titkok nélkül mutatja a szükséges éles beállításokat.
 - Migráció előtt készíts adatbázismentést, majd tesztmásolaton ellenőrizd a korábbi foglalásokat, árakat és időpontokat.
 - A 003-as migráció a korábbi, időzóna nélküli `courses.start_time/end_time` értékeket budapesti helyi időként értelmezi. Ha a valódi adatbázisod ilyen mezőkben UTC-adatot tárolt, a migráció futtatása előtt ezt a konkrét átalakítást igazítani kell. A feltöltés nem tartalmazott adatbázisdumpot.
 - Ezután szükséges a teljes böngészős, mobilos próba és egy tényleges levélkézbesítési próba a saját emailfiókoddal.
@@ -180,6 +182,8 @@ Az alap férőhely minden új szolgáltatásnál 6 fő. Az új alkalom a szolgá
 ## Telefonos Google-naptár – 2026. szeptember 15.
 Az admin Telefonos naptár oldalán egyirányú Google-szinkron kapcsolható be, iPhone Naptárban is megjeleníthető külön kurzusnaptárral. A funkció egyszeri Google OAuth-szerverbeállítást igényel. Részletes beállítás, működés, újrapróbálás és üzemeltetés: **CALENDAR-SYNC.hu.md**. Az átadáskor 52 backend-integrációs teszt és 11 frontendteszt sikeres; a Google-válaszokat a tesztek szimulálják, valódi Google-fiókos és telefonos próba az éles kulcsok beállítása után szükséges.
 # Stripe és Billingo (megőrzött korábbi folyamat)
+
+A 2026. november 12-i biztonsági frissítés a backendben Express 5.3.0, Nodemailer 10.5.0 és Sharp 0.35.5, a frontendben React Router 7.18.5 verziót rögzít. Telepítéshez a két könyvtárban `npm ci` használható, a hozzájuk tartozó lockfile-okkal. A `minimatch` fejlesztői függőség célzottan 11.0.8-ra van rögzítve a nodemon, ESLint és `@eslint/config-array` alatt; ez az ismert sérülékenység javítása, és a fájlminták kezelése, a lint és a build ellenőrizve lett. Az upstream függőségek javítása után az override-ok felülvizsgálhatók. A jsdom 30 teszteszköz Node 22.22.2 vagy 24.15.0 megfelelő ágát, illetve Node 26+-t vár; a helyi Node 22.20.0 ezért telepítéskor engine-figyelmeztetést ad, bár a frontendtesztek sikeresek. A Node frissítése nem része ennek a csomagtelepítésnek.
 
 A bankkártyás fizetés és automatikus számlázás beállítása: [PAYMENTS.hu.md](PAYMENTS.hu.md). A konfigurációs minta: [.env.payments.example](.env.payments.example).
 
