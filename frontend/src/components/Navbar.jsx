@@ -15,7 +15,7 @@ export default function Navbar() {
     <nav className="chocoleaf-navbar" aria-label="Fő navigáció">
       <div className="container navbar-container">
         <Link className="chocoleaf-brand" to="/" onClick={closeMenu}>
-          ChocoLeaf
+          <img className="chocoleaf-brand__logo" src="/assets/logo.png" alt="ChocoLeaf – főoldal" />
         </Link>
 
         <button
@@ -36,7 +36,7 @@ export default function Navbar() {
           id="primary-navigation"
         >
           <ul>
-            {[...siteLinks, ...siteActions].map((link) => (
+            {siteLinks.map((link) => (
               <li key={link.to}>
                 <NavLink
                   className={({ isActive }) =>
@@ -51,6 +51,13 @@ export default function Navbar() {
             ))}
             <AdminNavItem onClick={closeMenu} />
           </ul>
+          <div className="navbar-actions">
+            {siteActions.map(link => (
+              <Link className={link.className} to={link.to} key={link.to} onClick={closeMenu}>
+                {link.label}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </nav>

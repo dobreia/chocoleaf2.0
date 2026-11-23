@@ -8,6 +8,8 @@
 }
 
 .navbar-container {
+    max-width: 1620px;
+    width: calc(100% - 32px);
     min-height: 72px;
     display: flex;
     align-items: center;
@@ -16,12 +18,20 @@
 }
 
 .chocoleaf-brand {
+    display: inline-flex;
+    flex-shrink: 0;
     color: #ffffff;
     font-size: 28px;
     font-weight: 800;
     letter-spacing: 0;
     text-decoration: none;
     white-space: nowrap;
+}
+
+.chocoleaf-brand__logo {
+    display: block;
+    width: 170px;
+    height: auto;
 }
 
 .chocoleaf-brand:hover,
@@ -39,6 +49,18 @@
     list-style: none;
 }
 
+.navbar-menu {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+}
+
+.navbar-menu li + li {
+    border-left: 1px solid rgba(255, 255, 255, 0.7);
+    padding-left: 12px;
+    margin-left: 12px;
+}
+
 .chocoleaf-navbar .nav-link {
     display: inline-flex;
     align-items: center;
@@ -46,17 +68,39 @@
     padding: 8px 11px;
     border-radius: 6px;
     color: #ffffff;
-    font-size: 16px;
-    font-weight: 700;
+    font-family: "Courgette", cursive;
+    font-size: 20px;
+    font-weight: 400;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
     text-decoration: none;
 }
 
 .chocoleaf-navbar .nav-link:hover,
 .chocoleaf-navbar .nav-link:focus-visible,
 .chocoleaf-navbar .nav-link.is-active {
-    color: #2f2630;
-    background: #eee8dc;
+    color: #a39dcd;
 }
+
+.navbar-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.navbar-actions a {
+    padding: 6px 12px;
+    border: 1px solid black;
+    border-radius: 6px;
+    font-family: "Exo 2", sans-serif;
+    font-size: 18px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.navbar-actions .button-primary { background: #6c485c; color: white; }
+.navbar-actions .button-secondary { background: #eee8dc; color: black; }
+.navbar-actions .button-primary:hover { background: #d49eb9; color: white; }
+.navbar-actions .button-secondary:hover { background: #a39dcd; color: white; }
 
 .navbar-toggle {
     display: none;
@@ -123,7 +167,7 @@
     grid-column: 1 / -1;
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1260px) {
     .navbar-container {
         flex-wrap: wrap;
     }
@@ -148,11 +192,26 @@
         gap: 4px;
     }
 
+    .navbar-menu li + li {
+        border-left: 0;
+        padding-left: 0;
+        margin-left: 0;
+    }
+
+    .navbar-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 16px;
+    }
+
     .chocoleaf-navbar .nav-link {
         width: 100%;
         justify-content: center;
     }
 
+}
+
+@media (max-width: 980px) {
     .site-footer__inner {
         grid-template-columns: 1fr;
     }
