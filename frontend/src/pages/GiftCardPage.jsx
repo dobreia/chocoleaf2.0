@@ -3,6 +3,7 @@ import { startStripePayment } from '../api/payments';
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePageDraftState, usePageDraftRef, useClearPageDrafts } from '../components/usePageDraft';
 import BillingFields from '../components/BillingFields';
+import ImageAsset from '../components/ImageAsset';
 import { emptyBilling } from '../components/billingData';
 import { useNavigate } from "react-router-dom";
 
@@ -47,12 +48,15 @@ export default function GiftCardPage() {
     return () => { live = false; clearInterval(timer); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
   }, []);
   const [selectedAmount, setSelectedAmount] = usePageDraftState('gift.amount', null);
+  const [selectedCourseId, setSelectedCourseId] = usePageDraftState('gift.courseId', null);
   const [customAmount, setCustomAmount] = usePageDraftState('gift.customAmount', String(minAmount));
   const customInput = useRef(null);
   const isCustom = selectedAmount === 'custom';
   const candidateAmount = isCustom ? Number(customAmount) : selectedAmount;
   const amount = Number.isSafeInteger(candidateAmount) && candidateAmount >= minAmount && candidateAmount <= maxAmount && (isCustom || (!amountsLoading && !amountsError && amountOptions.includes(candidateAmount))) ? candidateAmount : null;
   const unavailableSelection = !!(!isCustom && selectedAmount && !amountsLoading && !amountOptions.includes(selectedAmount));
+  const matchingCourses = amountRecommendations.find(option => option.amount === selectedAmount)?.courses ?? [];
+  const selectedCourse = matchingCourses.find(course => course.id === selectedCourseId) ?? matchingCourses[0];
   useEffect(() => { if (isCustom) { customInput.current?.focus(); customInput.current?.select(); } }, [isCustom]);
   const [quantity, setQuantity] = usePageDraftState('gift.quantity', 1);
   const [names, setNames] = usePageDraftState('gift.names', [""]);
@@ -191,10 +195,15 @@ export default function GiftCardPage() {
             {amountsError && <p role="status" className="voucher-error">{amountsError}</p>}
             {!amountsLoading && !amountsError && !amountOptions.length && <p>Jelenleg egyéni összeggel vásárolhatsz utalványt.</p>}
             {unavailableSelection && !amountsError && <p role="status" className="voucher-error">A korábban kiválasztott kurzusár már nem érhető el. Válassz másik összeget vagy add meg egyéni értékként.</p>}
-            <div className="voucher-amounts">{amountRecommendations.map(option => <button type="button" key={option.amount} aria-pressed={selectedAmount === option.amount} className={selectedAmount === option.amount ? 'selected' : ''} onClick={() => { requestKeyRef.current = null; setSelectedAmount(option.amount); }}>{formatAmount(option.amount)} Ft
-              <span>kurzusárhoz igazítva</span>
-              {option.courses.map(course => <span className="voucher-course-suggestion" key={course.id}>{course.title}{course.multiSession && <small>teljes kurzus ára</small>}</span>)}
-            </button>)}
+            <div className="voucher-amounts">
+              {amountRecommendations.flatMap(({ amount: courseAmount, courses }) => courses.map(course => {
+                const selected = selectedAmount === courseAmount && selectedCourse?.id === course.id;
+                return <button type="button" key={`${courseAmount}-${course.id}`} aria-pressed={selected} className={selected ? 'selected' : ''}
+                  onClick={() => { requestKeyRef.current = null; setSelectedAmount(courseAmount); setSelectedCourseId(course.id); }}>
+                  {formatAmount(courseAmount)} Ft
+                  <span className="voucher-course-suggestion">{course.title}{course.multiSession && <small>teljes kurzus ára</small>}</span>
+                </button>;
+              }))}
               <button type="button" className={'voucher-custom-choice'+(isCustom?' selected':'')} aria-pressed={isCustom} aria-expanded={isCustom} aria-controls="voucher-custom-amount" onClick={() => { requestKeyRef.current = null; normalizeCustomAmount(); setSelectedAmount('custom'); }}>Egyéni összeg<span>te határozod meg az utalvány értékét</span></button>
             </div>
             {isCustom && <div id="voucher-custom-amount">
@@ -211,7 +220,10 @@ export default function GiftCardPage() {
             <BillingFields value={stripeBilling} onChange={setStripeBilling} />
           </section>
         </div>
-        <aside className="voucher-summary"><div className="voucher-summary-inner"><img className="voucher-photo" src="/assets/courses/alap.jpg" alt="Kézműves csokoládékészítő élmény" /><p className="experience-eyebrow">Az ajándékod</p><h2>Édes élmény, névre szólóan.</h2><div className="voucher-summary-row"><span>Utalvány értéke</span><strong>{amount ? formatAmount(amount) + ' Ft' : isCustom ? 'Adj meg összeget' : 'Válassz értéket'}</strong></div><div className="voucher-summary-row"><span>Mennyiség</span><strong>{quantity || '–'} db</strong></div><div className="voucher-total" aria-live="polite"><span>Fizetendő összesen</span><strong>{amount && quantity ? formatAmount(amount * Number(quantity)) + ' Ft' : '–'}</strong></div>
+        <aside className="voucher-summary"><div className="voucher-summary-inner">
+          <ImageAsset className="voucher-photo" src={selectedCourse?.image || '/assets/courses/alap.jpg'}
+            alt={selectedCourse?.image ? selectedCourse.title : 'Kézműves csokoládékészítő élmény'} />
+          <p className="experience-eyebrow">Az ajándékod</p><h2>Édes élmény, névre szólóan.</h2><div className="voucher-summary-row"><span>Utalvány értéke</span><strong>{amount ? formatAmount(amount) + ' Ft' : isCustom ? 'Adj meg összeget' : 'Válassz értéket'}</strong></div><div className="voucher-summary-row"><span>Mennyiség</span><strong>{quantity || '–'} db</strong></div><div className="voucher-total" aria-live="polite"><span>Fizetendő összesen</span><strong>{amount && quantity ? formatAmount(amount * Number(quantity)) + ' Ft' : '–'}</strong></div>
           <p>Az utalvány a ChocoLeaf édességkészítő workshopjaira használható fel, a rajta szereplő értékben.</p><h3>Mi történik a rendelés után?</h3><ol><li>{provider === 'stripe' ? 'Bankkártyával fizetsz a Stripe biztonságos oldalán.' : 'Megkapod az átutaláshoz szükséges adatokat.'}</li><li>A fizetés beérkezését visszaigazoljuk.</li><li>A névre szóló PDF-utalványokat elküldjük a megadott email címre.</li>{provider === 'stripe' && <li>A számlát automatikusan elkészítjük és emailben elküldjük.</li>}</ol>
           {errorMessage && <p role="alert" className="voucher-error">{errorMessage}</p>}<button className="experience-cta" type="submit" disabled={isSubmitting || !provider || (!isCustom && (amountsLoading || !!amountsError || !!unavailableSelection))}>{buttonText}</button><small>Fizetési mód: {provider === 'stripe' ? 'bankkártya (Stripe)' : provider ? 'banki átutalás' : 'betöltés…'}.</small>
         </div></aside>

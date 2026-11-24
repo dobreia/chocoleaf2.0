@@ -31,7 +31,7 @@ router.post('/check-vouchers',async(req,res)=>{
 router.get('/amounts',async(req,res)=>{
   res.set('Cache-Control','no-store');
   const details=req.query.details==='1';
-  const columns=details?`c.price,s.id AS service_id,s.title,
+  const columns=details?`c.price,s.id AS service_id,s.title,COALESCE(NULLIF(s.image,''),s.image_detail) AS image,
     (SELECT count(*)::int FROM course_session_times st WHERE st.course_id=c.id) AS session_count`:'c.price';
   const rows=(await pool.query(`SELECT DISTINCT ${columns} FROM courses c JOIN services s ON s.id=c.service_id
     WHERE c.active AND s.active AND c.start_time>now() AND c.price BETWEEN 1000 AND 1000000
@@ -43,7 +43,7 @@ router.get('/amounts',async(req,res)=>{
     const courses=options.get(row.price).courses;
     const existing=courses.find(course=>course.id===row.service_id);
     if(existing)existing.multiSession ||= row.session_count>1;
-    else courses.push({id:row.service_id,title:row.title,multiSession:row.session_count>1});
+    else courses.push({id:row.service_id,title:row.title,image:row.image,multiSession:row.session_count>1});
   }
   res.json([...options.values()]);
 });
