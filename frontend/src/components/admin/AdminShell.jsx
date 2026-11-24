@@ -49,7 +49,7 @@ export default function AdminShell() {
   if (!user)
     return (
       <main className="cl-admin cl-login">
-        <a href="/">ChocoLeaf</a>
+        <a href="/"><img className="cl-brand-logo" src="/assets/logo.png" alt="ChocoLeaf – főoldal" /></a>
         <h1>Admin belépés</h1>
         <SaveForm
           label="Bejelentkezés"
@@ -88,7 +88,8 @@ export default function AdminShell() {
     <div className="cl-admin">
       <header className="cl-top">
         <NavLink to="/admin" className="cl-brand">
-          ChocoLeaf <small>ADMIN</small>
+          <img className="cl-brand-logo" src="/assets/logo.png" alt="ChocoLeaf" />
+          <small>ADMIN</small>
         </NavLink>
         <div>
           <a href="/">Weboldal</a>

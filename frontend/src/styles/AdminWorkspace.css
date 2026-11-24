@@ -35,13 +35,19 @@
   margin-right: 16px;
 }
 .cl-brand {
-  font-size: 25px;
-  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.cl-brand-logo {
+  display: block;
+  width: clamp(90px, 26vw, 145px);
+  height: auto;
 }
 .cl-brand small {
   font-size: 12px;
+  font-weight: bold;
   letter-spacing: 2px;
-  margin-left: 12px;
 }
 .cl-workspace {
   display: grid;
@@ -542,9 +548,8 @@
   padding: 60px 24px;
 }
 .cl-login > a {
-  display: block;
+  display: inline-block;
   color: #6c485c;
-  font-size: 26px;
   margin-bottom: 30px;
 }
 .cl-actions {
@@ -619,9 +624,6 @@
   .cl-pagination {
     gap: 6px;
     font-size: 14px;
-  }
-  .cl-top .cl-brand {
-    font-size: 21px;
   }
   .cl-brand small {
     display: none;
