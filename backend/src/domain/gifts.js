@@ -75,4 +75,22 @@ async function issueByAdmin(input,requestKey,admin) {
     return {id:row.id,codes:vouchers.map(v=>v.code),validUntil:vouchers[0]?.valid_until};
   });
 }
-module.exports = { fulfill, nextReference, issueByAdmin };
+async function updateVoucher(code,input,admin) {
+  const statuses=['issued','paid','redeemed','deleted'];
+  const nextStatus=input.status;
+  if(!statuses.includes(nextStatus)||!statuses.includes(input.expectedStatus))fail('Érvénytelen utalványállapot.');
+  return transaction(async c=>{
+    const voucher=await one(c,`SELECT v.*,g.data FROM gift_vouchers v JOIN gift_orders g ON g.id=v.order_id
+      WHERE v.code=$1 FOR UPDATE OF v`,[code]);
+    if(!voucher)fail('Az utalvány nem található.',404);
+    const previous=voucher.admin_status||(voucher.data.paidAt?'paid':'issued');
+    if(await one(c,"SELECT 1 FROM booking_vouchers WHERE code=$1 AND status IN ('active','consumed')",[code]))
+      fail('Ez az utalvány már online foglaláshoz tartozik. A módosítást a Foglalások oldalon végezd el.',409);
+    if(input.expectedStatus!==previous)fail('Az utalvány állapota időközben megváltozott. Frissítsd a listát.',409);
+    if(nextStatus===previous)return;
+    await c.query('UPDATE gift_vouchers SET admin_status=$2 WHERE code=$1',[code,nextStatus]);
+    await c.query(`INSERT INTO gift_voucher_events(code,previous_status,status,admin_id,admin_email)
+      VALUES($1,$2,$3,$4,$5)`,[code,previous,nextStatus,admin.id,admin.email]);
+  });
+}
+module.exports = { fulfill, nextReference, issueByAdmin, updateVoucher };

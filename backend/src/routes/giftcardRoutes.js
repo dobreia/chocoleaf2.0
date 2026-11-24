@@ -14,6 +14,11 @@ router.post('/admin/issue',requireAdmin,async(req,res)=>{
   const result=await require('../domain/gifts').issueByAdmin(req.body,key,req.admin);
   res.status(201).json({...result,message:'Az utalványok elkészültek, az e-mail küldési sorba került.'});
 });
+router.patch('/admin/vouchers/:code',requireAdmin,async(req,res)=>{
+  const code=str(req.params.code,'Utalványszám',100).toUpperCase();
+  await require('../domain/gifts').updateVoucher(code,req.body,req.admin);
+  res.json({message:req.body.status==='deleted'?'Az utalvány töröltként megjelölve. A sorszám és az előzmények megmaradtak.':'Az utalvány állapota frissült.'});
+});
 router.post('/check-vouchers',async(req,res)=>{
   res.set('Cache-Control','no-store');
   const result=await transaction(async c=>{
@@ -128,7 +133,9 @@ router.get("/admin/orders", requireAdmin, async (req, res) =>
     (
       await pool.query(
         `SELECT g.*,(SELECT jsonb_agg(jsonb_build_object('code',v.code,'name',v.recipient_name,'amount',v.amount,'valid_until',v.valid_until,'changes_used',v.changes_used,
-          'status',COALESCE((SELECT u.status FROM booking_vouchers u WHERE u.code=v.code AND u.status IN ('active','consumed') LIMIT 1),'available')) ORDER BY v.code)
+          'management_status',COALESCE(v.admin_status,CASE WHEN g.data->>'paidAt' IS NOT NULL THEN 'paid' ELSE 'issued' END),
+          'events',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',e.id,'previous_status',e.previous_status,'status',e.status,'admin_email',e.admin_email,'created_at',e.created_at) ORDER BY e.created_at,e.id) FROM gift_voucher_events e WHERE e.code=v.code),'[]'::jsonb),
+          'status',COALESCE((SELECT u.status FROM booking_vouchers u WHERE u.code=v.code AND u.status IN ('active','consumed') LIMIT 1),CASE WHEN v.admin_status IN ('redeemed','deleted') THEN v.admin_status ELSE 'available' END)) ORDER BY v.code)
           FROM gift_vouchers v WHERE v.order_id=g.id) AS vouchers FROM gift_orders g ${req.query.order?'WHERE g.id=$1':''} ORDER BY created_at DESC LIMIT 500`,
         req.query.order?[str(req.query.order,'Rendelés',100)]:[],
       )

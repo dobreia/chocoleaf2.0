@@ -15,8 +15,9 @@ async function quote(c,input,total,bookingId=null){
   for(const code of list){
     const voucher=await one(c,`SELECT code,amount,valid_until FROM gift_vouchers v
       WHERE code=$1 AND valid_until>=(now() AT TIME ZONE 'Europe/Budapest')::date
+      AND (v.admin_status IS NULL OR v.admin_status IN ('issued','paid'))
       AND NOT EXISTS(SELECT 1 FROM booking_vouchers u WHERE u.code=v.code AND u.status IN ('active','consumed') AND ($2::uuid IS NULL OR u.booking_id IS DISTINCT FROM $2::uuid))`,[code,bookingId]);
-    if(!voucher)fail('Az utalvány nem használható fel: nem kiállított, lejárt vagy már felhasznált.',409);
+    if(!voucher)fail('Az utalvány nem használható fel: nem kiállított, lejárt, törölt vagy már felhasznált.',409);
     items.push(voucher);
   }
   const discount=items.reduce((sum,v)=>sum+v.amount,0);

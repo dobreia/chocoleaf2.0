@@ -4,21 +4,25 @@ function options(env = process.env) {
     auth:env.MAIL_USER ? {user:env.MAIL_USER,pass:env.MAIL_PASS} : undefined} :
     {...common,service:'gmail',auth:{user:env.MAIL_USER,pass:env.MAIL_PASS}};
 }
-function validateReal(env = process.env) {
+function validateReal(env = process.env, settingsFile = 'backend/.env') {
   const missing=['MAIL_USER','MAIL_PASS','MAIL_FROM','MAIL_ADMIN'].filter(k=>!env[k]?.trim());
-  if(missing.length)throw Error('A valódi emailküldéshez töltsd ki a backend/.env fájlban: '+missing.join(', ')+'.');
+  if(missing.length)throw Error(`A valódi emailküldéshez töltsd ki a ${settingsFile} fájlban: ${missing.join(', ')}.`);
   const port=Number(env.SMTP_PORT || 587);
   if(!Number.isInteger(port)||port<1||port>65535)throw Error('Érvénytelen SMTP_PORT.');
 }
-async function verifyReal(env = process.env) {
-  validateReal(env);
+async function verifyReal(env = process.env, settingsFile = 'backend/.env') {
+  validateReal(env, settingsFile);
   const transport=require('nodemailer').createTransport(options(env));
   try {await transport.verify();}
   catch(error){
     const code=['EAUTH','ECONNECTION','ECONNREFUSED','ENOTFOUND','ETIMEDOUT','ESOCKET','ETLS','EPROTOCOL'].includes(error.code)?error.code:'';
     const response=Number.isInteger(error.responseCode)&&error.responseCode>=100&&error.responseCode<=599?String(error.responseCode):'';
     const detail=[code,response].filter(Boolean).join(' / ');
-    throw Error('Az SMTP-kapcsolat ellenőrzése sikertelen'+(detail?' ('+detail+')':'')+'. Ellenőrizd a kiszolgálót, portot, felhasználónevet és jelszót a backend/.env fájlban.');
+    const gmail = !env.SMTP_HOST || env.SMTP_HOST.toLowerCase() === 'smtp.gmail.com';
+    const hint = code === 'EAUTH' && gmail
+      ? `A Gmail elutasította a bejelentkezést. Ellenőrizd a MAIL_USER és MAIL_PASS értékét a ${settingsFile} fájlban. A MAIL_PASS mezőbe a feladó Google-fiókjához tartozó alkalmazásjelszó kell.`
+      : `Ellenőrizd a kiszolgálót, portot, felhasználónevet és jelszót a ${settingsFile} fájlban.`;
+    throw Error('Az SMTP-kapcsolat ellenőrzése sikertelen'+(detail?' ('+detail+')':'')+'. '+hint);
   }
   finally {transport.close();}
 }

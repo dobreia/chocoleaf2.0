@@ -137,6 +137,22 @@
 .cl-title h1 {
   margin: 0;
 }
+.cl-gift-voucher {
+  border-top: 1px solid #e0d3da;
+  padding-top: 16px;
+  margin-top: 16px;
+}
+.cl-gift-voucher > .cl-actions {
+  align-items: flex-end;
+}
+.cl-gift-voucher > .cl-actions > .cl-field {
+  margin: 0;
+  min-width: 140px;
+}
+.cl-gift-voucher > .cl-actions > button {
+  min-height: 44px;
+  margin-block: 0;
+}
 .cl-gift-quantity {
   display: flex;
   align-items: center;

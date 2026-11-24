@@ -58,3 +58,41 @@ test('invalid numeric characters are ignored and cancel or leaving the page clea
   await page.getByRole('button',{name:'+ Utalvány kiállítása',exact:true}).click();
   await expect(form.getByLabel('1. utalvány – név',{exact:true})).toHaveValue('');
 });
+
+test('admin manages individual voucher states and keeps deleted serials with their audit without page navigation',async({page})=>{
+  await openGifts(page);
+  const response=await page.request.post('/api/giftcard/admin/issue',{
+    headers:{'Idempotency-Key':crypto.randomUUID()},
+    data:{amount:19000,quantity:2,names:['Személyes Beváltás','Törölt Utalvány'],email:'managed-browser@example.test'},
+  });
+  expect(response.status()).toBe(201);
+  const {codes}=await response.json();
+  await page.reload();
+  const first=page.locator('.cl-gift-voucher').filter({hasText:codes[0]});
+  const second=page.locator('.cl-gift-voucher').filter({hasText:codes[1]});
+  let navigations=0;
+  page.on('framenavigated',frame=>{if(frame===page.mainFrame())navigations++;});
+  await first.getByRole('combobox').selectOption('paid');
+  await expect(first.getByRole('combobox')).toHaveValue('paid');
+  await first.getByText(/Módosítási előzmények/).click();
+  await expect(first).toContainText('demo@example.test');
+  page.once('dialog',dialog=>dialog.accept());
+  await first.getByRole('combobox').selectOption('redeemed');
+  await expect(first).toContainText('Személyesen beváltva, újra nem használható');
+  page.once('dialog',dialog=>dialog.dismiss());
+  await second.getByRole('button',{name:'Utalvány törlése'}).click();
+  await expect(second.getByRole('combobox')).toHaveValue('issued');
+  page.once('dialog',dialog=>dialog.accept());
+  await second.getByRole('button',{name:'Utalvány törlése'}).click();
+  await expect(second).toContainText('Törölt utalvány – nem váltható be');
+  await expect(second.getByRole('combobox')).toBeEnabled();
+  await expect(second.getByRole('combobox')).toHaveValue('deleted');
+  await expect(second.getByRole('button',{name:'Utalvány törlése'})).toHaveCount(0);
+  await second.getByText(/Módosítási előzmények/).click();
+  await expect(second).toContainText('Kiállított → Törölt');
+  page.once('dialog',dialog=>dialog.accept());
+  await second.getByRole('combobox').selectOption('paid');
+  await expect(second.getByRole('combobox')).toHaveValue('paid');
+  await expect(second).toContainText('Törölt → Fizetett');
+  expect(navigations).toBe(0);
+});

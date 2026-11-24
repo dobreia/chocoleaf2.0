@@ -129,7 +129,8 @@ test('a pending payment holds one package price and locks every session; expiry 
   assert.ok((await book(group)).booking.id);
 });
 test('public availability includes all dates across month boundaries and never multiplies the package price',async()=>{
-  const date=new Date(base+70*86400000);date.setUTCDate(1);date.setUTCHours(9,0,0,0);
+  // Keep month-boundary fixtures separate from the relative-day fixtures above.
+  const date=new Date(base+1000*86400000);date.setUTCDate(1);date.setUTCHours(9,0,0,0);
   const first=date.toISOString();date.setUTCMonth(date.getUTCMonth()+1);const second=date.toISOString();
   const group=await create(70,{sessions:[{start_time:first,end_time:new Date(+new Date(first)+3600000).toISOString()},{start_time:second,end_time:new Date(+new Date(second)+7200000).toISOString()}]});
   const response=await fetch(origin+'/api/bookings/availability?'+new URLSearchParams({courseId:serviceId,year:date.getUTCFullYear(),month:date.getUTCMonth()+1}));

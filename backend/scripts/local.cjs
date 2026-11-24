@@ -63,7 +63,7 @@ async function free(port) {
   await new Promise((resolve,reject)=>{const s=net.createServer();s.once('error',()=>reject(Error(`A ${port} port foglalt. Állítsd le az ott futó fejlesztői szervert.`)));s.listen(port,'127.0.0.1',()=>s.close(resolve));});
 }
 async function main() {
-  if(!check && !setupOnly && mailMode==='real') await mailSettings.verifyReal();
+  if(!check && !setupOnly && mailMode==='real') await mailSettings.verifyReal(process.env, 'backend/.env.local-test');
   if(!setupOnly){await free(apiPort);await free(webPort);}
   await setup();
   if(setupOnly)return;

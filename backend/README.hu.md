@@ -6,6 +6,10 @@ Admin → Utalványok → **+ Utalvány kiállítása**: a kézbesítési e-mail
 
 Az új `POST /api/giftcard/admin/issue` végpont adminmunkamenetet és UUID `Idempotency-Key` fejlécet kér. Az ismételt, azonos beküldés nem készít új utalványt vagy levelet. A nyilvántartás külön jelöli az adminos kiállítást és a kiállító admin azonosítóját/e-mail-címét. Nem készül fizetési rekord, számla vagy `paidAt` jelölés; utólagos fizetési jóváhagyás és átutalási oldal ehhez a kiállításhoz nem használható. A vásárlói kiállítás és fizetési folyamat megmaradt.
 
+Az egyes kiállított utalványoknál külön állítható a **Kiállított / Fizetett / Beváltott** státusz. A Beváltott a személyes beváltást rögzíti, és kizárja a későbbi online felhasználást; téves jelölése megerősítés után javítható. A Fizetett itt adminisztratív nyilvántartás: nem indít pénzmozgást, számlázást, PDF-generálást vagy új levelet. A vásárlás tényleges fizetési adatai ettől függetlenek maradnak. Az online foglaláshoz kötött vagy azon keresztül beváltott utalványt a foglalási folyamat kezeli, ezért közvetlenül nem módosítható.
+
+Az **Utalvány törlése** érvényteleníti az utalványt, és megőrzi a sorszámát, a nevet és a törlés tényét. Törölt utalványnál a státuszválasztóval közvetlenül megadható az új állapot az eredeti lejárati dátum megőrzésével. A módosítások időpontja, korábbi és új állapota, valamint a műveletet végző admin a kártya **Módosítási előzmények** részében látszik. A `025-voucher-admin-management.sql` migráció hozza létre a szükséges mezőt és naplót. Az adminvédett `PATCH /api/giftcard/admin/vouchers/:code` végpont a megjelenített `expectedStatus` értékét is kéri az elavult vagy párhuzamos módosítások kizárására.
+
 Az automatizált próba izolált adatbázissal és helyi SMTP-fogadóval dolgozik (`backend/test/admin-gifts.test.cjs`). Böngészős ellenőrzés a frontend könyvtárból: `npm run test:e2e:admin-gifts`.
 
 Automatikus prod-élesítés: [GitHub Actions beállítása és használata](../deploy/GITHUB-ACTIONS.hu.md). A szerveroldal előkészítve; a három repository secret és a workflow `prod` branchre pusholása szükséges az induláshoz.
